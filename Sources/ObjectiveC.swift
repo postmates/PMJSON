@@ -102,8 +102,10 @@ extension JSON {
         case .Double(let d): return d
         case .Object(let obj):
             let dict = NSMutableDictionary(capacity: obj.count)
-            for (key, value) in obj where !value.isNull {
-                dict[key] = value.plist
+            for (key, value) in obj {
+                if let value = value.plistNoNull {
+                    dict[key] = value
+                }
             }
             return dict
         case .Array(let ary):
