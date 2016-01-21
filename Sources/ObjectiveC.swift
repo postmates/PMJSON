@@ -81,12 +81,7 @@ extension JSON {
         case .String(let s): return s
         case .Int64(let i): return NSNumber(longLong: i)
         case .Double(let d): return d
-        case .Object(let obj):
-            let dict = NSMutableDictionary(capacity: obj.count)
-            for (key, value) in obj {
-                dict[key] = value.plist
-            }
-            return dict
+        case .Object(let obj): return obj.plist
         case .Array(let ary):
             return ary.map({$0.plist})
         }
@@ -100,17 +95,32 @@ extension JSON {
         case .String(let s): return s
         case .Int64(let i): return NSNumber(longLong: i)
         case .Double(let d): return d
-        case .Object(let obj):
-            let dict = NSMutableDictionary(capacity: obj.count)
-            for (key, value) in obj {
-                if let value = value.plistNoNull {
-                    dict[key] = value
-                }
-            }
-            return dict
+        case .Object(let obj): return obj.plistNoNull
         case .Array(let ary):
             return ary.flatMap({$0.plistNoNull})
         }
+    }
+}
+
+extension JSONObject {
+    /// Returns the JSON as a plist-compatible dictionary.
+    public var plist: [NSObject: AnyObject] {
+        var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
+        for (key, value) in self {
+            dict[key] = value.plist
+        }
+        return dict
+    }
+    
+    /// Returns the JSON as a plist-compatible dictionary, discarding any nulls.
+    public var plistNoNull: [NSObject: AnyObject] {
+        var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
+        for (key, value) in self {
+            if let value = value.plistNoNull {
+                dict[key] = value
+            }
+        }
+        return dict
     }
 }
 
