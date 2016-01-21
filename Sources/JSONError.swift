@@ -5,6 +5,8 @@
 //  Created by Kevin Ballard on 11/9/15.
 //
 
+// MARK: JSONError
+
 public enum JSONError: ErrorType, CustomStringConvertible {
     case MissingOrInvalidType(path: String?, expected: ExpectedType, actual: JSONType?)
     
@@ -64,6 +66,7 @@ public enum JSONError: ErrorType, CustomStringConvertible {
     }
 }
 
+// MARK: - Basic accessors
 public extension JSON {
     /// Returns the bool value if the receiver is a bool.
     /// Otherwise, an error is thrown.
@@ -174,6 +177,7 @@ public extension JSON {
     }
 }
 
+// MARK: - Keyed accessors
 public extension JSON {
     /// Subscripts the receiver with `key` and returns the result.
     /// If the key doesn't exist or the value is the wrong type, an error is thrown.
@@ -192,25 +196,6 @@ public extension JSON {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getBoolOrNil() }
-    }
-    
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getBool(index: Int) throws -> Swift.Bool {
-        let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Bool)
-        return try scoped(index) { try value.getBool() }
-    }
-    
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getBoolOrNil(index: Int) throws -> Swift.Bool? {
-        let ary = try getArray()
-        guard let value = ary[safe: index] else { return nil }
-        return try scoped(index) { try value.getBoolOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
@@ -232,25 +217,6 @@ public extension JSON {
         return try scoped(key) { try value.getStringOrNil() }
     }
     
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getString(index: Int) throws -> Swift.String {
-        let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .String)
-        return try scoped(index) { try value.getString() }
-    }
-    
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getStringOrNil(index: Int) throws -> Swift.String? {
-        let ary = try getArray()
-        guard let value = ary[safe: index] else { return nil }
-        return try scoped(index) { try value.getStringOrNil() }
-    }
-    
     /// Subscripts the receiver with `key` and returns the result.
     /// If the key doesn't exist or the value is the wrong type, an error is thrown.
     /// - Throws: `JSONError`
@@ -268,25 +234,6 @@ public extension JSON {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
-    }
-    
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getInt64(index: Int) throws -> Swift.Int64 {
-        let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
-        return try scoped(index) { try value.getInt64() }
-    }
-    
-    /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getInt64OrNil(index: Int) throws -> Swift.Int64? {
-        let ary = try getArray()
-        guard let value = ary[safe: index] else { return nil }
-        return try scoped(index) { try value.getInt64OrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
@@ -308,6 +255,142 @@ public extension JSON {
         return try scoped(key) { try value.getDoubleOrNil() }
     }
     
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getObject(_:_:)`
+    func getObject(key: Swift.String) throws -> JSONObject {
+        return try getObject(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getObjectOrNil(_:_:)`
+    func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
+        return try getObjectOrNil(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and passes the result to the given block.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getObject<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T {
+        return try getObject().getObject(key, f)
+    }
+    
+    /// Subscripts the receiver with `key` and passes the result to the given block.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T? {
+        return try getObject().getObjectOrNil(key, f)
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getArray(_:_:)`
+    func getArray(key: Swift.String) throws -> ContiguousArray<JSON> {
+        return try getArray(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getArrayOrNil(_:_:)`
+    func getArrayOrNil(key: Swift.String) throws -> ContiguousArray<JSON>? {
+        return try getArrayOrNil(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and passes the result to the given block.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getArray<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .Array)
+        return try scoped(key) { try f(value.getArray()) }
+    }
+    
+    /// Subscripts the receiver with `key` and passes the result to the given block.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.getArrayOrNil().map(f) }
+    }
+}
+
+// MARK: - Indexed accessors
+public extension JSON {
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getBool(index: Int) throws -> Swift.Bool {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Bool)
+        return try scoped(index) { try value.getBool() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getBoolOrNil(index: Int) throws -> Swift.Bool? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.getBoolOrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getString(index: Int) throws -> Swift.String {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .String)
+        return try scoped(index) { try value.getString() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getStringOrNil(index: Int) throws -> Swift.String? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.getStringOrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getInt64(index: Int) throws -> Swift.Int64 {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Number)
+        return try scoped(index) { try value.getInt64() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getInt64OrNil(index: Int) throws -> Swift.Int64? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.getInt64OrNil() }
+    }
+    
     /// Subscripts the receiver with `index` and returns the result.
     /// If the index is out of range or the value is the wrong type, an error is thrown.
     /// - Throws: `JSONError`
@@ -326,32 +409,32 @@ public extension JSON {
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getDoubleOrNil() }
     }
-}
-
-public extension JSON {
-    /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is the wrong type, an error is thrown.
+    /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
     /// - Throws: `JSONError`
-    func getObject<T>(key: Swift.String, @noescape f: JSONObject throws -> T) throws -> T {
-        let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Object)
-        return try scoped(key) { try f(value.getObject()) }
+    /// - SeeAlso: `getObject(_:_:)`
+    func getObject(index: Int) throws -> JSONObject {
+        return try getObject(index, { $0 })
     }
     
-    /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(key: Swift.String, @noescape f: JSONObject throws -> T) throws -> T? {
-        let dict = try getObject()
-        guard let value = dict[key] else { return nil }
-        return try scoped(key) { try value.getObjectOrNil().map(f) }
+    /// - SeeAlso: `getObjectOrNil(_:_:)`
+    func getObjectOrNil(index: Int) throws -> JSONObject? {
+        return try getObjectOrNil(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
     /// If the index is out of range or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObject<T>(index: Int, @noescape f: JSONObject throws -> T) throws -> T {
+    func getObject<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Object)
         return try scoped(index) { try f(value.getObject()) }
@@ -361,35 +444,37 @@ public extension JSON {
     /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(index: Int, @noescape f: JSONObject throws -> T) throws -> T? {
+    func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getObjectOrNil().map(f) }
     }
     
-    /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is the wrong type, an error is thrown.
+    /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
     /// - Throws: `JSONError`
-    func getArray<T>(key: Swift.String, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T {
-        let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Array)
-        return try scoped(key) { try f(value.getArray()) }
+    /// - SeeAlso: `getArray(_:_:)`
+    func getArray(index: Int) throws -> ContiguousArray<JSON> {
+        return try getArray(index, { $0 })
     }
     
-    /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// Subscripts the receiver with `index` and returns the result.
+    /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T? {
-        let dict = try getObject()
-        guard let value = dict[key] else { return nil }
-        return try scoped(key) { try value.getArrayOrNil().map(f) }
+    /// - SeeAlso: `getArrayOrNil(_:_:)`
+    func getArrayOrNil(index: Int) throws -> ContiguousArray<JSON>? {
+        return try getArrayOrNil(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
     /// If the index is out of range or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray<T>(index: Int, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T {
+    func getArray<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Array)
         return try scoped(index) { try f(value.getArray()) }
@@ -399,18 +484,41 @@ public extension JSON {
     /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(index: Int, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T? {
+    func getArrayOrNil<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getArrayOrNil().map(f) }
     }
 }
 
+// MARK: -
+
 public extension JSONObject {
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getObject(_:_:)`
+    func getObject(key: Swift.String) throws -> JSONObject {
+        return try getObject(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   object value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getObjectOrNil(_:_:)`
+    func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
+        return try getObjectOrNil(key, { $0 })
+    }
+    
     /// Subscripts the receiver with `key` and passes the result to the given block.
     /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObject<T>(key: Swift.String, @noescape f: JSONObject throws -> T) throws -> T {
+    func getObject<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .Object)
         return try scoped(key) { try f(value.getObject()) }
     }
@@ -419,15 +527,36 @@ public extension JSONObject {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(key: Swift.String, @noescape f: JSONObject throws -> T) throws -> T? {
+    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getObjectOrNil().map(f) }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
+    /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getArray(_:_:)`
+    func getArray(key: Swift.String) throws -> ContiguousArray<JSON> {
+        return try getArray(key, { $0 })
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
+    ///   array value to produce better errors.
+    /// - Throws: `JSONError`
+    /// - SeeAlso: `getArrayOrNil(_:_:)`
+    func getArrayOrNil(key: Swift.String) throws -> ContiguousArray<JSON>? {
+        return try getArrayOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
     /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray<T>(key: Swift.String, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T {
+    func getArray<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .Array)
         return try scoped(key) { try f(value.getArray()) }
     }
@@ -436,11 +565,13 @@ public extension JSONObject {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape f: ContiguousArray<JSON> throws -> T) throws -> T? {
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().map(f) }
     }
 }
+
+// MARK: -
 
 private func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
     guard let value = dict[key] else { throw JSONError.MissingOrInvalidType(path: key, expected: .Required(type), actual: nil) }
