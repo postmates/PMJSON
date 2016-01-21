@@ -495,6 +495,74 @@ public extension JSON {
 
 public extension JSONObject {
     /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getBool(key: Swift.String) throws -> Swift.Bool {
+        let value = try getRequired(self, key: key, type: .String)
+        return try scoped(key) { try value.getBool() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getBoolOrNil(key: Swift.String) throws -> Swift.Bool? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getBoolOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getString(key: Swift.String) throws -> Swift.String {
+        let value = try getRequired(self, key: key, type: .String)
+        return try scoped(key) { try value.getString() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getStringOrNil(key: Swift.String) throws -> Swift.String? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getStringOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getInt64(key: Swift.String) throws -> Swift.Int64 {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.getInt64() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getDouble(key: Swift.String) throws -> Swift.Double {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.getDouble() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// If the key doesn't exist or the value is `null`, returns `nil`.
+    /// If the value has the wrong type, an error is thrown.
+    /// - Throws: `JSONError`
+    func getDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getDoubleOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
     /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
