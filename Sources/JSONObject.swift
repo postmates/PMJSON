@@ -28,10 +28,10 @@ public struct JSONObject {
     public private(set) var dictionary: [String: JSON]
     
     public subscript(key: String) -> JSON? {
-        @transparent get {
+        @inline(__always) get {
             return dictionary[key]
         }
-        @transparent set {
+        @inline(__always) set {
             dictionary[key] = newValue
         }
     }

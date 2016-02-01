@@ -363,10 +363,10 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
     @inline(__always) private mutating func bump() -> UnicodeScalar? {
         let c = base.next()
         if c == "\n" {
-            line++
+            line += 1
             column = 0
         } else {
-            column++
+            column += 1
         }
         return c
     }
