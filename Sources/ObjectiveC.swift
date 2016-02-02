@@ -16,6 +16,27 @@ extension JSON {
     public static func decode(data: NSData, strict: Swift.Bool = false) throws -> JSON {
         return try JSON.decode(UTF8Decoder(data: data), strict: strict)
     }
+    
+    /// Encodes a `JSON` to an `NSData`.
+    /// - Parameter json: The `JSON` to encode.
+    /// - Parameter pretty: If `true`, include extra whitespace for formatting. Default is `false`.
+    /// - Returns: An `NSData` with the JSON representation of *json*.
+    public static func encodeAsData(json: JSON, pretty: Swift.Bool = false) -> NSData {
+        struct Output: OutputStreamType {
+            let data = NSMutableData()
+            func write(string: Swift.String) {
+                let oldLen = data.length
+                data.increaseLengthBy(string.utf8.count)
+                let ptr = UnsafeMutablePointer<UInt8>(data.mutableBytes) + oldLen
+                for (i, x) in string.utf8.enumerate() {
+                    ptr[i] = x
+                }
+            }
+        }
+        var output = Output()
+        JSON.encode(json, toStream: &output, pretty: pretty)
+        return output.data
+    }
 }
 
 extension JSON {

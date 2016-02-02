@@ -55,6 +55,60 @@ class JSONSwiftCheck: XCTestCase {
                 }
             }
         }
+        
+        property("JSON can always decode the output of JSON.encodeAsString(pretty: false)") <- {
+            let g = JSON.arbitrary
+            return forAll(g) { json in
+                do {
+                    let s = JSON.encodeAsString(json, pretty: false)
+                    let json2 = try JSON.decode(s)
+                    return json2.approximatelyEqual(json)
+                } catch {
+                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
+                }
+            }
+        }
+        
+        property("JSON can always decode the output of JSON.encodeAsString(pretty: true)") <- {
+            let g = JSON.arbitrary
+            return forAll(g) { json in
+                do {
+                    let s = JSON.encodeAsString(json, pretty: true)
+                    let json2 = try JSON.decode(s)
+                    return json2.approximatelyEqual(json)
+                } catch {
+                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
+                }
+            }
+        }
+        
+        property("NSJSONSerialization can always decode the output of JSON.encodeAsData(pretty: false)") <- {
+            let g = JSON.arbitrary
+            return forAll(g) { json in
+                do {
+                    let data = JSON.encodeAsData(json, pretty: false)
+                    let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
+                    let json2 = try JSON(plist: cocoa)
+                    return json2.approximatelyEqual(json)
+                } catch {
+                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
+                }
+            }
+        }
+        
+        property("NSJSONSerialization can always decode the output of JSON.encodeAsData(pretty: true)") <- {
+            let g = JSON.arbitrary
+            return forAll(g) { json in
+                do {
+                    let data = JSON.encodeAsData(json, pretty: true)
+                    let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
+                    let json2 = try JSON(plist: cocoa)
+                    return json2.approximatelyEqual(json)
+                } catch {
+                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
+                }
+            }
+        }
     }
 }
 

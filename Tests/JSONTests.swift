@@ -52,7 +52,7 @@ class JSONTests: XCTestCase {
         s += "{}]"
         return s.dataUsingEncoding(NSUTF8StringEncoding)!
     }()
-    func testPerformance() {
+    func testDecodePerformance() {
         measureBlock { [bigJson] in
             for _ in 0..<10 {
                 do {
@@ -64,7 +64,7 @@ class JSONTests: XCTestCase {
         }
     }
     
-    func testPerformanceCocoa() {
+    func testDecodePerformanceCocoa() {
         measureBlock { [bigJson] in
             for _ in 0..<10 {
                 do {
@@ -76,11 +76,74 @@ class JSONTests: XCTestCase {
         }
     }
     
+    func testEncodePerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measureBlock {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsData(json, pretty: false)
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testEncodeCocoaPerformance() {
+        do {
+            let json = try JSON.decode(bigJson).plist
+            measureBlock {
+                for _ in 0..<10 {
+                    do {
+                        _ = try NSJSONSerialization.dataWithJSONObject(json, options: [])
+                    } catch {
+                        XCTFail("error encoding json: \(error)")
+                    }
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testEncodePrettyPerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measureBlock {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsData(json, pretty: true)
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testEncodePrettyCocoaPerformance() {
+        do {
+            let json = try JSON.decode(bigJson).plist
+            measureBlock {
+                for _ in 0..<10 {
+                    do {
+                        _ = try NSJSONSerialization.dataWithJSONObject(json, options: [.PrettyPrinted])
+                    } catch {
+                        XCTFail("error encoding json: \(error)")
+                    }
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
     func testCompareCocoa() {
         do {
-            let json = try JSON.decode(bigJson).plist as! NSObject
+            let json = try JSON.decode(bigJson)
+            let jsonObj = json.plist as! NSObject
             let cocoa = try NSJSONSerialization.JSONObjectWithData(bigJson, options: []) as! NSObject
-            XCTAssertEqual(json, cocoa)
+            XCTAssertEqual(jsonObj, cocoa)
+            let cocoa2 = try NSJSONSerialization.JSONObjectWithData(JSON.encodeAsData(json), options: []) as! NSObject
+            XCTAssertEqual(jsonObj, cocoa2)
         } catch {
             XCTFail(String(error))
         }
