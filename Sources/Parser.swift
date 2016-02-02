@@ -311,19 +311,19 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
         case "t":
             let line = self.line, column = self.column
             guard case "r"? = bump(), case "u"? = bump(), case "e"? = bump() else {
-                throw JSONParserError(line: line, column: column, code: .InvalidSyntax)
+                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
             }
             return .BooleanValue(true)
         case "f":
             let line = self.line, column = self.column
             guard case "a"? = bump(), case "l"? = bump(), case "s"? = bump(), case "e"? = bump() else {
-                throw JSONParserError(line: line, column: column, code: .InvalidSyntax)
+                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
             }
             return .BooleanValue(false)
         case "n":
             let line = self.line, column = self.column
             guard case "u"? = bump(), case "l"? = bump(), case "l"? = bump() else {
-                throw JSONParserError(line: line, column: column, code: .InvalidSyntax)
+                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
             }
             return .NullValue
         default:
@@ -377,7 +377,7 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
     }
     
     private func error(code: JSONParserError.Code) -> JSONParserError {
-        return JSONParserError(line: line, column: column, code: code)
+        return JSONParserError(code: code, line: line, column: column)
     }
     
     /// The line of the last emitted token.
@@ -442,10 +442,16 @@ public enum JSONEvent {
     case Error(JSONParserError)
 }
 
-public struct JSONParserError: ErrorType {
+public struct JSONParserError: ErrorType, CustomStringConvertible {
+    public let code: Code
     public let line: UInt
     public let column: UInt
-    public let code: Code
+    
+    public init(code: Code, line: UInt, column: UInt) {
+        self.code = code
+        self.line = line
+        self.column = column
+    }
     
     public var _code: Int { return code.rawValue }
     
@@ -478,6 +484,10 @@ public struct JSONParserError: ErrorType {
         case TrailingCharacters
         /// EOF was found before the root value finished parsing.
         case UnexpectedEOF
+    }
+    
+    public var description: String {
+        return "JSONParserError(\(code), line: \(line), column: \(column))"
     }
 }
 

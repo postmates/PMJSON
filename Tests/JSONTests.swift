@@ -44,6 +44,10 @@ class JSONTests: XCTestCase {
         assertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
     }
     
+    func testParserErrorDescription() {
+        XCTAssertEqual(String(JSONParserError(code: .UnexpectedEOF, line: 5, column: 12)), "JSONParserError(UnexpectedEOF, line: 5, column: 12)")
+    }
+    
     lazy var bigJson: NSData = {
         var s = "[\n"
         for _ in 0..<1000 {
@@ -52,6 +56,20 @@ class JSONTests: XCTestCase {
         s += "{}]"
         return s.dataUsingEncoding(NSUTF8StringEncoding)!
     }()
+    
+    func testCompareCocoa() {
+        do {
+            let json = try JSON.decode(bigJson)
+            let jsonObj = json.plist as! NSObject
+            let cocoa = try NSJSONSerialization.JSONObjectWithData(bigJson, options: []) as! NSObject
+            XCTAssertEqual(jsonObj, cocoa)
+            let cocoa2 = try NSJSONSerialization.JSONObjectWithData(JSON.encodeAsData(json), options: []) as! NSObject
+            XCTAssertEqual(jsonObj, cocoa2)
+        } catch {
+            XCTFail(String(error))
+        }
+    }
+    
     func testDecodePerformance() {
         measureBlock { [bigJson] in
             for _ in 0..<10 {
@@ -133,19 +151,6 @@ class JSONTests: XCTestCase {
             }
         } catch {
             XCTFail("error parsing json: \(error)")
-        }
-    }
-    
-    func testCompareCocoa() {
-        do {
-            let json = try JSON.decode(bigJson)
-            let jsonObj = json.plist as! NSObject
-            let cocoa = try NSJSONSerialization.JSONObjectWithData(bigJson, options: []) as! NSObject
-            XCTAssertEqual(jsonObj, cocoa)
-            let cocoa2 = try NSJSONSerialization.JSONObjectWithData(JSON.encodeAsData(json), options: []) as! NSObject
-            XCTAssertEqual(jsonObj, cocoa2)
-        } catch {
-            XCTFail(String(error))
         }
     }
 }

@@ -100,7 +100,7 @@ private struct JSONDecoder<Seq: SequenceType where Seq.Generator.Element == Unic
     }
     
     private func error(code: JSONParserError.Code) -> JSONParserError {
-        return JSONParserError(line: gen.line, column: gen.column, code: code)
+        return JSONParserError(code: code, line: gen.line, column: gen.column)
     }
     
     private var gen: JSONParser<Seq>.Generator
