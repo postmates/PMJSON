@@ -639,6 +639,62 @@ public extension JSONObject {
     }
 }
 
+// MARK: - JSONArray helpers
+
+public extension JSON {
+    /// Returns an `Array` containing the results of mapping `transform` over `array`.
+    /// If `transform` throws a `JSONError`, the error will be modified to include the index
+    /// of the element that caused the error.
+    /// - Parameter array: The `JSONArray` to map over.
+    /// - Parameter transform: A block that is called once for each element of `array`.
+    /// - Returns: An array with the results of mapping `transform` over `array`.
+    /// - Throws: Rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
+    ///   limitations. If you want to map an array with a non-throwing transform function, use
+    ///   `SequenceType.map` instead.
+    static func map<T>(array: JSONArray, @noescape transform: JSON throws -> T) throws -> [T] {
+        return try array.enumerate().map({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    }
+    
+    /// Returns an `Array` containing the non-`nil` results of mapping `transform` over `array`.
+    /// If `transform` throws a `JSONError`, the error will be modified to include the index
+    /// of the element that caused the error.
+    /// - Parameter array: The `JSONArray` to map over.
+    /// - Parameter transform: A block that is called once for each element of `array`.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
+    /// - Throws: Rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
+    ///   limitations. If you want to map an array with a non-throwing transform function, use
+    ///   `SequenceType.flatMap` instead.
+    static func flatMap<T>(array: JSONArray, @noescape transform: JSON throws -> T?) throws -> [T] {
+        return try array.enumerate().flatMap({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    }
+    
+    /// Returns an `Array` containing the concatenated results of mapping `transform` over `array`.
+    /// If `transform` throws a `JSONError`, the error will be modified to include the index
+    /// of the element that caused the error.
+    /// - Parameter array: The `JSONArray` to map over.
+    /// - Parameter transform: A block that is called once for each element of `array`.
+    /// - Returns: An array with the concatenated results of mapping `transform` over `array`.
+    /// - Throws: Rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
+    ///   limitations. If you want to map an array with a non-throwing transform function, use
+    ///   `SequenceType.flatMap` instead.
+    static func flatMap<S: SequenceType>(array: JSONArray, transform: JSON throws -> S) throws -> [S.Generator.Element] {
+        // FIXME: Use SequenceType.flatMap() once it becomes @noescape
+        var results: [S.Generator.Element] = []
+        for (i, elt) in array.enumerate() {
+            try scoped(i) {
+                results.appendContentsOf(try transform(elt))
+            }
+        }
+        return results
+    }
+}
+
 // MARK: -
 
 private func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
