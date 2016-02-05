@@ -83,7 +83,7 @@ extension JSON {
             }
             self = .Object(JSONObject(obj))
         case let array as NSArray:
-            var ary: ContiguousArray<JSON> = []
+            var ary: JSONArray = []
             ary.reserveCapacity(array.count)
             for elt in array {
                 ary.append(try JSON(plist: elt))

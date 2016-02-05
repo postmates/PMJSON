@@ -22,8 +22,10 @@ public enum JSON {
     /// An object.
     case Object(JSONObject)
     /// An array.
-    case Array(ContiguousArray<JSON>)
+    case Array(JSONArray)
 }
+
+public typealias JSONArray = ContiguousArray<JSON>
 
 extension JSON: Equatable {}
 public func ==(lhs: JSON, rhs: JSON) -> Bool {
@@ -101,7 +103,7 @@ extension JSON: StringLiteralConvertible {
 
 extension JSON: ArrayLiteralConvertible, DictionaryLiteralConvertible {
     public init(arrayLiteral elements: JSON...) {
-        self = .Array(ContiguousArray(elements))
+        self = .Array(JSONArray(elements))
     }
     
     public init(dictionaryLiteral elements: (Swift.String, JSON)...) {

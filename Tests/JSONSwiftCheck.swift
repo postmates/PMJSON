@@ -139,7 +139,7 @@ extension JSON: Arbitrary {
             JSON.Int64 <^> Swift.Int64.arbitrary,
             JSON.Double <^> Swift.Double.arbitrary,
             Gen.sized({ n in ({ JSON.Object(JSONObject($0)) } <^> Dictionary<Swift.String,JSON>.arbitrary).resize(n/2) }),
-            Gen.sized({ n in (JSON.Array <^> Swift.ContiguousArray.arbitrary).resize(n/2) })
+            Gen.sized({ n in (JSON.Array <^> JSONArray.arbitrary).resize(n/2) })
             ])
     }
     

@@ -88,7 +88,7 @@ private struct JSONDecoder<Seq: SequenceType where Seq.Generator.Element == Unic
     
     private mutating func buildArray() throws -> JSON {
         bump()
-        var ary: ContiguousArray<JSON> = []
+        var ary: JSONArray = []
         while let token = self.token {
             if case .ArrayEnd = token {
                 return .Array(ary)

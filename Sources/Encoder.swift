@@ -119,7 +119,7 @@ extension JSON {
         stream.write("}")
     }
     
-    private static func encodeArray<Target: OutputStreamType>(array: ContiguousArray<JSON>, inout toStream stream: Target, indent: Int?) {
+    private static func encodeArray<Target: OutputStreamType>(array: JSONArray, inout toStream stream: Target, indent: Int?) {
         let indented = indent.map({$0+1})
         if let indent = indented {
             stream.write("[\n")

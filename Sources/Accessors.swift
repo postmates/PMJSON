@@ -116,7 +116,7 @@ public extension JSON {
     }
     
     /// Returns the array if the receiver is `.Array`, otherwise `nil`.
-    var array: ContiguousArray<JSON>? {
+    var array: JSONArray? {
         switch self {
         case .Array(let ary): return ary
         default: return nil

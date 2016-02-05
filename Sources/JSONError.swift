@@ -161,7 +161,7 @@ public extension JSON {
     /// Returns the array value if the receiver is an array.
     /// Otherwise, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray() throws -> ContiguousArray<JSON> {
+    func getArray() throws -> JSONArray {
         guard let ary = array else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Array), actual: .forValue(self)) }
         return ary
     }
@@ -170,7 +170,7 @@ public extension JSON {
     /// Returns `nil` if the receiver is `null`.
     /// Otherwise, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil() throws -> ContiguousArray<JSON>? {
+    func getArrayOrNil() throws -> JSONArray? {
         if let ary = array { return ary }
         else if isNull { return nil }
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Array), actual: .forValue(self)) }
@@ -297,7 +297,7 @@ public extension JSON {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(key: Swift.String) throws -> ContiguousArray<JSON> {
+    func getArray(key: Swift.String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
@@ -308,14 +308,14 @@ public extension JSON {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(key: Swift.String) throws -> ContiguousArray<JSON>? {
+    func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
     /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
+    func getArray<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T) throws -> T {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .Array)
         return try scoped(key) { try f(value.getArray()) }
@@ -325,7 +325,7 @@ public extension JSON {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
@@ -456,7 +456,7 @@ public extension JSON {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(index: Int) throws -> ContiguousArray<JSON> {
+    func getArray(index: Int) throws -> JSONArray {
         return try getArray(index, { $0 })
     }
     
@@ -467,14 +467,14 @@ public extension JSON {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(index: Int) throws -> ContiguousArray<JSON>? {
+    func getArrayOrNil(index: Int) throws -> JSONArray? {
         return try getArrayOrNil(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
     /// If the index is out of range or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
+    func getArray<T>(index: Int, @noescape _ f: JSONArray throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Array)
         return try scoped(index) { try f(value.getArray()) }
@@ -484,7 +484,7 @@ public extension JSON {
     /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(index: Int, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getArrayOrNil().flatMap(f) }
@@ -606,7 +606,7 @@ public extension JSONObject {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(key: Swift.String) throws -> ContiguousArray<JSON> {
+    func getArray(key: Swift.String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
@@ -617,14 +617,14 @@ public extension JSONObject {
     ///   array value to produce better errors.
     /// - Throws: `JSONError`
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(key: Swift.String) throws -> ContiguousArray<JSON>? {
+    func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
     /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArray<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T {
+    func getArray<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .Array)
         return try scoped(key) { try f(value.getArray()) }
     }
@@ -633,7 +633,7 @@ public extension JSONObject {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
     }
@@ -646,7 +646,7 @@ private func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType
     return value
 }
 
-private func getRequired(ary: ContiguousArray<JSON>, index: Int, type: JSONError.JSONType) throws -> JSON {
+private func getRequired(ary: JSONArray, index: Int, type: JSONError.JSONType) throws -> JSON {
     guard let value = ary[safe: index] else { throw JSONError.MissingOrInvalidType(path: "[\(index)]", expected: .Required(type), actual: nil) }
     return value
 }
