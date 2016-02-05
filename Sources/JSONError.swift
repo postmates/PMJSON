@@ -287,7 +287,7 @@ public extension JSON {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T? {
+    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T?) throws -> T? {
         return try getObject().getObjectOrNil(key, f)
     }
     
@@ -325,10 +325,10 @@ public extension JSON {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
-        return try scoped(key) { try value.getArrayOrNil().map(f) }
+        return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
     }
 }
 
@@ -444,10 +444,10 @@ public extension JSON {
     /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T? {
+    func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
-        return try scoped(index) { try value.getObjectOrNil().map(f) }
+        return try scoped(index) { try value.getObjectOrNil().flatMap(f) }
     }
     
     /// Subscripts the receiver with `index` and returns the result.
@@ -484,10 +484,10 @@ public extension JSON {
     /// If the index is out of range or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
+    func getArrayOrNil<T>(index: Int, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
-        return try scoped(index) { try value.getArrayOrNil().map(f) }
+        return try scoped(index) { try value.getArrayOrNil().flatMap(f) }
     }
 }
 
@@ -595,9 +595,9 @@ public extension JSONObject {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T? {
+    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
-        return try scoped(key) { try value.getObjectOrNil().map(f) }
+        return try scoped(key) { try value.getObjectOrNil().flatMap(f) }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
@@ -633,9 +633,9 @@ public extension JSONObject {
     /// If the key doesn't exist or the value is `null`, returns `nil`.
     /// If the value has the wrong type, an error is thrown.
     /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T) throws -> T? {
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: ContiguousArray<JSON> throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
-        return try scoped(key) { try value.getArrayOrNil().map(f) }
+        return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
     }
 }
 
