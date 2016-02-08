@@ -653,7 +653,7 @@ public extension JSON {
     /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
     ///   limitations. If you want to map an array with a non-throwing transform function, use
     ///   `SequenceType.map` instead.
-    static func map<T>(array: JSONArray, @noescape transform: JSON throws -> T) throws -> [T] {
+    static func map<T>(array: JSONArray, @noescape _ transform: JSON throws -> T) throws -> [T] {
         return try array.enumerate().map({ i, elt in try scoped(i, f: { try transform(elt) }) })
     }
     
@@ -668,7 +668,7 @@ public extension JSON {
     /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
     ///   limitations. If you want to map an array with a non-throwing transform function, use
     ///   `SequenceType.flatMap` instead.
-    static func flatMap<T>(array: JSONArray, @noescape transform: JSON throws -> T?) throws -> [T] {
+    static func flatMap<T>(array: JSONArray, @noescape _ transform: JSON throws -> T?) throws -> [T] {
         return try array.enumerate().flatMap({ i, elt in try scoped(i, f: { try transform(elt) }) })
     }
     
@@ -683,7 +683,7 @@ public extension JSON {
     /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
     ///   limitations. If you want to map an array with a non-throwing transform function, use
     ///   `SequenceType.flatMap` instead.
-    static func flatMap<S: SequenceType>(array: JSONArray, transform: JSON throws -> S) throws -> [S.Generator.Element] {
+    static func flatMap<S: SequenceType>(array: JSONArray, _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
         // FIXME: Use SequenceType.flatMap() once it becomes @noescape
         var results: [S.Generator.Element] = []
         for (i, elt) in array.enumerate() {
