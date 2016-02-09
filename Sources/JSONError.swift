@@ -7,25 +7,41 @@
 
 // MARK: JSONError
 
+/// Errors thrown by the JSON `get*()` accessor families.
 public enum JSONError: ErrorType, CustomStringConvertible {
+    /// Thrown when a given path is missing or has the wrong type.
+    /// - Parameter path: The path of the key that caused the error.
+    /// - Parameter expected: The type that was expected at this path.
+    /// - Parameter actual: The type of the value found at the path, or `nil` if there was no value.
     case MissingOrInvalidType(path: String?, expected: ExpectedType, actual: JSONType?)
+    /// Thrown when an integral value is coerced to a smaller type (e.g. `Int64` to `Int`) and the
+    /// value doesn't fit in the smaller type.
+    /// - Parameter path: The path of the value that cuased the error.
+    /// - Parameter value: The actual value at that path.
+    /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
+    case OutOfRangeInt64(path: String?, value: Int64, expected: Any.Type)
     
     public var description: String {
         switch self {
         case let .MissingOrInvalidType(path, expected, actual): return "\(path.map({$0+": "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
+        case let .OutOfRangeInt64(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         }
     }
     
     private func withPrefix(prefix: String) -> JSONError {
-        switch self {
-        case let .MissingOrInvalidType(path?, expected, actual):
+        func prefixPath(path: String?, with prefix: String) -> String {
+            guard let path = path else { return prefix }
             if path.hasPrefix("[") {
-                return .MissingOrInvalidType(path: prefix + path, expected: expected, actual: actual)
+                return prefix + path
             } else {
-                return .MissingOrInvalidType(path: "\(prefix).\(path)", expected: expected, actual: actual)
+                return "\(prefix).\(path)"
             }
-        case let .MissingOrInvalidType(nil, expected, actual):
-            return .MissingOrInvalidType(path: prefix, expected: expected, actual: actual)
+        }
+        switch self {
+        case let .MissingOrInvalidType(path, expected, actual):
+            return .MissingOrInvalidType(path: prefixPath(path, with: prefix), expected: expected, actual: actual)
+        case let .OutOfRangeInt64(path, value, expected):
+            return .OutOfRangeInt64(path: prefixPath(path, with: prefix), value: value, expected: expected)
         }
     }
     
@@ -116,6 +132,30 @@ public extension JSON {
     func getInt64OrNil() throws -> Swift.Int64? {
         if let val = int64 { return val }
         else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the integral value if the receiver is a number.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
+    ///   is too large to fit in an `Int`.
+    func getInt() throws -> Int {
+        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+        let truncated = Int(truncatingBitPattern: val)
+        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        return truncated
+    }
+    
+    /// Returns the integral value if the receiver is a number.
+    /// - Returns: An `Int` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
+    ///   is too large to fit in an `Int`.
+    func getIntOrNil() throws -> Int? {
+        if let val = int64 {
+            let truncated = Int(truncatingBitPattern: val)
+            guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+            return truncated
+        } else if isNull { return nil }
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
     }
     
@@ -234,6 +274,29 @@ public extension JSON {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type,
+    ///   or if the 64-bit integral value is too large to fit in an `Int`, or if
+    ///   the receiver is not an object.
+    func getInt(key: Swift.String) throws -> Int {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .Number)
+        return try scoped(key) { try value.getInt() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral
+    ///   value is too large to fit in an `Int`, or if the receiver is not an object.
+    func getIntOrNil(key: Swift.String) throws -> Int? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.getIntOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
@@ -414,6 +477,29 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the 64-bit integral value is too large to fit in an `Int`, or if
+    ///   the receiver is not an array.
+    func getInt(index: Int) throws -> Int {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Number)
+        return try scoped(index) { try value.getInt() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral value
+    ///   is too large to fit in an `Int`, or if the receiver is not an array.
+    func getIntOrNil(index: Int) throws -> Int? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.getIntOrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result.
+    /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
     ///   or if the receiver is not an array.
@@ -583,6 +669,26 @@ public extension JSONObject {
     func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type,
+    ///   or if the 64-bit integral value is too large to fit in an `Int`.
+    func getInt(key: Swift.String) throws -> Int {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.getInt() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral
+    ///   value is too large to fit in an `Int`.
+    func getIntOrNil(key: Swift.String) throws -> Int? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getIntOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
