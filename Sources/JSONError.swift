@@ -69,17 +69,16 @@ public enum JSONError: ErrorType, CustomStringConvertible {
 // MARK: - Basic accessors
 public extension JSON {
     /// Returns the bool value if the receiver is a bool.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `Bool` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getBool() throws -> Swift.Bool {
         guard let b = bool else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Bool), actual: .forValue(self)) }
         return b
     }
     
     /// Returns the bool value if the receiver is a bool.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `Bool` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getBoolOrNil() throws -> Swift.Bool? {
         if let b = bool { return b }
         else if isNull { return nil }
@@ -87,17 +86,16 @@ public extension JSON {
     }
     
     /// Returns the string value if the receiver is a string.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getString() throws -> Swift.String {
         guard let str = string else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.String), actual: .forValue(self)) }
         return str
     }
     
     /// Returns the string value if the receiver is a string.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `String` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getStringOrNil() throws -> Swift.String? {
         if let str = string { return str }
         else if isNull { return nil }
@@ -105,17 +103,16 @@ public extension JSON {
     }
     
     /// Returns the 64-bit integral value if the receiver is a number.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getInt64() throws -> Swift.Int64 {
         guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
         return val
     }
     
     /// Returns the 64-bit integral value value if the receiver is a number.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An `Int64` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getInt64OrNil() throws -> Swift.Int64? {
         if let val = int64 { return val }
         else if isNull { return nil }
@@ -123,17 +120,16 @@ public extension JSON {
     }
     
     /// Returns the double value if the receiver is a number.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getDouble() throws -> Swift.Double {
         guard let val = double else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
         return val
     }
     
     /// Returns the double value if the receiver is a number.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getDoubleOrNil() throws -> Swift.Double? {
         if let val = double { return val }
         else if isNull { return nil }
@@ -141,17 +137,16 @@ public extension JSON {
     }
     
     /// Returns the object value if the receiver is an object.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An object value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getObject() throws -> JSONObject {
         guard let dict = object else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Object), actual: .forValue(self)) }
         return dict
     }
     
     /// Returns the object value if the receiver is an object.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An object value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getObjectOrNil() throws -> JSONObject? {
         if let dict = object { return dict }
         else if isNull { return nil }
@@ -159,17 +154,16 @@ public extension JSON {
     }
     
     /// Returns the array value if the receiver is an array.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An array value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getArray() throws -> JSONArray {
         guard let ary = array else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Array), actual: .forValue(self)) }
         return ary
     }
     
     /// Returns the array value if the receiver is an array.
-    /// Returns `nil` if the receiver is `null`.
-    /// Otherwise, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Returns: An array value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
     func getArrayOrNil() throws -> JSONArray? {
         if let ary = array { return ary }
         else if isNull { return nil }
@@ -180,8 +174,10 @@ public extension JSON {
 // MARK: - Keyed accessors
 public extension JSON {
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Bool` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     func getBool(key: Swift.String) throws -> Swift.Bool {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .String)
@@ -189,9 +185,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Bool` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     func getBoolOrNil(key: Swift.String) throws -> Swift.Bool? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
@@ -199,8 +195,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     func getString(key: Swift.String) throws -> Swift.String {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .String)
@@ -208,9 +206,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     func getStringOrNil(key: Swift.String) throws -> Swift.String? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
@@ -218,8 +216,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     func getInt64(key: Swift.String) throws -> Swift.Int64 {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .Number)
@@ -227,9 +227,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
@@ -237,8 +237,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     func getDouble(key: Swift.String) throws -> Swift.Double {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .Number)
@@ -246,9 +248,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     func getDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
@@ -256,87 +258,102 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An object value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     /// - SeeAlso: `getObject(_:_:)`
     func getObject(key: Swift.String) throws -> JSONObject {
         return try getObject(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An object value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
     func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
         return try getObjectOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getObject<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T {
-        return try getObject().getObject(key, f)
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object, or any error thrown by `transform`.
+    func getObject<T>(key: Swift.String, @noescape _ transform: JSONObject throws -> T) throws -> T {
+        return try getObject().getObject(key, transform)
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T?) throws -> T? {
-        return try getObject().getObjectOrNil(key, f)
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
+    ///   or any error thrown by `transform`.
+    func getObjectOrNil<T>(key: Swift.String, @noescape _ transform: JSONObject throws -> T?) throws -> T? {
+        return try getObject().getObjectOrNil(key, transform)
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
     /// - SeeAlso: `getArray(_:_:)`
     func getArray(key: Swift.String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An array value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
     func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getArray<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T) throws -> T {
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object, or any error thrown by `transform`.
+    func getArray<T>(key: Swift.String, @noescape _ transform: JSONArray throws -> T) throws -> T {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .Array)
-        return try scoped(key) { try f(value.getArray()) }
+        return try scoped(key) { try transform(value.getArray()) }
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
+    ///   or any error thrown by `transform`.
+    func getArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSONArray throws -> T?) throws -> T? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
-        return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
+        return try scoped(key) { try value.getArrayOrNil().flatMap(transform) }
     }
 }
 
 // MARK: - Indexed accessors
 public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Bool` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     func getBool(index: Int) throws -> Swift.Bool {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Bool)
@@ -344,9 +361,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Bool` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getBoolOrNil(index: Int) throws -> Swift.Bool? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -354,8 +371,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     func getString(index: Int) throws -> Swift.String {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .String)
@@ -363,9 +382,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getStringOrNil(index: Int) throws -> Swift.String? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -373,8 +392,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     func getInt64(index: Int) throws -> Swift.Int64 {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Number)
@@ -382,9 +403,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getInt64OrNil(index: Int) throws -> Swift.Int64? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -392,8 +413,10 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     func getDouble(index: Int) throws -> Swift.Double {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Number)
@@ -401,9 +424,9 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getDoubleOrNil(index: Int) throws -> Swift.Double? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -411,29 +434,34 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
     /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An object value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     /// - SeeAlso: `getObject(_:_:)`
     func getObject(index: Int) throws -> JSONObject {
         return try getObject(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An object value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
     func getObjectOrNil(index: Int) throws -> JSONObject? {
         return try getObjectOrNil(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
-    /// If the index is out of range or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array, or any error thrown by `transform`.
     func getObject<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Object)
@@ -441,9 +469,11 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
+    /// - Returns: The result of calling the given block, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
+    ////  or any error thrown by `transform`.
     func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -451,29 +481,34 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is the wrong type, an error is thrown.
     /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An array value.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array.
     /// - SeeAlso: `getArray(_:_:)`
     func getArray(index: Int) throws -> JSONArray {
         return try getArray(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and returns the result.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An array value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
     func getArrayOrNil(index: Int) throws -> JSONArray? {
         return try getArrayOrNil(index, { $0 })
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
-    /// If the index is out of range or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    ///   or if the receiver is not an array, or any error thrown by `transform`.
     func getArray<T>(index: Int, @noescape _ f: JSONArray throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .Array)
@@ -481,9 +516,11 @@ public extension JSON {
     }
     
     /// Subscripts the receiver with `index` and passes the result to the given block.
-    /// If the index is out of range or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
+    /// - Returns: The result of calling the given block, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
+    ///   or any error thrown by `transform`.
     func getArrayOrNil<T>(index: Int, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
@@ -495,144 +532,157 @@ public extension JSON {
 
 public extension JSONObject {
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Bool` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     func getBool(key: Swift.String) throws -> Swift.Bool {
         let value = try getRequired(self, key: key, type: .String)
         return try scoped(key) { try value.getBool() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Bool` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     func getBoolOrNil(key: Swift.String) throws -> Swift.Bool? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getBoolOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     func getString(key: Swift.String) throws -> Swift.String {
         let value = try getRequired(self, key: key, type: .String)
         return try scoped(key) { try value.getString() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     func getStringOrNil(key: Swift.String) throws -> Swift.String? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getStringOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     func getInt64(key: Swift.String) throws -> Swift.Int64 {
         let value = try getRequired(self, key: key, type: .Number)
         return try scoped(key) { try value.getInt64() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     func getDouble(key: Swift.String) throws -> Swift.Double {
         let value = try getRequired(self, key: key, type: .Number)
         return try scoped(key) { try value.getDouble() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     func getDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getDoubleOrNil() }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Note: Use `getObject(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An object value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     /// - SeeAlso: `getObject(_:_:)`
     func getObject(key: Swift.String) throws -> JSONObject {
         return try getObject(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An object value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
     func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
         return try getObjectOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
+    ///   error thrown by `transform`.
     func getObject<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .Object)
         return try scoped(key) { try f(value.getObject()) }
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
     func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getObjectOrNil().flatMap(f) }
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
     /// - Note: Use `getArray(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     /// - SeeAlso: `getArray(_:_:)`
     func getArray(key: Swift.String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and returns the result.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
     /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An array value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
     func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
+    ///   error thrown by `transform`.
     func getArray<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .Array)
         return try scoped(key) { try f(value.getArray()) }
     }
     
     /// Subscripts the receiver with `key` and passes the result to the given block.
-    /// If the key doesn't exist or the value is `null`, returns `nil`.
-    /// If the value has the wrong type, an error is thrown.
-    /// - Throws: `JSONError`
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
+    /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
     func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
