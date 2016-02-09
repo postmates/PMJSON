@@ -178,3 +178,48 @@ public extension JSON {
         return try scoped(index) { try value.toDecimalNumberOrNil() }
     }
 }
+
+// MARK: -
+
+public extension JSONObject {
+    /// Subscripts the receiver with `key` and returns the result as an `NSDecimalNumber`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `NSDecimalNumber`.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
+    ///   the receiver is not an object.
+    func getDecimalNumber(key: Swift.String) throws -> NSDecimalNumber {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.getDecimalNumber() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result as an `NSDecimalNumber`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `NSDecimalNumber`, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is the wrong type, or if the receiver is
+    ///   not an object.
+    func getDecimalNumberOrNil(key: Swift.String) throws -> NSDecimalNumber? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.getDecimalNumberOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result as an `NSDecimalNumber`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `NSDecimalNumber`.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
+    ///   an array, or a string that cannot be coerced to a decimal number, or if the
+    ///   receiver is not an object.
+    func toDecimalNumber(key: Swift.String) throws -> NSDecimalNumber {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.toDecimalNumber() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result as an `NSDecimalNumber`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `NSDecimalNumber`, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
+    ///   cannot be coerced to a decimal number, or if the receiver is not an object.
+    func toDecimalNumberOrNil(key: Swift.String) throws -> NSDecimalNumber? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.toDecimalNumberOrNil() }
+    }
+}
