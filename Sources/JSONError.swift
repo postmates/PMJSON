@@ -127,6 +127,100 @@ public extension JSON {
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.String), actual: .forValue(self)) }
     }
     
+    /// Returns the 64-bit integral value if the receiver is a number.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getInt64() throws -> Swift.Int64 {
+        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+        return val
+    }
+    
+    /// Returns the 64-bit integral value value if the receiver is a number.
+    /// - Returns: An `Int64` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getInt64OrNil() throws -> Swift.Int64? {
+        if let val = int64 { return val }
+        else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the integral value if the receiver is a number.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
+    ///   is too large to fit in an `Int`.
+    func getInt() throws -> Int {
+        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+        let truncated = Int(truncatingBitPattern: val)
+        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        return truncated
+    }
+    
+    /// Returns the integral value if the receiver is a number.
+    /// - Returns: An `Int` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
+    ///   is too large to fit in an `Int`.
+    func getIntOrNil() throws -> Int? {
+        if let val = int64 {
+            let truncated = Int(truncatingBitPattern: val)
+            guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+            return truncated
+        } else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the double value if the receiver is a number.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getDouble() throws -> Swift.Double {
+        guard let val = double else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+        return val
+    }
+    
+    /// Returns the double value if the receiver is a number.
+    /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getDoubleOrNil() throws -> Swift.Double? {
+        if let val = double { return val }
+        else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the object value if the receiver is an object.
+    /// - Returns: An object value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getObject() throws -> JSONObject {
+        guard let dict = object else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Object), actual: .forValue(self)) }
+        return dict
+    }
+    
+    /// Returns the object value if the receiver is an object.
+    /// - Returns: An object value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getObjectOrNil() throws -> JSONObject? {
+        if let dict = object { return dict }
+        else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Object), actual: .forValue(self)) }
+    }
+    
+    /// Returns the array value if the receiver is an array.
+    /// - Returns: An array value.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getArray() throws -> JSONArray {
+        guard let ary = array else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Array), actual: .forValue(self)) }
+        return ary
+    }
+    
+    /// Returns the array value if the receiver is an array.
+    /// - Returns: An array value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is the wrong type.
+    func getArrayOrNil() throws -> JSONArray? {
+        if let ary = array { return ary }
+        else if isNull { return nil }
+        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Array), actual: .forValue(self)) }
+    }
+}
+
+public extension JSON {
     /// Returns the receiver coerced to a string value.
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the receiver is an object or array.
@@ -146,23 +240,6 @@ public extension JSON {
         case .Double(let d): return Swift.String(d)
         default: throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.String), actual: .forValue(self))
         }
-    }
-    
-    /// Returns the 64-bit integral value if the receiver is a number.
-    /// - Returns: An `Int64` value.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getInt64() throws -> Swift.Int64 {
-        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
-        return val
-    }
-    
-    /// Returns the 64-bit integral value value if the receiver is a number.
-    /// - Returns: An `Int64` value, or `nil` if the receiver is `null`.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getInt64OrNil() throws -> Swift.Int64? {
-        if let val = int64 { return val }
-        else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
     }
     
     /// Returns the receiver coerced to a 64-bit integral value.
@@ -216,30 +293,6 @@ public extension JSON {
         throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
     }
     
-    /// Returns the integral value if the receiver is a number.
-    /// - Returns: An `Int` value.
-    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
-    ///   is too large to fit in an `Int`.
-    func getInt() throws -> Int {
-        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
-        let truncated = Int(truncatingBitPattern: val)
-        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
-        return truncated
-    }
-    
-    /// Returns the integral value if the receiver is a number.
-    /// - Returns: An `Int` value, or `nil` if the receiver is `null`.
-    /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
-    ///   is too large to fit in an `Int`.
-    func getIntOrNil() throws -> Int? {
-        if let val = int64 {
-            let truncated = Int(truncatingBitPattern: val)
-            guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
-            return truncated
-        } else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
-    }
-    
     /// Returns the receiver coerced to an integral value.
     /// If the receiver is a floating-point value, the value will be truncated
     /// to an integer.
@@ -266,23 +319,6 @@ public extension JSON {
         let truncated = Int(truncatingBitPattern: val)
         guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
         return truncated
-    }
-    
-    /// Returns the double value if the receiver is a number.
-    /// - Returns: A `Double` value.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getDouble() throws -> Swift.Double {
-        guard let val = double else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
-        return val
-    }
-    
-    /// Returns the double value if the receiver is a number.
-    /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getDoubleOrNil() throws -> Swift.Double? {
-        if let val = double { return val }
-        else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
     }
     
     /// Returns the receiver coerced to a `Double`.
@@ -312,40 +348,6 @@ public extension JSON {
         case .Null: return nil
         default: throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
         }
-    }
-    
-    /// Returns the object value if the receiver is an object.
-    /// - Returns: An object value.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getObject() throws -> JSONObject {
-        guard let dict = object else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Object), actual: .forValue(self)) }
-        return dict
-    }
-    
-    /// Returns the object value if the receiver is an object.
-    /// - Returns: An object value, or `nil` if the receiver is `null`.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getObjectOrNil() throws -> JSONObject? {
-        if let dict = object { return dict }
-        else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Object), actual: .forValue(self)) }
-    }
-    
-    /// Returns the array value if the receiver is an array.
-    /// - Returns: An array value.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getArray() throws -> JSONArray {
-        guard let ary = array else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Array), actual: .forValue(self)) }
-        return ary
-    }
-    
-    /// Returns the array value if the receiver is an array.
-    /// - Returns: An array value, or `nil` if the receiver is `null`.
-    /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getArrayOrNil() throws -> JSONArray? {
-        if let ary = array { return ary }
-        else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Array), actual: .forValue(self)) }
     }
 }
 
@@ -545,6 +547,102 @@ public extension JSON {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(transform) }
+    }
+}
+
+public extension JSON {
+    /// Subscripts the receiver with `key` and returns the result coerced to a `String`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the key doesn't exist, the value is an object or an array,
+    ///   or if the receiver is not an object.
+    /// - SeeAlso: `toString()`.
+    func toString(key: Swift.String) throws -> Swift.String {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .String)
+        return try scoped(key) { try value.toString() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `String`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an object.
+    /// - SeeAlso: `toStringOrNil()`.
+    func toStringOrNil(key: Swift.String) throws -> Swift.String? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.toStringOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int64`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to a 64-bit integral value, or a floating-point
+    ///   value that does not fit in 64 bits, or if the receiver is not an object.
+    func toInt64(key: Swift.String) throws -> Swift.Int64 {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .Number)
+        return try scoped(key) { try value.toInt64() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int64`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
+    ///   that does not fit in 64 bits, or if the receiver is not an object.
+    func toInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.toInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to an integral value, or a floating-point
+    ///   value that does not fit in an `Int`, or if the receiver is not an object.
+    func toInt(key: Swift.String) throws -> Int {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .Number)
+        return try scoped(key) { try value.toInt() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to an integral value, or a floating-point value
+    ///   that does not fit in an `Int`, or if the receiver is not an object.
+    func toIntOrNil(key: Swift.String) throws -> Int? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.toIntOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `Double`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean,
+    ///   an object, an array, or a string that cannot be coerced to a floating-point value,
+    ///   or if the receiver is not an object.
+    func toDouble(key: Swift.String) throws -> Swift.Double {
+        let dict = try getObject()
+        let value = try getRequired(dict, key: key, type: .Number)
+        return try scoped(key) { try value.toDouble() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `Double`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
+    ///   cannot be coerced to a floating-point value, or if the receiver is not an object.
+    func toDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+        let dict = try getObject()
+        guard let value = dict[key] else { return nil }
+        return try scoped(key) { try value.toDoubleOrNil() }
     }
 }
 
@@ -752,6 +850,108 @@ public extension JSON {
     }
 }
 
+public extension JSON {
+    /// Subscripts the receiver with `index` and returns the result coerced to a `String`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is an object or an array,
+    ///   or if the receiver is not an array.
+    /// - SeeAlso: `toString()`.
+    func toString(index: Int) throws -> Swift.String {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .String)
+        return try scoped(index) { try value.toString() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to a `String`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an array.
+    /// - SeeAlso: `toStringOrNil()`.
+    func toStringOrNil(index: Int) throws -> Swift.String? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.toStringOrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to an `Int64`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    ///   an object, an array, a string that cannot be coerced to a 64-bit integral value, or a
+    ///   floating-point value that does not fit in 64 bits, or if the receiver is not an array.
+    /// - SeeAlso: `toInt64()`.
+    func toInt64(index: Int) throws -> Swift.Int64 {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Number)
+        return try scoped(index) { try value.toInt64() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to an `Int64`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
+    ///   that does not fit in 64 bits, or if the receiver is not an array.
+    /// - SeeAlso: `toInt64OrNil()`.
+    func toInt64OrNil(index: Int) throws -> Swift.Int64? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.toInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to an `Int`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    ///   an object, an array, a string that cannot be coerced to an integral value, or a
+    ///   floating-point value that does not fit in an `Int`, or if the receiver is not an array.
+    /// - SeeAlso: `toInt()`.
+    func toInt(index: Int) throws -> Int {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Number)
+        return try scoped(index) { try value.toInt() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to an `Int`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to an integral value, or a floating-point value
+    ///   that does not fit in an `Int`, or if the receiver is not an array.
+    /// - SeeAlso: `toIntOrNil()`.
+    func toIntOrNil(index: Int) throws -> Int? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.toIntOrNil() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to a `Double`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    ///   an object, an array, or a string that cannot be coerced to a floating-point value,
+    ///   or if the receiver is not an array.
+    /// - SeeAlso: `toDouble()`.
+    func toDouble(index: Int) throws -> Swift.Double {
+        let ary = try getArray()
+        let value = try getRequired(ary, index: index, type: .Number)
+        return try scoped(index) { try value.toDouble() }
+    }
+    
+    /// Subscripts the receiver with `index` and returns the result coerced to a `Double`.
+    /// - Parameter index: The index that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
+    ///   cannot be coerced to a floating-point value, or if the receiver is not an array.
+    /// - SeeAlso: `toDouble()`.
+    func toDoubleOrNil(index: Int) throws -> Swift.Double? {
+        let ary = try getArray()
+        guard let value = ary[safe: index] else { return nil }
+        return try scoped(index) { try value.toDoubleOrNil() }
+    }
+}
+
 // MARK: -
 
 public extension JSONObject {
@@ -930,6 +1130,94 @@ public extension JSONObject {
     func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
+    }
+}
+
+public extension JSONObject {
+    /// Subscripts the receiver with `key` and returns the result coerced to a `String`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the key doesn't exist, the value is an object or an array,
+    ///   or if the receiver is not an object.
+    /// - SeeAlso: `toString()`.
+    func toString(key: Swift.String) throws -> Swift.String {
+        let value = try getRequired(self, key: key, type: .String)
+        return try scoped(key) { try value.toString() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `String`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an object.
+    /// - SeeAlso: `toStringOrNil()`.
+    func toStringOrNil(key: Swift.String) throws -> Swift.String? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.toStringOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int64`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to a 64-bit integral value, or a floating-point
+    ///   value that does not fit in 64 bits, or if the receiver is not an object.
+    func toInt64(key: Swift.String) throws -> Swift.Int64 {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.toInt64() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int64`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
+    ///   that does not fit in 64 bits, or if the receiver is not an object.
+    func toInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.toInt64OrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to an integral value, or a floating-point
+    ///   value that does not fit in an `Int`, or if the receiver is not an object.
+    func toInt(key: Swift.String) throws -> Int {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.toInt() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to an `Int`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
+    ///   that cannot be coerced to an integral value, or a floating-point value
+    ///   that does not fit in an `Int`, or if the receiver is not an object.
+    func toIntOrNil(key: Swift.String) throws -> Int? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.toIntOrNil() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `Double`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean,
+    ///   an object, an array, or a string that cannot be coerced to a floating-point value,
+    ///   or if the receiver is not an object.
+    func toDouble(key: Swift.String) throws -> Swift.Double {
+        let value = try getRequired(self, key: key, type: .Number)
+        return try scoped(key) { try value.toDouble() }
+    }
+    
+    /// Subscripts the receiver with `key` and returns the result coerced to a `Double`.
+    /// - Parameter key: The key that's used to subscript the receiver.
+    /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
+    ///   cannot be coerced to a floating-point value, or if the receiver is not an object.
+    func toDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+        guard let value = self[key] else { return nil }
+        return try scoped(key) { try value.toDoubleOrNil() }
     }
 }
 
