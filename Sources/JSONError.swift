@@ -225,20 +225,24 @@ public extension JSON {
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the receiver is an object or array.
     func toString() throws -> Swift.String {
-        return try toStringOrNil() ?? "null"
+        return try toStringMaybeNil(.Required(.String)) ?? "null"
     }
     
     /// Returns the receiver coerced to a string value.
     /// - Returns: A `String` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is an object or array.
     func toStringOrNil() throws -> Swift.String? {
+        return try toStringMaybeNil(.Optional(.String))
+    }
+    
+    private func toStringMaybeNil(expected: JSONError.ExpectedType) throws -> Swift.String? {
         switch self {
         case .String(let s): return s
         case .Null: return nil
         case .Bool(let b): return Swift.String(b)
         case .Int64(let i): return Swift.String(i)
         case .Double(let d): return Swift.String(d)
-        default: throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.String), actual: .forValue(self))
+        default: throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
         }
     }
     
@@ -651,7 +655,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Bool` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     func getBool(index: Int) throws -> Swift.Bool {
         let ary = try getArray()
@@ -661,7 +665,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: A `Bool` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: A `Bool` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getBoolOrNil(index: Int) throws -> Swift.Bool? {
         let ary = try getArray()
@@ -672,7 +676,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `String` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     func getString(index: Int) throws -> Swift.String {
         let ary = try getArray()
@@ -682,7 +686,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: A `String` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: A `String` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getStringOrNil(index: Int) throws -> Swift.String? {
         let ary = try getArray()
@@ -693,7 +697,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An `Int64` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     func getInt64(index: Int) throws -> Swift.Int64 {
         let ary = try getArray()
@@ -703,7 +707,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An `Int64` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An `Int64` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getInt64OrNil(index: Int) throws -> Swift.Int64? {
         let ary = try getArray()
@@ -714,7 +718,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An `Int` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the 64-bit integral value is too large to fit in an `Int`, or if
     ///   the receiver is not an array.
     func getInt(index: Int) throws -> Int {
@@ -725,7 +729,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An `Int` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An `Int` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral value
     ///   is too large to fit in an `Int`, or if the receiver is not an array.
     func getIntOrNil(index: Int) throws -> Int? {
@@ -737,7 +741,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Double` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     func getDouble(index: Int) throws -> Swift.Double {
         let ary = try getArray()
@@ -747,7 +751,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: A `Double` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: A `Double` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     func getDoubleOrNil(index: Int) throws -> Swift.Double? {
         let ary = try getArray()
@@ -760,7 +764,7 @@ public extension JSON {
     ///   object value to produce better errors.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An object value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `getObject(_:_:)`
     func getObject(index: Int) throws -> JSONObject {
@@ -771,7 +775,7 @@ public extension JSON {
     /// - Note: Use `getObjectOrNil(_:_:)` when using throwing accessors on the resulting
     ///   object value to produce better errors.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An object value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An object value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
     func getObjectOrNil(index: Int) throws -> JSONObject? {
@@ -782,7 +786,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
     /// - Returns: The result of calling the given block.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
     func getObject<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T {
         let ary = try getArray()
@@ -793,7 +797,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and passes the result to the given block.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
-    /// - Returns: The result of calling the given block, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ////  or any error thrown by `transform`.
     func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T?) throws -> T? {
@@ -807,7 +811,7 @@ public extension JSON {
     ///   array value to produce better errors.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An array value.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `getArray(_:_:)`
     func getArray(index: Int) throws -> JSONArray {
@@ -818,7 +822,7 @@ public extension JSON {
     /// - Note: Use `getArrayOrNil(_:_:)` when using throwing accessors on the resulting
     ///   array value to produce better errors.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An array value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An array value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
     func getArrayOrNil(index: Int) throws -> JSONArray? {
@@ -829,7 +833,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
     /// - Returns: The result of calling the given block.
-    /// - Throws: `JSONError` if the index is out of range or the value is the wrong type,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
     func getArray<T>(index: Int, @noescape _ f: JSONArray throws -> T) throws -> T {
         let ary = try getArray()
@@ -840,7 +844,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and passes the result to the given block.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `index`.
-    /// - Returns: The result of calling the given block, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ///   or any error thrown by `transform`.
     func getArrayOrNil<T>(index: Int, @noescape _ f: JSONArray throws -> T?) throws -> T? {
@@ -854,7 +858,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result coerced to a `String`.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `String` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is an object or an array,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is an object or an array,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `toString()`.
     func toString(index: Int) throws -> Swift.String {
@@ -865,7 +869,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result coerced to a `String`.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: A `String` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: A `String` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an array.
     /// - SeeAlso: `toStringOrNil()`.
     func toStringOrNil(index: Int) throws -> Swift.String? {
@@ -877,7 +881,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result coerced to an `Int64`.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An `Int64` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is `null`, a boolean,
     ///   an object, an array, a string that cannot be coerced to a 64-bit integral value, or a
     ///   floating-point value that does not fit in 64 bits, or if the receiver is not an array.
     /// - SeeAlso: `toInt64()`.
@@ -889,7 +893,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result coerced to an `Int64`.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An `Int64` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An `Int64` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
     ///   that does not fit in 64 bits, or if the receiver is not an array.
@@ -903,7 +907,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result coerced to an `Int`.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An `Int` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is `null`, a boolean,
     ///   an object, an array, a string that cannot be coerced to an integral value, or a
     ///   floating-point value that does not fit in an `Int`, or if the receiver is not an array.
     /// - SeeAlso: `toInt()`.
@@ -915,7 +919,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result coerced to an `Int`.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: An `Int` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: An `Int` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to an integral value, or a floating-point value
     ///   that does not fit in an `Int`, or if the receiver is not an array.
@@ -929,7 +933,7 @@ public extension JSON {
     /// Subscripts the receiver with `index` and returns the result coerced to a `Double`.
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Double` value.
-    /// - Throws: `JSONError` if the index is out of range or the value is `null`, a boolean,
+    /// - Throws: `JSONError` if the index is out of bounds or the value is `null`, a boolean,
     ///   an object, an array, or a string that cannot be coerced to a floating-point value,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `toDouble()`.
@@ -941,7 +945,7 @@ public extension JSON {
     
     /// Subscripts the receiver with `index` and returns the result coerced to a `Double`.
     /// - Parameter index: The index that's used to subscript the receiver.
-    /// - Returns: A `Double` value, or `nil` if the index is out of range or the value is `null`.
+    /// - Returns: A `Double` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
     ///   cannot be coerced to a floating-point value, or if the receiver is not an array.
     /// - SeeAlso: `toDouble()`.
