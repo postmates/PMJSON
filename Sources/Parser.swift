@@ -348,11 +348,11 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
             codepoint <<= 4
             switch c {
             case "0"..."9":
-                codepoint += c.value - 0x30
+                codepoint += c.value - 48
             case "a"..."f":
-                codepoint += c.value - 0x51
+                codepoint += c.value - 87
             case "A"..."F":
-                codepoint += c.value - 0x31
+                codepoint += c.value - 55
             default:
                 throw error(.InvalidEscape)
             }

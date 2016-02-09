@@ -23,7 +23,7 @@ class JSONTests: XCTestCase {
         do {
             let a = try a(), b = b()
             if !matchesJSON(a, b) {
-                XCTFail("expected \(a), found \(b)", file: file, line: line)
+                XCTFail("expected \(b), found \(a)", file: file, line: line)
             }
         } catch {
             XCTFail(String(error), file: file, line: line)
@@ -42,6 +42,15 @@ class JSONTests: XCTestCase {
     func testDouble() {
         assertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
         assertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
+    }
+    
+    func testStringEscapes() {
+        assertMatchesJSON(try JSON.decode("\" \\\\\\\"\\/\\b\\f\\n\\r\\t \""), " \\\"/\u{8}\u{C}\n\r\t ")
+        assertMatchesJSON(try JSON.decode("\" \\u200D\\u00A9\\uFFFD \""), " \u{200D}©\u{FFFD} ")
+    }
+    
+    func testSurrogatePair() {
+        assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
     }
     
     func testParserErrorDescription() {
