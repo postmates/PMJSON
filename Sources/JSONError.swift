@@ -74,7 +74,7 @@ public enum JSONError: ErrorType, CustomStringConvertible {
         case Object = "object"
         case Array = "array"
         
-        private static func forValue(value: JSON) -> JSONType {
+        internal static func forValue(value: JSON) -> JSONType {
             switch value {
             case .Null: return .Null
             case .Bool: return .Bool
@@ -1283,18 +1283,18 @@ public extension JSON {
 
 // MARK: -
 
-private func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
+internal func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
     guard let value = dict[key] else { throw JSONError.MissingOrInvalidType(path: key, expected: .Required(type), actual: nil) }
     return value
 }
 
-private func getRequired(ary: JSONArray, index: Int, type: JSONError.JSONType) throws -> JSON {
+internal func getRequired(ary: JSONArray, index: Int, type: JSONError.JSONType) throws -> JSON {
     guard let value = ary[safe: index] else { throw JSONError.MissingOrInvalidType(path: "[\(index)]", expected: .Required(type), actual: nil) }
     return value
 }
 
 @inline(__always)
-private func scoped<T>(key: String, @noescape f: () throws -> T) throws -> T {
+internal func scoped<T>(key: String, @noescape f: () throws -> T) throws -> T {
     do {
         return try f()
     } catch let error as JSONError {
@@ -1303,7 +1303,7 @@ private func scoped<T>(key: String, @noescape f: () throws -> T) throws -> T {
 }
 
 @inline(__always)
-private func scoped<T>(index: Int, @noescape f: () throws -> T) throws -> T {
+internal func scoped<T>(index: Int, @noescape f: () throws -> T) throws -> T {
     do {
         return try f()
     } catch let error as JSONError {
@@ -1311,7 +1311,7 @@ private func scoped<T>(index: Int, @noescape f: () throws -> T) throws -> T {
     }
 }
 
-private extension ContiguousArray {
+internal extension ContiguousArray {
     subscript(safe index: Int) -> Element? {
         guard index >= startIndex && index < endIndex else { return nil }
         return self[index]
