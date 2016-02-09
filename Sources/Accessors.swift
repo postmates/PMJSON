@@ -127,7 +127,7 @@ public extension JSON {
 public extension JSON {
     /// Returns the string value if the receiver is `.String`, coerces the value to a string if
     /// the receiver is `.Bool`, `.Null`, `.Int64`, or `.Number`, or otherwise returns `nil`.
-    var toString: Swift.String? {
+    var asString: Swift.String? {
         switch self {
         case .String(let s): return s
         case .Null: return "null"
@@ -143,7 +143,7 @@ public extension JSON {
     /// If the receiver is `.Double`, the value is truncated. If it does not fit in 64 bits, `nil` is returned.
     /// If the receiver is `.String`, it must parse fully as an integral or floating-point number.
     /// If it parses as a floating-point number, it is truncated. If it does not fit in 64 bits, `nil` is returned.
-    var toInt64: Swift.Int64? {
+    var asInt64: Swift.Int64? {
         switch self {
         case .Int64(let i): return i
         case .Double(let d): return convertDoubleToInt64(d)
@@ -162,7 +162,7 @@ public extension JSON {
     /// Returns the double value if the receiver is `.Int64` or `.Double`, coerces the value
     /// if the receiver is `.String`, otherwise returns `nil`.
     /// If the receiver is `.String`, it must parse fully as a floating-point number.
-    var toDouble: Swift.Double? {
+    var asDouble: Swift.Double? {
         switch self {
         case .Int64(let i): return Swift.Double(i)
         case .Double(let d): return d
