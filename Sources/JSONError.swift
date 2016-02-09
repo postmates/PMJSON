@@ -7,7 +7,7 @@
 
 // MARK: JSONError
 
-/// Errors thrown by the JSON `get*()` accessor families.
+/// Errors thrown by the JSON `get*` or `to*` accessor families.
 public enum JSONError: ErrorType, CustomStringConvertible {
     /// Thrown when a given path is missing or has the wrong type.
     /// - Parameter path: The path of the key that caused the error.
@@ -20,11 +20,18 @@ public enum JSONError: ErrorType, CustomStringConvertible {
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case OutOfRangeInt64(path: String?, value: Int64, expected: Any.Type)
+    /// Thrown when a floating-point value is coerced to a smaller type (e.g. `Double` to `Int`)
+    /// and the value doesn't fit in the smaller type.
+    /// - Parameter path: The path of the value that cuased the error.
+    /// - Parameter value: The actual value at that path.
+    /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
+    case OutOfRangeDouble(path: String?, value: Double, expected: Any.Type)
     
     public var description: String {
         switch self {
         case let .MissingOrInvalidType(path, expected, actual): return "\(path.map({$0+": "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
         case let .OutOfRangeInt64(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .OutOfRangeDouble(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         }
     }
     
@@ -42,6 +49,8 @@ public enum JSONError: ErrorType, CustomStringConvertible {
             return .MissingOrInvalidType(path: prefixPath(path, with: prefix), expected: expected, actual: actual)
         case let .OutOfRangeInt64(path, value, expected):
             return .OutOfRangeInt64(path: prefixPath(path, with: prefix), value: value, expected: expected)
+        case let .OutOfRangeDouble(path, value, expected):
+            return .OutOfRangeDouble(path: prefixPath(path, with: prefix), value: value, expected: expected)
         }
     }
     
@@ -118,6 +127,27 @@ public extension JSON {
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.String), actual: .forValue(self)) }
     }
     
+    /// Returns the receiver coerced to a string value.
+    /// - Returns: A `String` value.
+    /// - Throws: `JSONError` if the receiver is an object or array.
+    func toString() throws -> Swift.String {
+        return try toStringOrNil() ?? "null"
+    }
+    
+    /// Returns the receiver coerced to a string value.
+    /// - Returns: A `String` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is an object or array.
+    func toStringOrNil() throws -> Swift.String? {
+        switch self {
+        case .String(let s): return s
+        case .Null: return nil
+        case .Bool(let b): return Swift.String(b)
+        case .Int64(let i): return Swift.String(i)
+        case .Double(let d): return Swift.String(d)
+        default: throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.String), actual: .forValue(self))
+        }
+    }
+    
     /// Returns the 64-bit integral value if the receiver is a number.
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
@@ -133,6 +163,57 @@ public extension JSON {
         if let val = int64 { return val }
         else if isNull { return nil }
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the receiver coerced to a 64-bit integral value.
+    /// If the receiver is a floating-point value, the value will be truncated
+    /// to an integer.
+    /// - Returns: An `Int64` value`.
+    /// - Throws: `JSONError` if the receiver is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to a 64-bit integral value,
+    ///   or a floating-point value that does not fit in 64 bits.
+    func toInt64() throws -> Swift.Int64 {
+        guard let val = try toInt64MaybeNil(.Required(.Number)) else {
+            throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .Null)
+        }
+        return val
+    }
+    
+    /// Returns the receiver coerced to a 64-bit integral value.
+    /// If the receiver is a floating-point value, the value will be truncated
+    /// to an integer.
+    /// - Returns: An `Int64` value`, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is a boolean, an object, an array,
+    ///   a string that cannot be coerced to a 64-bit integral value,
+    ///   or a floating-point value that does not fit in 64 bits.
+    func toInt64OrNil() throws -> Swift.Int64? {
+        return try toInt64MaybeNil(.Optional(.Number))
+    }
+    
+    private func toInt64MaybeNil(expected: JSONError.ExpectedType) throws -> Swift.Int64? {
+        switch self {
+        case .Int64(let i):
+            return i
+        case .Double(let d):
+            guard let val = convertDoubleToInt64(d) else {
+                throw JSONError.OutOfRangeDouble(path: nil, value: d, expected: Swift.Int64.self)
+            }
+            return val
+        case .String(let s):
+            if let i = Swift.Int64(s, radix: 10) {
+                return i
+            } else if let d = Swift.Double(s) {
+                guard let val = convertDoubleToInt64(d) else {
+                    throw JSONError.OutOfRangeDouble(path: nil, value: d, expected: Swift.Int64.self)
+                }
+                return val
+            }
+        case .Null:
+            return nil
+        default:
+            break
+        }
+        throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
     }
     
     /// Returns the integral value if the receiver is a number.
@@ -159,6 +240,34 @@ public extension JSON {
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
     }
     
+    /// Returns the receiver coerced to an integral value.
+    /// If the receiver is a floating-point value, the value will be truncated
+    /// to an integer.
+    /// - Returns: An `Int` value`.
+    /// - Throws: `JSONError` if the receiver is `null`, a boolean, an object,
+    ///   an array, a string that cannot be coerced to an integral value,
+    ///   or a floating-point value that does not fit in an `Int`.
+    func toInt() throws -> Int {
+        let val = try toInt64()
+        let truncated = Int(truncatingBitPattern: val)
+        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        return truncated
+    }
+    
+    /// Returns the receiver coerced to an integral value.
+    /// If the receiver is a floating-point value, the value will be truncated
+    /// to an integer.
+    /// - Returns: An `Int` value`, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is a boolean, an object,
+    ///   an array, a string that cannot be coerced to an integral value,
+    ///   or a floating-point value that does not fit in an `Int`.
+    func toIntOrNil() throws -> Int? {
+        guard let val = try toInt64OrNil() else { return nil }
+        let truncated = Int(truncatingBitPattern: val)
+        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        return truncated
+    }
+    
     /// Returns the double value if the receiver is a number.
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
@@ -174,6 +283,35 @@ public extension JSON {
         if let val = double { return val }
         else if isNull { return nil }
         else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+    }
+    
+    /// Returns the receiver coerced to a `Double`.
+    /// - Returns: A `Double` value.
+    /// - Throws: `JSONError` if the receiver is `null`, a boolean, an object, an array,
+    ///   or a string that cannot be coerced to a floating-point value.
+    func toDouble() throws -> Swift.Double {
+        guard let val = try toDoubleMaybeNil(.Required(.Number)) else {
+            throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .Null)
+        }
+        return val
+    }
+    
+    /// Returns the receiver coerced to a `Double`.
+    /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
+    /// - Throws: `JSONError` if the receiver is a boolean, an object, an array,
+    ///   or a string that cannot be coerced to a floating-point value.
+    func toDoubleOrNil() throws -> Swift.Double? {
+        return try toDoubleMaybeNil(.Optional(.Number))
+    }
+    
+    private func toDoubleMaybeNil(expected: JSONError.ExpectedType) throws -> Swift.Double? {
+        switch self {
+        case .Int64(let i): return Swift.Double(i)
+        case .Double(let d): return d
+        case .String(let s): return Swift.Double(s)
+        case .Null: return nil
+        default: throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        }
     }
     
     /// Returns the object value if the receiver is an object.

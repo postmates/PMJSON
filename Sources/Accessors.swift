@@ -126,16 +126,9 @@ public extension JSON {
 
 public extension JSON {
     /// Returns the string value if the receiver is `.String`, coerces the value to a string if
-    /// the receiver is `.Bool`, `.Null`, `.Int64`, or `.Number`, or otherwise returns `nil`.
+    /// the receiver is `.Bool`, `.Null`, `.Int64`, or `.Double`, or otherwise returns `nil`.
     var asString: Swift.String? {
-        switch self {
-        case .String(let s): return s
-        case .Null: return "null"
-        case .Bool(let b): return Swift.String(b)
-        case .Int64(let i): return Swift.String(i)
-        case .Double(let d): return Swift.String(d)
-        default: return nil
-        }
+        return try? toString()
     }
     
     /// Returns the 64-bit integral value if the receiver is `.Int64` or `.Double`, coerces the value
@@ -144,31 +137,23 @@ public extension JSON {
     /// If the receiver is `.String`, it must parse fully as an integral or floating-point number.
     /// If it parses as a floating-point number, it is truncated. If it does not fit in 64 bits, `nil` is returned.
     var asInt64: Swift.Int64? {
-        switch self {
-        case .Int64(let i): return i
-        case .Double(let d): return convertDoubleToInt64(d)
-        case .String(let s):
-            if let i = Swift.Int64(s, radix: 10) {
-                return i
-            } else if let d = Swift.Double(s) {
-                return convertDoubleToInt64(d)
-            } else {
-                return nil
-            }
-        default: return nil
-        }
+        return try? toInt64()
+    }
+    
+    /// Returns the integral value if the receiver is `.Int64` or `.Double`, coerces the value
+    /// if the receiver is `.String`, otherwise returns `nil`.
+    /// If the receiver is `.Double`, the value is truncated. If it does not fit in an `Int`, `nil` is returned.
+    /// If the receiver is `.String`, it must parse fully as an integral or floating-point number.
+    /// If it parses as a floating-point number, it is truncated. If it does not fit in an `Int`, `nil` is returned.
+    var asInt: Int? {
+        return try? toInt()
     }
     
     /// Returns the double value if the receiver is `.Int64` or `.Double`, coerces the value
     /// if the receiver is `.String`, otherwise returns `nil`.
     /// If the receiver is `.String`, it must parse fully as a floating-point number.
     var asDouble: Swift.Double? {
-        switch self {
-        case .Int64(let i): return Swift.Double(i)
-        case .Double(let d): return d
-        case .String(let s): return Swift.Double(s)
-        default: return nil
-        }
+        return try? toDouble()
     }
 }
 
@@ -188,7 +173,7 @@ public extension JSON {
     }
 }
 
-private func convertDoubleToInt64(d: Double) -> Int64? {
+internal func convertDoubleToInt64(d: Double) -> Int64? {
     // Int64(Double(Int64.max)) asserts because it interprets it as out of bounds.
     // Int64(Double(Int64.min)) works just fine.
     if d >= Double(Int64.max) || d < Double(Int64.min) {
