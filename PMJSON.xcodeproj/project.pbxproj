@@ -45,9 +45,10 @@
 		9E1B24511BC73D7600E5BC19 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9E1B24581BC73DA000E5BC19 /* JSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
 		9E1B246A1BC7463D00E5BC19 /* Parser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
-		9E49DEF21C1F9E2F004FDCAD /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		9E49DEF21C1F9E2F004FDCAD /* LICENSE-MIT */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-MIT"; sourceTree = "<group>"; };
 		9E49DEF31C1F9E2F004FDCAD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9E5983DB1C60282F008495F6 /* Encoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Encoder.swift; sourceTree = "<group>"; };
+		9E69BE0B1C6E843D00D92762 /* LICENSE-APACHE */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LICENSE-APACHE"; sourceTree = "<group>"; };
 		9E8793771BC7547800BC6A15 /* Decoder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Decoder.swift; sourceTree = "<group>"; };
 		9E87937B1BC8341500BC6A15 /* ObjectiveC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectiveC.swift; sourceTree = "<group>"; };
 		9E87937D1BC835F500BC6A15 /* Accessors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Accessors.swift; sourceTree = "<group>"; };
@@ -76,7 +77,8 @@
 			isa = PBXGroup;
 			children = (
 				9E49DEF31C1F9E2F004FDCAD /* README.md */,
-				9E49DEF21C1F9E2F004FDCAD /* LICENSE */,
+				9E69BE0B1C6E843D00D92762 /* LICENSE-APACHE */,
+				9E49DEF21C1F9E2F004FDCAD /* LICENSE-MIT */,
 				9E1B24421BC73D7600E5BC19 /* JSON */,
 				9E1B244E1BC73D7600E5BC19 /* JSONTests */,
 				9E1B24341BC73D3600E5BC19 /* Products */,
@@ -181,6 +183,7 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0710;
+				ORGANIZATIONNAME = Postmates;
 				TargetAttributes = {
 					9E1B24401BC73D7600E5BC19 = {
 						CreatedOnToolsVersion = 7.0.1;
