@@ -100,6 +100,8 @@ All of these accessors are also available on the `JSONObject` type (which is the
 
 The `JSON` type has static methods `map()` and `flatMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
+There's also helpers for converting to/from plist-compatible objects. `JSON` offers an initializer `init(plist: AnyObject) throws` that converts from any plist-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.plist`, which returns a plist-compatible object equivalent to the `JSON`, and `.plistNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+
 ### Performance
 
 The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to an `NSData` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does.
