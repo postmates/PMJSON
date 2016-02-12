@@ -134,6 +134,6 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### v0.9
+#### v0.9 (2016-02-12)
 
 Initial release.
