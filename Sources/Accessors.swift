@@ -105,6 +105,16 @@ public extension JSON {
         }
     }
     
+    /// Returns the integral value if the receiver is `.Int64` or `.Double`, otherwise `nil`.
+    /// If the receiver is `.Double`, the value is truncated. If it does not fit in an `Int`, `nil` is returned.
+    /// If the receiver is `.Int64` and the value does not fit in an `.Int`, `nil` is returned.
+    var int: Int? {
+        guard let value = int64 else { return nil}
+        let truncated = Int(truncatingBitPattern: value)
+        guard Swift.Int64(truncated) == value else { return nil }
+        return truncated
+    }
+    
     /// Returns the numeric value as a `Double` if the receiver is `.Int64` or `.Double`, otherwise `nil`.
     var double: Swift.Double? {
         switch self {
