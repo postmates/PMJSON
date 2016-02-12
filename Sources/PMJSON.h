@@ -6,15 +6,15 @@
 //
 
 #if defined(__cplusplus)
-#define JSON_EXTERN extern "C"
+#define PMJSON_EXTERN extern "C"
 #else
-#define JSON_EXTERN extern
+#define PMJSON_EXTERN extern
 #endif
 
 //! Project version number for JSON.
-JSON_EXTERN double JSONVersionNumber;
+PMJSON_EXTERN double PMJSONVersionNumber;
 
 //! Project version string for JSON.
-JSON_EXTERN const unsigned char JSONVersionString[];
+PMJSON_EXTERN const unsigned char PMJSONVersionString[];
 
-#undef JSON_EXTERN
+#undef PMJSON_EXTERN
