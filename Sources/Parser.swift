@@ -32,7 +32,7 @@ public struct JSONParser<Seq: SequenceType where Seq.Generator.Element == Unicod
 }
 
 /// The generator for JSONParser.
-public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == UnicodeScalar>: GeneratorType {
+public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == UnicodeScalar>: JSONEventGenerator {
     public init(_ gen: Gen) {
         base = PeekGenerator(gen)
     }
@@ -447,6 +447,14 @@ public enum JSONEvent {
     case NullValue
     /// A parser error.
     case Error(JSONParserError)
+}
+
+/// A generator of `JSONEvent`s that records column/line info.
+public protocol JSONEventGenerator: GeneratorType {
+    /// The line of the last emitted token.
+    var line: UInt { get }
+    /// The column of the last emitted token.
+    var column: UInt { get }
 }
 
 public struct JSONParserError: ErrorType, CustomStringConvertible {

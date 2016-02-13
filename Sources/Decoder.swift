@@ -37,8 +37,8 @@ extension JSON {
 }
 
 /// A JSON decoder.
-private struct JSONDecoder<Seq: SequenceType where Seq.Generator.Element == UnicodeScalar> {
-    init(_ parser: JSONParser<Seq>) {
+private struct JSONDecoder<Seq: SequenceType where Seq.Generator: JSONEventGenerator, Seq.Generator.Element == JSONEvent> {
+    init(_ parser: Seq) {
         gen = parser.generate()
     }
     
@@ -110,7 +110,7 @@ private struct JSONDecoder<Seq: SequenceType where Seq.Generator.Element == Unic
         return JSONParserError(code: code, line: gen.line, column: gen.column)
     }
     
-    private var gen: JSONParser<Seq>.Generator
+    private var gen: Seq.Generator
     private var token: JSONEvent?
     private var objectHighWaterMark: Int = 0
 }
