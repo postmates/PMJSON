@@ -100,7 +100,7 @@ All of these accessors are also available on the `JSONObject` type (which is the
 
 The `JSON` type has static methods `map()` and `flatMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
-There's also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(plist: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.plist`, which returns a Foundation object equivalent to the `JSON`, and `.plistNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+There's also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
 
 ### Performance
 

@@ -20,8 +20,8 @@ class JSONSwiftCheck: XCTestCase {
     func testProperties() {
         property("JSON can round-trip through Foundation and still remain equal") <- forAll { (json: JSON) in
             do {
-                let plist = json.plist
-                let json2 = try JSON(plist: plist)
+                let object = json.ns
+                let json2 = try JSON(ns: object)
                 return json.approximatelyEqual(json2)
             } catch {
                 return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
@@ -32,8 +32,8 @@ class JSONSwiftCheck: XCTestCase {
             let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
             return forAll(g) { json in
                 do {
-                    let plist = json.plist
-                    let data = try NSJSONSerialization.dataWithJSONObject(plist, options: [])
+                    let object = json.ns
+                    let data = try NSJSONSerialization.dataWithJSONObject(object, options: [])
                     let decoded = try JSON.decode(data)
                     return decoded.approximatelyEqual(json)
                 } catch {
@@ -46,11 +46,11 @@ class JSONSwiftCheck: XCTestCase {
             let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
             return forAll(g) { json in
                 do {
-                    let plist = json.plist
-                    guard NSJSONSerialization.isValidJSONObject(plist) else {
+                    let object = json.ns
+                    guard NSJSONSerialization.isValidJSONObject(object) else {
                         return TestResult.failed("JSON object is not valid for NSJSONSerialization").counterexample(String(json))
                     }
-                    let data = try NSJSONSerialization.dataWithJSONObject(plist, options: .PrettyPrinted)
+                    let data = try NSJSONSerialization.dataWithJSONObject(object, options: .PrettyPrinted)
                     do {
                         let decoded = try JSON.decode(data)
                         return decoded.approximatelyEqual(json)
@@ -95,7 +95,7 @@ class JSONSwiftCheck: XCTestCase {
                 do {
                     let data = JSON.encodeAsData(json, pretty: false)
                     let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
-                    let json2 = try JSON(plist: cocoa)
+                    let json2 = try JSON(ns: cocoa)
                     return json2.approximatelyEqual(json)
                 } catch {
                     return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
@@ -109,7 +109,7 @@ class JSONSwiftCheck: XCTestCase {
                 do {
                     let data = JSON.encodeAsData(json, pretty: true)
                     let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
-                    let json2 = try JSON(plist: cocoa)
+                    let json2 = try JSON(ns: cocoa)
                     return json2.approximatelyEqual(json)
                 } catch {
                     return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))

@@ -48,16 +48,24 @@ extension JSON {
 
 extension JSON {
     /// Converts a JSON-compatible Foundation object into a `JSON` value.
-    /// - Throws: `JSONPlistError` if the object is not JSON-compatible.
+    /// - Note: Deprecated in favor of `init(ns:)`.
+    /// - Throws: `JSONFoundationError` if the object is not JSON-compatible.
+    @available(*, deprecated, renamed="init(ns:)")
     public init(plist: AnyObject) throws {
-        if plist === kCFBooleanTrue {
+        try self.init(ns: plist)
+    }
+    
+    /// Converts a JSON-compatible Foundation object into a `JSON` value.
+    /// - Throws: `JSONFoundationError` if the object is not JSON-compatible.
+    public init(ns object: AnyObject) throws {
+        if object === kCFBooleanTrue {
             self = .Bool(true)
             return
-        } else if plist === kCFBooleanFalse {
+        } else if object === kCFBooleanFalse {
             self = .Bool(false)
             return
         }
-        switch plist {
+        switch object {
         case is NSNull:
             self = .Null
         case let n as NSNumber:
@@ -85,66 +93,94 @@ extension JSON {
         case let dict as NSDictionary:
             var obj: [Swift.String: JSON] = Dictionary(minimumCapacity: dict.count)
             for (key, value) in dict {
-                guard let key = key as? Swift.String else { throw JSONPlistError.NonStringKey }
-                obj[key] = try JSON(plist: value)
+                guard let key = key as? Swift.String else { throw JSONFoundationError.NonStringKey }
+                obj[key] = try JSON(ns: value)
             }
             self = .Object(JSONObject(obj))
         case let array as NSArray:
             var ary: JSONArray = []
             ary.reserveCapacity(array.count)
             for elt in array {
-                ary.append(try JSON(plist: elt))
+                ary.append(try JSON(ns: elt))
             }
             self = .Array(ary)
         default:
-            throw JSONPlistError.IncompatibleType
+            throw JSONFoundationError.IncompatibleType
         }
     }
     
     /// Returns the JSON as a JSON-compatible Foundation object.
+    /// - Note: Deprecated in favor of `ns`.
+    @available(*, deprecated, renamed="ns")
     public var plist: AnyObject {
+        return ns
+    }
+    
+    /// Returns the JSON as a JSON-compatible Foundation object.
+    public var ns: AnyObject {
         switch self {
         case .Null: return NSNull()
         case .Bool(let b): return b as NSNumber
         case .String(let s): return s
         case .Int64(let i): return NSNumber(longLong: i)
         case .Double(let d): return d
-        case .Object(let obj): return obj.plist
+        case .Object(let obj): return obj.ns
         case .Array(let ary):
-            return ary.map({$0.plist})
+            return ary.map({$0.ns})
         }
     }
     
     /// Returns the JSON as a JSON-compatible Foundation object, discarding any nulls.
+    /// - Note: Deprecated in favor of `nsNoNull`.
+    @available(*, deprecated, renamed="nsNoNull")
     public var plistNoNull: AnyObject? {
+        return nsNoNull
+    }
+    
+    /// Returns the JSON as a JSON-compatible Foundation object, discarding any nulls.
+    public var nsNoNull: AnyObject? {
         switch self {
         case .Null: return nil
         case .Bool(let b): return b as NSNumber
         case .String(let s): return s
         case .Int64(let i): return NSNumber(longLong: i)
         case .Double(let d): return d
-        case .Object(let obj): return obj.plistNoNull
+        case .Object(let obj): return obj.nsNoNull
         case .Array(let ary):
-            return ary.flatMap({$0.plistNoNull})
+            return ary.flatMap({$0.nsNoNull})
         }
     }
 }
 
 extension JSONObject {
     /// Returns the JSON as a JSON-compatible dictionary.
+    /// - Note: Deprecated in favor of `ns`.
+    @available(*, deprecated, renamed="ns")
     public var plist: [NSObject: AnyObject] {
+        return ns
+    }
+    
+    /// Returns the JSON as a JSON-compatible dictionary.
+    public var ns: [NSObject: AnyObject] {
         var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
         for (key, value) in self {
-            dict[key] = value.plist
+            dict[key] = value.ns
         }
         return dict
     }
     
     /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
+    /// - Note: Deprecated in favor of `nsNoNull`.
+    @available(*, deprecated, renamed="nsNoNull")
     public var plistNoNull: [NSObject: AnyObject] {
+        return nsNoNull
+    }
+    
+    /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
+    public var nsNoNull: [NSObject: AnyObject] {
         var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
         for (key, value) in self {
-            if let value = value.plistNoNull {
+            if let value = value.nsNoNull {
                 dict[key] = value
             }
         }
@@ -153,8 +189,14 @@ extension JSONObject {
 }
 
 /// An error that is thrown when converting from `AnyObject` to `JSON`.
-/// - SeeAlso: `JSON.init(plist:)`
-public enum JSONPlistError: ErrorType {
+/// - Note: Deprecated in favor of `JSONFoundationError`.
+/// - SeeAlso: `JSON.init(ns:)`
+@available(*, deprecated, renamed="JSONFoundationError")
+public typealias JSONPlistError = JSONFoundationError
+
+/// An error that is thrown when converting from `AnyObject` to `JSON`.
+/// - SeeAlso: `JSON.init(ns:)`
+public enum JSONFoundationError: ErrorType {
     /// Thrown when a non-JSON-compatible type is found.
     case IncompatibleType
     /// Thrown when a dictionary has a key that is not a string.

@@ -75,7 +75,7 @@ class JSONTests: XCTestCase {
     func testCompareCocoa() {
         do {
             let json = try JSON.decode(bigJson)
-            let jsonObj = json.plist as! NSObject
+            let jsonObj = json.ns as! NSObject
             let cocoa = try NSJSONSerialization.JSONObjectWithData(bigJson, options: []) as! NSObject
             XCTAssertEqual(jsonObj, cocoa)
             let cocoa2 = try NSJSONSerialization.JSONObjectWithData(JSON.encodeAsData(json), options: []) as! NSObject
@@ -124,7 +124,7 @@ class JSONTests: XCTestCase {
     
     func testEncodeCocoaPerformance() {
         do {
-            let json = try JSON.decode(bigJson).plist
+            let json = try JSON.decode(bigJson).ns
             measureBlock {
                 for _ in 0..<10 {
                     do {
@@ -154,7 +154,7 @@ class JSONTests: XCTestCase {
     
     func testEncodePrettyCocoaPerformance() {
         do {
-            let json = try JSON.decode(bigJson).plist
+            let json = try JSON.decode(bigJson).ns
             measureBlock {
                 for _ in 0..<10 {
                     do {
