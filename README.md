@@ -8,9 +8,9 @@
 
 [Carthage]: https://github.com/carthage/carthage
 
-PMJSON provides a pure-Swift strongly-typed JSON encoder/decoder as well as a set of convenience methods for converting to/from Foundation plist objects and for decoding JSON structures.
+PMJSON provides a pure-Swift strongly-typed JSON encoder/decoder as well as a set of convenience methods for converting to/from Foundation objects and for decoding JSON structures.
 
-The entire JSON encoder/decoder can be used without Foundation, by removing the files `ObjectiveC.swift` and `DecimalNumber.swift` from the project. The only dependency the rest of the project has is on `Darwin`, for `strtod()` and `strtoll()`. The file `ObjectiveC.swift` adds convenience methods for translating between `JSON` values and Foundation plist-compatible objects as well as decoding from an `NSData`, and `DecimalNumber.swift` adds convenience accessors for converting values into `NSDecimalNumber`.
+The entire JSON encoder/decoder can be used without Foundation, by removing the files `ObjectiveC.swift` and `DecimalNumber.swift` from the project. The only dependency the rest of the project has is on `Darwin`, for `strtod()` and `strtoll()`. The file `ObjectiveC.swift` adds convenience methods for translating between `JSON` values and Foundation objects as well as decoding from an `NSData`, and `DecimalNumber.swift` adds convenience accessors for converting values into `NSDecimalNumber`.
 
 ## Usage
 
@@ -100,7 +100,7 @@ All of these accessors are also available on the `JSONObject` type (which is the
 
 The `JSON` type has static methods `map()` and `flatMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
-There's also helpers for converting to/from plist-compatible objects. `JSON` offers an initializer `init(plist: AnyObject) throws` that converts from any plist-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.plist`, which returns a plist-compatible object equivalent to the `JSON`, and `.plistNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+There's also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(plist: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.plist`, which returns a Foundation object equivalent to the `JSON`, and `.plistNoNull` which does the same but omits any `null` values instead of using `NSNull`.
 
 ### Performance
 

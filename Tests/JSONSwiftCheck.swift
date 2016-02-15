@@ -18,7 +18,7 @@ import SwiftCheck
 
 class JSONSwiftCheck: XCTestCase {
     func testProperties() {
-        property("JSON can round-trip through plist and still remain equal") <- forAll { (json: JSON) in
+        property("JSON can round-trip through Foundation and still remain equal") <- forAll { (json: JSON) in
             do {
                 let plist = json.plist
                 let json2 = try JSON(plist: plist)

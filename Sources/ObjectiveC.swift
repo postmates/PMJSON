@@ -47,8 +47,8 @@ extension JSON {
 }
 
 extension JSON {
-    /// Converts a plist-compatible Foundation object into a `JSON` value.
-    /// - Throws: `JSONPlistError` if the object is not plist-compatible.
+    /// Converts a JSON-compatible Foundation object into a `JSON` value.
+    /// - Throws: `JSONPlistError` if the object is not JSON-compatible.
     public init(plist: AnyObject) throws {
         if plist === kCFBooleanTrue {
             self = .Bool(true)
@@ -101,7 +101,7 @@ extension JSON {
         }
     }
     
-    /// Returns the JSON as a plist-compatible Foundation type.
+    /// Returns the JSON as a JSON-compatible Foundation object.
     public var plist: AnyObject {
         switch self {
         case .Null: return NSNull()
@@ -115,7 +115,7 @@ extension JSON {
         }
     }
     
-    /// Returns the JSON as a plist-compatible Foundation type, discarding any nulls.
+    /// Returns the JSON as a JSON-compatible Foundation object, discarding any nulls.
     public var plistNoNull: AnyObject? {
         switch self {
         case .Null: return nil
@@ -131,7 +131,7 @@ extension JSON {
 }
 
 extension JSONObject {
-    /// Returns the JSON as a plist-compatible dictionary.
+    /// Returns the JSON as a JSON-compatible dictionary.
     public var plist: [NSObject: AnyObject] {
         var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
         for (key, value) in self {
@@ -140,7 +140,7 @@ extension JSONObject {
         return dict
     }
     
-    /// Returns the JSON as a plist-compatible dictionary, discarding any nulls.
+    /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
     public var plistNoNull: [NSObject: AnyObject] {
         var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
         for (key, value) in self {
@@ -155,7 +155,7 @@ extension JSONObject {
 /// An error that is thrown when converting from `AnyObject` to `JSON`.
 /// - SeeAlso: `JSON.init(plist:)`
 public enum JSONPlistError: ErrorType {
-    /// Thrown when a non-plist-compatible type is found.
+    /// Thrown when a non-JSON-compatible type is found.
     case IncompatibleType
     /// Thrown when a dictionary has a key that is not a string.
     case NonStringKey
