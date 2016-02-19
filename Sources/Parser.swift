@@ -532,7 +532,8 @@ private struct PeekGenerator<Base: GeneratorType> {
     private var peeked: Base.Element??
 }
 
-private func replace<T>(inout a: T, var with b: T) -> T {
+private func replace<T>(inout a: T, with b: T) -> T {
+    var b = b
     swap(&a, &b)
     return b
 }
