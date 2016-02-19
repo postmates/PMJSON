@@ -136,6 +136,8 @@ let package = Package(
 )
 ```
 
+[Swift Package Manager]: https://swift.org/package-manager/
+
 ## License
 
 Licensed under either of
