@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v0.9-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v0.9.1-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -115,7 +115,7 @@ Installing as a framework requires a minimum of iOS 8, OS X 10.9, watchOS 2.0, o
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
-github "postmates/PMJSON" ~> 0.9
+github "postmates/PMJSON" ~> 0.9.1
 ```
 
 Once installed, you can use this by adding `import PMJSON` to your code.
@@ -133,6 +133,13 @@ Licensed under either of
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 ## Version History
+
+#### v0.9.1 (2016-02-19)
+
+* Linux support.
+* Swift Package Manager support.
+* Rename instances of `plist` in the API to `ns`. The old names are still available but marked as deprecated.
+* Support the latest Swift snapshot (2012-02-08).
 
 #### v0.9 (2016-02-12)
 
