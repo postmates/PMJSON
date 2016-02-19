@@ -112,6 +112,8 @@ Installing as a framework requires a minimum of iOS 8, OS X 10.9, watchOS 2.0, o
 
 ## Installation
 
+### Carthage
+
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
@@ -119,6 +121,20 @@ github "postmates/PMJSON" ~> 0.9.1
 ```
 
 Once installed, you can use this by adding `import PMJSON` to your code.
+
+### Swift Package Manager
+
+When using a recent Swift development snapshot, the [Swift Package Manager][] may be used to install PMJSON by adding it to your `dependencies` list:
+
+```swift
+let package = Package(
+    name: "YourPackage",
+    dependencies: [
+        .Package(url: "https://github.com/postmates/PMJSON.git",
+                 versions: Version(major: 0, minor: 9, patch: 1)..<Version(major: 0, minor: 10, patch: 0))
+    ]
+)
+```
 
 ## License
 
