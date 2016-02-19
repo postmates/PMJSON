@@ -12,7 +12,11 @@
 //  except according to those terms.
 //
 
-import Darwin
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin
+#endif
 
 /// A streaming JSON parser that consumes a sequence of unicode scalars.
 public struct JSONParser<Seq: SequenceType where Seq.Generator.Element == UnicodeScalar>: SequenceType {

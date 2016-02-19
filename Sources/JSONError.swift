@@ -44,8 +44,8 @@ public enum JSONError: ErrorType, CustomStringConvertible {
     
     private func withPrefix(prefix: String) -> JSONError {
         func prefixPath(path: String?, with prefix: String) -> String {
-            guard let path = path else { return prefix }
-            if path.hasPrefix("[") {
+            guard let path = path where !path.isEmpty else { return prefix }
+            if path.unicodeScalars.first == "[" {
                 return prefix + path
             } else {
                 return "\(prefix).\(path)"
