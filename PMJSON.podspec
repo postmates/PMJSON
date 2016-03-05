@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "PMJSON"
-  s.version      = "0.9"
+  s.version      = "0.9.1"
   s.summary      = "Pure Swift JSON encoding/decoding library"
   s.description  = "PMJSON provides a pure-Swift strongly-typed JSON encoder/decoder as well as a set of convenience methods for converting to/from Foundation objects and for decoding JSON structures."
 
@@ -8,10 +8,10 @@ Pod::Spec.new do |s|
 
   s.license      = "MIT & Apache License, Version 2.0"
 
-  s.author             = { "kballard" => "kevin@sb.org" }
+  s.author             = { "Kevin Ballard" => "kevin.ballard@postmates.com" }
   s.social_media_url   = "https://twitter.com/eridius"
 
-  s.source       = { :git => "https://github.com/postmates/PMJSON.git", :tag => "v0.9" }
+  s.source       = { :git => "https://github.com/postmates/PMJSON.git", :tag => "v#{s.version}" }
 
   s.source_files  = "Sources/*.{swift,h,m}",
 

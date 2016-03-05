@@ -5,6 +5,7 @@
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)][Carthage]
+[![CocoaPods](https://img.shields.io/cocoapods/v/PMJSON.svg)](http://cocoadocs.org/docsets/PMJSON)
 
 [Carthage]: https://github.com/carthage/carthage
 
@@ -117,7 +118,13 @@ Installing as a framework requires a minimum of iOS 8, OS X 10.9, watchOS 2.0, o
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
-github "postmates/PMJSON" ~> 0.9.1
+github "postmates/PMJSON" ~> 0.9
+```
+
+To install using [CocoaPods][], add the following to your Podfile:
+
+```
+pod 'PMJSON', '~> 0.9'
 ```
 
 Once installed, you can use this by adding `import PMJSON` to your code.
