@@ -16,7 +16,7 @@ import XCTest
 import PMJSON
 
 class JSONTests: XCTestCase {
-    func assertEqual<T: Equatable>(@autoclosure a: () throws -> T, @autoclosure _ b: () -> T, file: String = __FILE__, line: UInt = __LINE__) {
+    func assertEqual<T: Equatable>(@autoclosure a: () throws -> T, @autoclosure _ b: () -> T, file: StaticString = #file, line: UInt = #line) {
         do {
             let a = try a()
             XCTAssertEqual(a, b(), file: file, line: line)
@@ -25,7 +25,7 @@ class JSONTests: XCTestCase {
         }
     }
     
-    func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: String = __FILE__, line: UInt = __LINE__) {
+    func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
             let a = try a(), b = b()
             if !matchesJSON(a, b) {
