@@ -53,17 +53,17 @@ let data = JSON.encodeAsData(json)
 
 ### Accessors
 
-Besides encoding/decoding, this library also provides a comprehensive suite of accessors for getting data out of `JSON` values. There's 4 types of basic accessors provided:
+Besides encoding/decoding, this library also provides a comprehensive suite of accessors for getting data out of `JSON` values. There are 4 types of basic accessors provided:
 
 1. Basic property accessors named after types such as `.string`. These accessors return the underlying value if it matches the type, or `nil` if  the value is not the right type. For example, `.string` returns `String?`. These accessors do not convert between types, e.g. `JSON.Int64(42).string` returns `nil`.
 2. Property accessors beginning with the word `as`, such as `.asString`. These accessors also return an optional value, but they convert between types if it makes sense to do so. For example, `JSON.Int64(42).asString` returns `"42"`.
 3. Methods beginnning with `get`, such as `getString()`. These methods return non-optional values, and throw `JSONError`s if the value's type does not match. These methods do not convert between types, e.g. `try JSON.Int64(42).getString()` throws an error. For every method of this type, there's also a variant ending in `OrNil`, such as `getStringOrNil()`, which does return an optional. These methods only return `nil` if the value is `null`, otherwise they throw an error.
-4. Methods beginning with `to`, such as `toString()`. These are just like the `get` methods except they convert between types when appropriate, using the same rules that the `as` methods do, e.g. `try JSON.Int64(42).toString()` returns `"42"`. Like the `get` methods, there's also variants ending in `OrNil`.
+4. Methods beginning with `to`, such as `toString()`. These are just like the `get` methods except they convert between types when appropriate, using the same rules that the `as` methods do, e.g. `try JSON.Int64(42).toString()` returns `"42"`. Like the `get` methods, there are also variants ending in `OrNil`.
 
 `JSON` also provides both keyed and indexed subscript operators that return a `JSON?`, and are always safe to call (even with out-of-bounds indexes). And it provides 2 kinds of subscripting accessors:
 
 1. For every basic `get` accessor, there's a variant that takes a key or an index. These are equivalent to subscripting the receiver and invoking the `get` accessor on the result, except they produce better errors (and they handle missing keys/out-of-bounds indexes properly). For example, `getString("key")` or `getString(index)`. The `OrNil` variants also return `nil` if the key doesn't exist or the index is out-of-bounds.
-2. Similarly, there's subscripting equivalents for the `to` accessors as well.
+2. Similarly, there are subscripting equivalents for the `to` accessors as well.
 
 And finally, the `getObject()` and `getArray()` accessors provide variants that take a closure. These variants are recommended over the basic accessors as they produce better errors. For example, given the following JSON:
 
@@ -101,7 +101,7 @@ All of these accessors are also available on the `JSONObject` type (which is the
 
 The `JSON` type has static methods `map()` and `flatMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
-There's also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+There are also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
 
 ### Performance
 
