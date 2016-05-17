@@ -30,6 +30,46 @@ public enum JSON {
     case Object(JSONObject)
     /// An array.
     case Array(JSONArray)
+    
+    /// Initializes `self` as a boolean with the value `bool`.
+    public init(_ bool: Swift.Bool) {
+        self = .Bool(bool)
+    }
+    /// Initializes `self` as a string with the value `str`.
+    public init(_ str: Swift.String) {
+        self = .String(str)
+    }
+    /// Initializes `self` as a 64-bit integer with the value `i`.
+    public init(_ i: Swift.Int64) {
+        self = .Int64(i)
+    }
+    /// Initializes `self` as a double with the value `d`.
+    public init(_ d: Swift.Double) {
+        self = .Double(d)
+    }
+    /// Initializes `self` as an object with the value `obj`.
+    public init(_ obj: JSONObject) {
+        self = .Object(obj)
+    }
+    /// Initializes `self` as an array with the value `ary`.
+    public init(_ ary: JSONArray) {
+        self = .Array(ary)
+    }
+    
+    /// Initializes `self` as an array with the contents of the sequence `seq`.
+    public init<S: SequenceType where S.Generator.Element == JSON>(_ seq: S) {
+        self = .Array(JSONArray(seq))
+    }
+    
+    /// Initializes `self` as an array with the contents of the sequence `seq`.
+    public init<S: SequenceType where S.Generator.Element == JSONObject>(_ seq: S) {
+        self = .Array(JSONArray(seq.lazy.map(JSON.init)))
+    }
+    
+    /// Initializes `self` as an array with the contents of the sequence `seq`.
+    public init<S: SequenceType where S.Generator.Element == JSONArray>(_ seq: S) {
+        self = .Array(JSONArray(seq.lazy.map(JSON.init)))
+    }
 }
 
 public typealias JSONArray = ContiguousArray<JSON>

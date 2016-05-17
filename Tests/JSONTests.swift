@@ -16,15 +16,6 @@ import XCTest
 import PMJSON
 
 class JSONTests: XCTestCase {
-    func assertEqual<T: Equatable>(@autoclosure a: () throws -> T, @autoclosure _ b: () -> T, file: StaticString = #file, line: UInt = #line) {
-        do {
-            let a = try a()
-            XCTAssertEqual(a, b(), file: file, line: line)
-        } catch {
-            XCTFail(String(error), file: file, line: line)
-        }
-    }
-    
     func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
             let a = try a(), b = b()
@@ -46,8 +37,8 @@ class JSONTests: XCTestCase {
     }
     
     func testDouble() {
-        assertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
-        assertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
+        XCTAssertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
+        XCTAssertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
     }
     
     func testStringEscapes() {
@@ -61,6 +52,18 @@ class JSONTests: XCTestCase {
     
     func testParserErrorDescription() {
         XCTAssertEqual(String(JSONParserError(code: .UnexpectedEOF, line: 5, column: 12)), "JSONParserError(UnexpectedEOF, line: 5, column: 12)")
+    }
+    
+    func testConversions() {
+        XCTAssertEqual(JSON(true), JSON.Bool(true))
+        XCTAssertEqual(JSON(42 as Int64), JSON.Int64(42))
+        XCTAssertEqual(JSON(42 as Double), JSON.Double(42))
+        XCTAssertEqual(JSON("foo"), JSON.String("foo"))
+        XCTAssertEqual(JSON(["foo": true]), ["foo": true])
+        XCTAssertEqual(JSON([JSON.Bool(true)] as JSONArray), [true]) // JSONArray
+        XCTAssertEqual(JSON([true].lazy.map(JSON.Bool)), [true]) // Sequence of JSON
+        XCTAssertEqual(JSON([["foo": true], ["bar": 42]].lazy.map(JSONObject.init)), [["foo": true], ["bar": 42]]) // Sequence of JSONObject
+        XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
     }
     
     lazy var bigJson: NSData = {
