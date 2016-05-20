@@ -55,6 +55,14 @@ public enum JSON {
     public init(_ ary: JSONArray) {
         self = .Array(ary)
     }
+}
+
+// Convenience conversions.
+public extension JSON {
+    /// Initializes `self` as a 64-bit integer with the value `i`.
+    public init(_ i: Int) {
+        self = .Int64(Swift.Int64(i))
+    }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
     public init<S: SequenceType where S.Generator.Element == JSON>(_ seq: S) {
