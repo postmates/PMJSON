@@ -177,13 +177,18 @@ extension JSONObject: DictionaryLiteralConvertible {
     }
 }
 
-extension JSONObject: CustomStringConvertible, CustomDebugStringConvertible {
+extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
+    public func writeTo<Target : OutputStreamType>(inout target: Target) {
+        JSON.encode(JSON(self), toStream: &target, pretty: false)
+    }
+    
     public var description: String {
-        return dictionary.description
+        return JSON.encodeAsString(JSON(self), pretty: false)
     }
     
     public var debugDescription: String {
-        return dictionary.debugDescription
+        let desc = JSON.encodeAsString(JSON(self), pretty: false)
+        return "JSONObject(\(desc))"
     }
 }
 
