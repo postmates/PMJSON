@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v0.9.2-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v0.9.3-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -138,7 +138,7 @@ let package = Package(
     name: "YourPackage",
     dependencies: [
         .Package(url: "https://github.com/postmates/PMJSON.git",
-                 versions: Version(major: 0, minor: 9, patch: 1)..<Version(major: 0, minor: 10, patch: 0))
+                 versions: Version(major: 0, minor: 9, patch: 3)..<Version(major: 0, minor: 10, patch: 0))
     ]
 )
 ```
@@ -158,6 +158,13 @@ Licensed under either of
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 ## Version History
+
+#### v0.9.3 (2016-05-23)
+
+* Add new set of convenience `JSON` initializers.
+* Change `description` and `debugDescription` for `JSON` and `JSONObject` to be more useful.
+  `description` is now the JSON-encoded string.
+* Implement `CustomReflectable` for `JSON` and `JSONObject`.
 
 #### v0.9.2 (2016-03-04)
 
