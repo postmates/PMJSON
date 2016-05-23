@@ -58,6 +58,7 @@ class JSONTests: XCTestCase {
         XCTAssertEqual(JSON(true), JSON.Bool(true))
         XCTAssertEqual(JSON(42 as Int64), JSON.Int64(42))
         XCTAssertEqual(JSON(42 as Double), JSON.Double(42))
+        XCTAssertEqual(JSON(42 as Int), JSON.Int64(42))
         XCTAssertEqual(JSON("foo"), JSON.String("foo"))
         XCTAssertEqual(JSON(["foo": true]), ["foo": true])
         XCTAssertEqual(JSON([JSON.Bool(true)] as JSONArray), [true]) // JSONArray
