@@ -189,6 +189,13 @@ extension JSONObject: CustomStringConvertible, CustomDebugStringConvertible {
 
 extension JSONObject: Equatable {}
 
+extension JSONObject: CustomReflectable {
+    public func customMirror() -> Mirror {
+        let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map({ ($0,$1) })
+        return Mirror(self, children: children, displayStyle: .Dictionary)
+    }
+}
+
 public func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
     return lhs.dictionary == rhs.dictionary
 }

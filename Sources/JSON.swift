@@ -154,3 +154,16 @@ extension JSON: ArrayLiteralConvertible, DictionaryLiteralConvertible {
         self = .Object(JSONObject(elements))
     }
 }
+
+extension JSON: CustomReflectable {
+    public func customMirror() -> Mirror {
+        switch self {
+        case .Null, .Bool, .String, .Int64, .Double: return Mirror(self, children: [])
+        case .Object(let obj):
+            let children: LazyMapCollection<JSONObject, Mirror.Child> = obj.lazy.map({ ($0, $1) })
+            return Mirror(self, children: children, displayStyle: .Dictionary)
+        case .Array(let ary):
+            return Mirror(self, unlabeledChildren: ary, displayStyle: .Collection)
+        }
+    }
+}
