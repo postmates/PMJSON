@@ -116,6 +116,27 @@ class JSONSwiftCheck: XCTestCase {
                 }
             }
         }
+        
+        property("JSON's Streamable, description, and debugDescription should be based on the JSON-encoded string") <- {
+            let g = JSON.arbitrary
+            return forAll(g) { json in
+                // Streamable and description are the JSON-encoded string directly.
+                // debugDescription is the JSON-encoded string wrapped in "JSON()".
+                let encoded = JSON.encodeAsString(json, pretty: false)
+                var streamOutput = ""
+                json.writeTo(&streamOutput)
+                guard streamOutput == encoded else {
+                    return TestResult.failed("JSON's Streamable output does not match encoded JSON string").counterexample(String(json))
+                }
+                guard json.description == encoded else {
+                    return TestResult.failed("JSON.description does not match encoded JSON string").counterexample(String(json))
+                }
+                guard json.debugDescription == "JSON(\(encoded))" else {
+                    return TestResult.failed("JSON.debugDescription does not match expected output").counterexample(String(json))
+                }
+                return TestResult.succeeded
+            }
+        }
     }
 }
 

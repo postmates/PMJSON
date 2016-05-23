@@ -98,29 +98,18 @@ public func ==(lhs: JSON, rhs: JSON) -> Bool {
     }
 }
 
-extension JSON: CustomStringConvertible, CustomDebugStringConvertible {
+extension JSON: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
+    public func writeTo<Target : OutputStreamType>(inout target: Target) {
+        JSON.encode(self, toStream: &target, pretty: false)
+    }
+    
     public var description: Swift.String {
-        switch self {
-        case .Null: return "null"
-        case .Bool(let b): return Swift.String(b)
-        case .String(let s): return Swift.String(reflecting: s)
-        case .Int64(let i): return Swift.String(i)
-        case .Double(let n): return Swift.String(n)
-        case .Object(let obj): return Swift.String(obj)
-        case .Array(let ary): return Swift.String(ary)
-        }
+        return JSON.encodeAsString(self, pretty: false)
     }
     
     public var debugDescription: Swift.String {
-        switch self {
-        case .Null: return "JSON.Null"
-        case .Bool(let b): return "JSON.Bool(\(b))"
-        case .String(let s): return "JSON.String(\(Swift.String(reflecting: s)))"
-        case .Int64(let i): return "JSON.Int64(\(i))"
-        case .Double(let n): return "JSON.Double(\(n))"
-        case .Object(let obj): return "JSON.Object(\(Swift.String(reflecting: obj)))"
-        case .Array(let ary): return "JSON.Array(\(Swift.String(reflecting: ary)))"
-        }
+        let desc = JSON.encodeAsString(self, pretty: false)
+        return "JSON(\(desc))"
     }
 }
 
