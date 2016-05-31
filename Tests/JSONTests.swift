@@ -67,6 +67,144 @@ class JSONTests: XCTestCase {
         XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
     }
     
+    func testConvenienceAccessors() {
+        let dict: JSON = [
+            "xs": [["x": 1], ["x": 2], ["x": 3]],
+            "ys": [["y": 1], ["y": nil], ["y": 3], [:]],
+            "zs": nil,
+            "s": "Hello",
+            "array": [
+                [["x": 1], ["x": 2], ["x": 3]],
+                [["y": 1], ["y": nil], ["y": 3], [:]],
+                [["x": [1,2]], ["x": []], ["x": [3]], ["x": [4,5,6]]],
+                nil,
+                "Hello"
+            ],
+            "concat": [["x": [1]], ["x": [2,3]], ["x": []], ["x": [4,5,6]]]
+        ]
+        
+        struct DummyError: ErrorType {}
+        
+        // object-style accessors
+        XCTAssertEqual([1,2,3], try dict.mapArray("xs", { try $0.getInt("x") }))
+        XCTAssertThrowsError(try dict.mapArray("ys", { try $0.getInt("y") }))
+        XCTAssertThrowsError(try dict.mapArray("s", { _ in 1 }))
+        XCTAssertThrowsError(try dict.mapArray("invalid", { _ in 1 }))
+        XCTAssertThrowsError(try dict.mapArray("xs", { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        XCTAssertEqual([1,2,3], try dict.object!.mapArray("xs", { try $0.getInt("x") }))
+        XCTAssertThrowsError(try dict.object!.mapArray("ys", { try $0.getInt("y") }))
+        XCTAssertThrowsError(try dict.object!.mapArray("s", { _ in 1 }))
+        XCTAssertThrowsError(try dict.object!.mapArray("invalid", { _ in 1 }))
+        XCTAssertThrowsError(try dict.object!.mapArray("xs", { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,2,3], try dict.mapArrayOrNil("xs", { try $0.getInt("x") }) ?? [-1])
+        XCTAssertThrowsError(try dict.mapArrayOrNil("ys", { try $0.getInt("y") }) ?? [-1])
+        XCTAssertNil(try dict.mapArrayOrNil("zs", { try $0.getInt("z") }))
+        XCTAssertNil(try dict.mapArrayOrNil("invalid", { try $0.getInt("z") }))
+        XCTAssertThrowsError(try dict.mapArrayOrNil("s", { _ in 1 })!)
+        XCTAssertThrowsError(try dict.mapArrayOrNil("xs", { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        XCTAssertEqual([1,2,3], try dict.object!.mapArrayOrNil("xs", { try $0.getInt("x") }) ?? [-1])
+        XCTAssertThrowsError(try dict.object!.mapArrayOrNil("ys", { try $0.getInt("y") }) ?? [-1])
+        XCTAssertNil(try dict.object!.mapArrayOrNil("zs", { try $0.getInt("z") }))
+        XCTAssertNil(try dict.object!.mapArrayOrNil("invalid", { try $0.getInt("z") }))
+        XCTAssertThrowsError(try dict.object!.mapArrayOrNil("s", { _ in 1 })!)
+        XCTAssertThrowsError(try dict.object!.mapArrayOrNil("xs", { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,3], try dict.flatMapArray("ys", { try $0.getIntOrNil("y") }))
+        XCTAssertEqual([1,2,3,4,5,6], try dict.flatMapArray("concat", { try $0.mapArray("x", { try $0.getInt() }) }))
+        XCTAssertThrowsError(try dict.flatMapArray("zs", { _ in [1] }))
+        XCTAssertThrowsError(try dict.flatMapArray("s", { _ in [1] }))
+        XCTAssertThrowsError(try dict.flatMapArray("invalid", { _ in [1] }))
+        XCTAssertThrowsError(try dict.flatMapArray("xs", { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        XCTAssertEqual([1,3], try dict.object!.flatMapArray("ys", { try $0.getIntOrNil("y") }))
+        XCTAssertEqual([1,2,3,4,5,6], try dict.object!.flatMapArray("concat", { try $0.mapArray("x", { try $0.getInt() }) }))
+        XCTAssertThrowsError(try dict.object!.flatMapArray("zs", { _ in [1] }))
+        XCTAssertThrowsError(try dict.object!.flatMapArray("s", { _ in [1] }))
+        XCTAssertThrowsError(try dict.object!.flatMapArray("invalid", { _ in [1] }))
+        XCTAssertThrowsError(try dict.object!.flatMapArray("xs", { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,3], try dict.flatMapArrayOrNil("ys", { try $0.getIntOrNil("y") }) ?? [])
+        XCTAssertEqual([1,2,3,4,5,6], try dict.flatMapArrayOrNil("concat", { try $0.mapArray("x", { try $0.getInt() }) }) ?? [])
+        XCTAssertNil(try dict.flatMapArrayOrNil("zs", { _ in [1] }))
+        XCTAssertThrowsError(try dict.flatMapArrayOrNil("s", { _ in [1] }))
+        XCTAssertNil(try dict.flatMapArrayOrNil("invalid", { _ in [1] }))
+        XCTAssertThrowsError(try dict.flatMapArrayOrNil("xs", { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        XCTAssertEqual([1,3], try dict.object!.flatMapArrayOrNil("ys", { try $0.getIntOrNil("y") }) ?? [])
+        XCTAssertEqual([1,2,3,4,5,6], try dict.object!.flatMapArrayOrNil("concat", { try $0.mapArray("x", { try $0.getInt() }) }) ?? [])
+        XCTAssertNil(try dict.object!.flatMapArrayOrNil("zs", { _ in [1] }))
+        XCTAssertThrowsError(try dict.object!.flatMapArrayOrNil("s", { _ in [1] }))
+        XCTAssertNil(try dict.object!.flatMapArrayOrNil("invalid", { _ in [1] }))
+        XCTAssertThrowsError(try dict.object!.flatMapArrayOrNil("xs", { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertThrowsError(try dict["array"]!.mapArray("xs", { _ in 1 }))
+        XCTAssertThrowsError(try dict["array"]!.mapArrayOrNil("xs", { _ in 1 }))
+        XCTAssertThrowsError(try dict["array"]!.flatMapArray("xs", { _ -> Int? in 1 }))
+        XCTAssertThrowsError(try dict["array"]!.flatMapArray("xs", { _ in [1] }))
+        XCTAssertThrowsError(try dict["array"]!.flatMapArrayOrNil("xs", { _ -> Int? in 1 }))
+        XCTAssertThrowsError(try dict["array"]!.flatMapArrayOrNil("xs", { _ in [1] }))
+        
+        // array-style accessors
+        let array = dict["array"]!
+        XCTAssertEqual([1,2,3], try array.mapArray(0, { try $0.getInt("x") }))
+        XCTAssertThrowsError(try array.mapArray(1, { try $0.getInt("y") }))
+        XCTAssertEqual([2,0,1,3], try array.mapArray(2, { try $0.getArray("x").count }))
+        XCTAssertThrowsError(try array.mapArray(3, { _ in 1 })) // null
+        XCTAssertThrowsError(try array.mapArray(4, { _ in 1 })) // string
+        XCTAssertThrowsError(try array.mapArray(5, { _ in 1 })) // out of bounds
+        XCTAssertThrowsError(try array.mapArray(0, { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,2,3], try array.mapArrayOrNil(0, { try $0.getInt("x") }) ?? [])
+        XCTAssertThrowsError(try array.mapArrayOrNil(1, { try $0.getInt("y") }))
+        XCTAssertEqual([2,0,1,3], try array.mapArrayOrNil(2, { try $0.getArray("x").count }) ?? [])
+        XCTAssertNil(try array.mapArrayOrNil(3, { _ in 1 })) // null
+        XCTAssertThrowsError(try array.mapArrayOrNil(4, { _ in 1 })) // string
+        XCTAssertNil(try array.mapArrayOrNil(5, { _ in 1 })) // out of bounds
+        XCTAssertThrowsError(try array.mapArrayOrNil(0, { _ in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,3], try array.flatMapArray(1, { try $0.getIntOrNil("y") }))
+        XCTAssertEqual([1,2,3,4,5,6], try array.flatMapArray(2, { try $0.mapArray("x", { try $0.getInt() }) }))
+        XCTAssertThrowsError(try array.flatMapArray(3, { _ in [1] })) // null
+        XCTAssertThrowsError(try array.flatMapArray(4, { _ in [1] })) // string
+        XCTAssertThrowsError(try array.flatMapArray(5, { _ in [1] })) // out of bounds
+        XCTAssertThrowsError(try array.flatMapArray(0, { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertEqual([1,3], try array.flatMapArrayOrNil(1, { try $0.getIntOrNil("y") }) ?? [])
+        XCTAssertEqual([1,2,3,4,5,6], try array.flatMapArrayOrNil(2, { try $0.mapArray("x", { try $0.getInt() }) }) ?? [])
+        XCTAssertNil(try array.flatMapArrayOrNil(3, { _ in [1] })) // null
+        XCTAssertThrowsError(try array.flatMapArrayOrNil(4, { _ in [1] })) // string
+        XCTAssertNil(try array.flatMapArrayOrNil(5, { _ in [1] })) // out of bounds
+        XCTAssertThrowsError(try array.flatMapArrayOrNil(0, { _ -> [Int] in throw DummyError() })) { error in
+            XCTAssert(error is DummyError, "expected DummyError, found \(error)")
+        }
+        
+        XCTAssertThrowsError(try dict.mapArray(0, { _ in 1 }))
+        XCTAssertThrowsError(try dict.mapArrayOrNil(0, { _ in 1 }))
+        XCTAssertThrowsError(try dict.flatMapArray(0, { _ in 1 }))
+        XCTAssertThrowsError(try dict.flatMapArrayOrNil(0, { _ in 1 }))
+    }
+    
     lazy var bigJson: NSData = {
         var s = "[\n"
         for _ in 0..<1000 {

@@ -1234,10 +1234,13 @@ public extension JSONObject {
 
 // MARK: - JSONArray helpers
 
+// FIXME: Swift 3: Use `rethrows`.
 public extension JSON {
     /// Returns an `Array` containing the results of mapping `transform` over `array`.
+    ///
     /// If `transform` throws a `JSONError`, the error will be modified to include the index
     /// of the element that caused the error.
+    ///
     /// - Parameter array: The `JSONArray` to map over.
     /// - Parameter transform: A block that is called once for each element of `array`.
     /// - Returns: An array with the results of mapping `transform` over `array`.
@@ -1251,13 +1254,15 @@ public extension JSON {
     }
     
     /// Returns an `Array` containing the non-`nil` results of mapping `transform` over `array`.
+    ///
     /// If `transform` throws a `JSONError`, the error will be modified to include the index
     /// of the element that caused the error.
+    ///
     /// - Parameter array: The `JSONArray` to map over.
     /// - Parameter transform: A block that is called once for each element of `array`.
     /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
-    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    /// - Complexity: O(*N*).
     /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
     ///   limitations. If you want to map an array with a non-throwing transform function, use
     ///   `SequenceType.flatMap` instead.
@@ -1266,8 +1271,10 @@ public extension JSON {
     }
     
     /// Returns an `Array` containing the concatenated results of mapping `transform` over `array`.
+    ///
     /// If `transform` throws a `JSONError`, the error will be modified to include the index
     /// of the element that caused the error.
+    ///
     /// - Parameter array: The `JSONArray` to map over.
     /// - Parameter transform: A block that is called once for each element of `array`.
     /// - Returns: An array with the concatenated results of mapping `transform` over `array`.
@@ -1276,7 +1283,7 @@ public extension JSON {
     /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
     ///   limitations. If you want to map an array with a non-throwing transform function, use
     ///   `SequenceType.flatMap` instead.
-    static func flatMap<S: SequenceType>(array: JSONArray, _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+    static func flatMap<S: SequenceType>(array: JSONArray, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
         // FIXME: Use SequenceType.flatMap() once it becomes @noescape
         var results: [S.Generator.Element] = []
         for (i, elt) in array.enumerate() {
@@ -1285,6 +1292,307 @@ public extension JSON {
             }
         }
         return results
+    }
+}
+
+public extension JSON {
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
+    ///   is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T] {
+        return try getArray(key, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(index, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
+    ///   value is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArray<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T) throws -> [T] {
+        return try getArray(index, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array, or `nil` if
+    ///   `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or `key` exists but the value is not
+    ///   an array or `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `index` is out of bounds or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array, or `nil` if
+    ///   `index` is out of bounds or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or the subscript value is not an
+    ///   array or `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArrayOrNil<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+        return try getArrayOrNil(index, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
+    ///   is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+        return try getArray(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
+    ///   is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArray<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+        return try getArray(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(index, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
+    ///   value is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArray<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+        return try getArray(index, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(index, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
+    ///   value is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArray<S: SequenceType>(index: Swift.Int, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+        return try getArray(index, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array, or
+    ///   `nil` if `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array,
+    ///   or `nil` if `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArrayOrNil<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `index` is out of bounds or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array, or
+    ///   `nil` if `index` is out of bounds or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArrayOrNil<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `index` is out of bounds or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array,
+    ///   or `nil` if `index` is out of bounds or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArrayOrNil<S: SequenceType>(index: Swift.Int, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+        return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
+    }
+}
+
+public extension JSONObject {
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T] {
+        return try getArray(key, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.map($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the results of mapping `transform` over the array, or `nil` if
+    ///   `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func mapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.map($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+        return try getArray(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array.
+    /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArray<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+        return try getArray(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the non-`nil` results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the non-`nil` results of mapping `transform` over the array, or
+    ///   `nil` if `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func flatMapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
+    /// containing the concatenated results of mapping `transform` over the value.
+    ///
+    /// Returns `nil` if `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter transform: A block that is called once for each element of the resulting array.
+    /// - Returns: An array with the concatenated results of mapping `transform` over the array,
+    ///   or `nil` if `key` does not exist or the value is `null`.
+    /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
+    ///   Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
+    func flatMapArrayOrNil<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
 }
 

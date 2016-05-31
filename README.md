@@ -159,6 +159,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add a set of convenience methods on `JSON` and `JSONObject` for mapping arrays returned by subscripting with a key or index: `mapArray(_:_:)`, `mapArrayOrNil(_:_:)`, `flatMapArray(_:_:)`, and `flatMapArrayOrNil(_:_:)`.
+
 #### v0.9.3 (2016-05-23)
 
 * Add new set of convenience `JSON` initializers.
