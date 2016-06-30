@@ -205,6 +205,27 @@
         case NonStringKey
     }
     
+    public extension JSONError {
+        /// Registers the `NSError` userInfo provider for `JSONError`.
+        @available(iOS 9, OSX 10.11, *)
+        static func registerNSErrorUserInfoProvider() {
+            _ = _lazyRegister
+        }
+        
+        @available(iOS 9, OSX 10.11, *)
+        private static var _lazyRegister: () = {
+            NSError.setUserInfoValueProviderForDomain("PMJSON.JSONError") { (error, key) in
+                guard let error = error as ErrorType as? JSONError else { return nil }
+                switch key {
+                case NSLocalizedDescriptionKey:
+                    return String(error)
+                default:
+                    return nil
+                }
+            }
+        }()
+    }
+    
     private struct UTF8Decoder: SequenceType {
         init(data: NSData) {
             self.data = data
