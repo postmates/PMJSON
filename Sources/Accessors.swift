@@ -80,63 +80,118 @@ public extension JSON {
 
 public extension JSON {
     /// Returns the boolean value if the receiver is `.Bool`, otherwise `nil`.
+    ///
+    /// When setting, replaces the receiver with the given boolean value, or with
+    /// null if the value is `nil`.
     var bool: Swift.Bool? {
-        switch self {
-        case .Bool(let b): return b
-        default: return nil
+        get {
+            switch self {
+            case .Bool(let b): return b
+            default: return nil
+            }
+        }
+        set {
+            self = newValue.map(JSON.Bool) ?? nil
         }
     }
     
     /// Returns the string value if the receiver is `.String`, otherwise `nil`.
+    ///
+    /// When setting, replaces the receiver with the given string value, or with
+    /// null if the value is `nil`.
     var string: Swift.String? {
-        switch self {
-        case .String(let s): return s
-        default: return nil
+        get {
+            switch self {
+            case .String(let s): return s
+            default: return nil
+            }
+        }
+        set {
+            self = newValue.map(JSON.String) ?? nil
         }
     }
     
     /// Returns the 64-bit integral value if the receiver is `.Int64` or `.Double`, otherwise `nil`.
     /// If the receiver is `.Double`, the value is truncated. If it does not fit in 64 bits, `nil` is returned.
+    ///
+    /// When setting, replaces the receiver with the given integral value, or with
+    /// null if the value is `nil`.
     var int64: Swift.Int64? {
-        switch self {
-        case .Int64(let i): return i
-        case .Double(let d): return convertDoubleToInt64(d)
-        default: return nil
+        get {
+            switch self {
+            case .Int64(let i): return i
+            case .Double(let d): return convertDoubleToInt64(d)
+            default: return nil
+            }
+        } set {
+            self = newValue.map(JSON.Int64) ?? nil
         }
     }
     
     /// Returns the integral value if the receiver is `.Int64` or `.Double`, otherwise `nil`.
     /// If the receiver is `.Double`, the value is truncated. If it does not fit in an `Int`, `nil` is returned.
     /// If the receiver is `.Int64` and the value does not fit in an `.Int`, `nil` is returned.
+    ///
+    /// When setting, replaces the receiver with the given integral value, or with
+    /// null if the value is `nil`.
     var int: Int? {
-        guard let value = int64 else { return nil}
-        let truncated = Int(truncatingBitPattern: value)
-        guard Swift.Int64(truncated) == value else { return nil }
-        return truncated
+        get {
+            guard let value = int64 else { return nil}
+            let truncated = Int(truncatingBitPattern: value)
+            guard Swift.Int64(truncated) == value else { return nil }
+            return truncated
+        }
+        set {
+            self = newValue.map({ JSON.Int64(Swift.Int64($0)) }) ?? nil
+        }
     }
     
     /// Returns the numeric value as a `Double` if the receiver is `.Int64` or `.Double`, otherwise `nil`.
+    ///
+    /// When setting, replaces the receiver with the given double value, or with
+    /// null if the value is `nil`.
     var double: Swift.Double? {
-        switch self {
-        case .Int64(let i): return Swift.Double(i)
-        case .Double(let d): return d
-        default: return nil
+        get {
+            switch self {
+            case .Int64(let i): return Swift.Double(i)
+            case .Double(let d): return d
+            default: return nil
+            }
+        }
+        set {
+            self = newValue.map(JSON.Double) ?? nil
         }
     }
     
     /// Returns the object dictionary if the receiver is `.Object`, otherwise `nil`.
+    ///
+    /// When setting, replaces the receiver with the given object value, or with
+    /// null if the value is `nil`.
     var object: JSONObject? {
-        switch self {
-        case .Object(let obj): return obj
-        default: return nil
+        get {
+            switch self {
+            case .Object(let obj): return obj
+            default: return nil
+            }
+        }
+        set {
+            self = newValue.map(JSON.Object) ?? nil
         }
     }
     
     /// Returns the array if the receiver is `.Array`, otherwise `nil`.
+    ///
+    /// When setting, replaces the receiver with the given array value, or with
+    /// null if the value is `nil`.
     var array: JSONArray? {
-        switch self {
-        case .Array(let ary): return ary
-        default: return nil
+        get {
+            switch self {
+            case .Array(let ary): return ary
+            default: return nil
+            }
+        }
+        set {
+            self = newValue.map(JSON.Array) ?? nil
         }
     }
 }

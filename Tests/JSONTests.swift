@@ -15,6 +15,15 @@
 import XCTest
 import PMJSON
 
+let bigJson: NSData = {
+    var s = "[\n"
+    for _ in 0..<1000 {
+        s += "{ \"a\": true, \"b\": null, \"c\":3.1415, \"d\": \"Hello world\", \"e\": [1,2,3]},"
+    }
+    s += "{}]"
+    return s.dataUsingEncoding(NSUTF8StringEncoding)!
+}()
+
 class JSONTests: XCTestCase {
     func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
@@ -205,15 +214,84 @@ class JSONTests: XCTestCase {
         XCTAssertThrowsError(try dict.flatMapArrayOrNil(0, { _ in 1 }))
     }
     
-    lazy var bigJson: NSData = {
-        var s = "[\n"
-        for _ in 0..<1000 {
-            s += "{ \"a\": true, \"b\": null, \"c\":3.1415, \"d\": \"Hello world\", \"e\": [1,2,3]},"
-        }
-        s += "{}]"
-        return s.dataUsingEncoding(NSUTF8StringEncoding)!
-    }()
+    func testConvenienceAccessorAssignments() {
+        var json: JSON = "test"
+        
+        XCTAssertNil(json.bool)
+        json.bool = true
+        XCTAssertEqual(json, true)
+        json.bool = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.string)
+        json.string = "foo"
+        XCTAssertEqual(json, "foo")
+        json.string = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.int64)
+        json.int64 = 42
+        XCTAssertEqual(json, 42)
+        json.int64 = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.int)
+        json.int = 42
+        XCTAssertEqual(json, 42)
+        json.int = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.double)
+        json.double = 42
+        XCTAssertEqual(json, 42)
+        json.double = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.object)
+        json.object = ["foo": "bar"]
+        XCTAssertEqual(json, ["foo": "bar"])
+        json.object = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        XCTAssertNil(json.array)
+        json.array = [1,2,3]
+        XCTAssertEqual(json, [1,2,3])
+        json.array = nil
+        XCTAssertEqual(json, JSON.Null)
+        
+        json = ["foo": "bar"]
+        json.object?["baz"] = "qux"
+        XCTAssertEqual(json, ["foo": "bar", "baz": "qux"])
+        
+        json = ["value": ["array": [1,2]]]
+        json.object?["value"]?.object?["array"]?.array?.append(3)
+        XCTAssertEqual(json, ["value": ["array": [1,2,3]]])
+    }
     
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    func testJSONErrorNSErrorDescription() throws {
+        if #available(iOS 9, OSX 10.11, *) {
+            JSONError.registerNSErrorUserInfoProvider()
+            let jserror: JSONError?
+            do {
+                let json: JSON = ["foo": 1]
+                _ = try json.getString("foo")
+                jserror = nil
+            } catch let error as JSONError {
+                jserror = error
+            }
+            guard let error = jserror else {
+                XCTFail("Expected error, found nothing")
+                return
+            }
+            let nserror = error as NSError
+            XCTAssertEqual(String(error), nserror.localizedDescription)
+        }
+    }
+    #endif
+}
+
+class JSONBenchmarks: XCTestCase {
     func testCompareCocoa() {
         do {
             let json = try JSON.decode(bigJson)
@@ -310,28 +388,6 @@ class JSONTests: XCTestCase {
             XCTFail("error parsing json: \(error)")
         }
     }
-    
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    func testJSONErrorNSErrorDescription() throws {
-        if #available(iOS 9, OSX 10.11, *) {
-            JSONError.registerNSErrorUserInfoProvider()
-            let jserror: JSONError?
-            do {
-                let json: JSON = ["foo": 1]
-                _ = try json.getString("foo")
-                jserror = nil
-            } catch let error as JSONError {
-                jserror = error
-            }
-            guard let error = jserror else {
-                XCTFail("Expected error, found nothing")
-                return
-            }
-            let nserror = error as NSError
-            XCTAssertEqual(String(error), nserror.localizedDescription)
-        }
-    }
-    #endif
 }
 
 private func matchesJSON(a: JSON, _ b: JSON) -> Bool {
