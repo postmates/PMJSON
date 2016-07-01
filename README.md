@@ -161,10 +161,12 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 #### Development
 
-* Add a set of convenience methods on `JSON` and `JSONObject` for mapping arrays returned by subscripting with a key or index: `mapArray(_:_:)`, `mapArrayOrNil(_:_:)`, `flatMapArray(_:_:)`, and `flatMapArrayOrNil(_:_:)`.
+* Add setters for basic accessors so you can write code like `json["foo"].object?["key"] = "bar"`.
+* Add optional `NSError` userInfo provider for `JSONError`. Setting this up requires calling `JSONError.registerNSErrorUserInfoProvider()`.
 
 #### v0.9.3 (2016-05-23)
 
+* Add a set of convenience methods on `JSON` and `JSONObject` for mapping arrays returned by subscripting with a key or index: `mapArray(_:_:)`, `mapArrayOrNil(_:_:)`, `flatMapArray(_:_:)`, and `flatMapArrayOrNil(_:_:)`.
 * Add new set of convenience `JSON` initializers.
 * Change `description` and `debugDescription` for `JSON` and `JSONObject` to be more useful.
   `description` is now the JSON-encoded string.
