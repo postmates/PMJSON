@@ -15,17 +15,17 @@
 import XCTest
 import PMJSON
 
-let bigJson: NSData = {
+let bigJson: Data = {
     var s = "[\n"
     for _ in 0..<1000 {
         s += "{ \"a\": true, \"b\": null, \"c\":3.1415, \"d\": \"Hello world\", \"e\": [1,2,3]},"
     }
     s += "{}]"
-    return s.dataUsingEncoding(NSUTF8StringEncoding)!
+    return s.data(using: String.Encoding.utf8)!
 }()
 
 class JSONTests: XCTestCase {
-    func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: StaticString = #file, line: UInt = #line) {
+    func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
             let a = try a(), b = b()
             if !matchesJSON(a, b) {
@@ -60,18 +60,18 @@ class JSONTests: XCTestCase {
     }
     
     func testParserErrorDescription() {
-        XCTAssertEqual(String(JSONParserError(code: .UnexpectedEOF, line: 5, column: 12)), "JSONParserError(UnexpectedEOF, line: 5, column: 12)")
+        XCTAssertEqual(String(JSONParserError(code: .unexpectedEOF, line: 5, column: 12)), "JSONParserError(unexpectedEOF, line: 5, column: 12)")
     }
     
     func testConversions() {
-        XCTAssertEqual(JSON(true), JSON.Bool(true))
-        XCTAssertEqual(JSON(42 as Int64), JSON.Int64(42))
-        XCTAssertEqual(JSON(42 as Double), JSON.Double(42))
-        XCTAssertEqual(JSON(42 as Int), JSON.Int64(42))
-        XCTAssertEqual(JSON("foo"), JSON.String("foo"))
+        XCTAssertEqual(JSON(true), JSON.bool(true))
+        XCTAssertEqual(JSON(42 as Int64), JSON.int64(42))
+        XCTAssertEqual(JSON(42 as Double), JSON.double(42))
+        XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
+        XCTAssertEqual(JSON("foo"), JSON.string("foo"))
         XCTAssertEqual(JSON(["foo": true]), ["foo": true])
-        XCTAssertEqual(JSON([JSON.Bool(true)] as JSONArray), [true]) // JSONArray
-        XCTAssertEqual(JSON([true].lazy.map(JSON.Bool)), [true]) // Sequence of JSON
+        XCTAssertEqual(JSON([JSON.bool(true)] as JSONArray), [true]) // JSONArray
+        XCTAssertEqual(JSON([true].lazy.map(JSON.bool)), [true]) // Sequence of JSON
         XCTAssertEqual(JSON([["foo": true], ["bar": 42]].lazy.map(JSONObject.init)), [["foo": true], ["bar": 42]]) // Sequence of JSONObject
         XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
     }
@@ -92,7 +92,7 @@ class JSONTests: XCTestCase {
             "concat": [["x": [1]], ["x": [2,3]], ["x": []], ["x": [4,5,6]]]
         ]
         
-        struct DummyError: ErrorType {}
+        struct DummyError: ErrorProtocol {}
         
         // object-style accessors
         XCTAssertEqual([1,2,3], try dict.mapArray("xs", { try $0.getInt("x") }))
@@ -221,43 +221,43 @@ class JSONTests: XCTestCase {
         json.bool = true
         XCTAssertEqual(json, true)
         json.bool = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.string)
         json.string = "foo"
         XCTAssertEqual(json, "foo")
         json.string = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.int64)
         json.int64 = 42
         XCTAssertEqual(json, 42)
         json.int64 = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.int)
         json.int = 42
         XCTAssertEqual(json, 42)
         json.int = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.double)
         json.double = 42
         XCTAssertEqual(json, 42)
         json.double = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.object)
         json.object = ["foo": "bar"]
         XCTAssertEqual(json, ["foo": "bar"])
         json.object = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.array)
         json.array = [1,2,3]
         XCTAssertEqual(json, [1,2,3])
         json.array = nil
-        XCTAssertEqual(json, JSON.Null)
+        XCTAssertEqual(json, JSON.null)
         
         json = ["foo": "bar"]
         json.object?["baz"] = "qux"
@@ -296,9 +296,9 @@ class JSONBenchmarks: XCTestCase {
         do {
             let json = try JSON.decode(bigJson)
             let jsonObj = json.ns as! NSObject
-            let cocoa = try NSJSONSerialization.JSONObjectWithData(bigJson, options: []) as! NSObject
+            let cocoa = try JSONSerialization.jsonObject(with: bigJson) as! NSObject
             XCTAssertEqual(jsonObj, cocoa)
-            let cocoa2 = try NSJSONSerialization.JSONObjectWithData(JSON.encodeAsData(json), options: []) as! NSObject
+            let cocoa2 = try JSONSerialization.jsonObject(with: JSON.encodeAsData(json)) as! NSObject
             XCTAssertEqual(jsonObj, cocoa2)
         } catch {
             XCTFail(String(error))
@@ -306,7 +306,7 @@ class JSONBenchmarks: XCTestCase {
     }
     
     func testDecodePerformance() {
-        measureBlock { [bigJson] in
+        measure { [bigJson] in
             for _ in 0..<10 {
                 do {
                     _ = try JSON.decode(bigJson)
@@ -318,10 +318,10 @@ class JSONBenchmarks: XCTestCase {
     }
     
     func testDecodePerformanceCocoa() {
-        measureBlock { [bigJson] in
+        measure { [bigJson] in
             for _ in 0..<10 {
                 do {
-                    _ = try NSJSONSerialization.JSONObjectWithData(bigJson, options: [])
+                    _ = try JSONSerialization.jsonObject(with: bigJson, options: [])
                 } catch {
                     XCTFail("error parsing json: \(error)")
                 }
@@ -332,7 +332,7 @@ class JSONBenchmarks: XCTestCase {
     func testEncodePerformance() {
         do {
             let json = try JSON.decode(bigJson)
-            measureBlock {
+            measure {
                 for _ in 0..<10 {
                     _ = JSON.encodeAsData(json, pretty: false)
                 }
@@ -345,10 +345,10 @@ class JSONBenchmarks: XCTestCase {
     func testEncodeCocoaPerformance() {
         do {
             let json = try JSON.decode(bigJson).ns
-            measureBlock {
+            measure {
                 for _ in 0..<10 {
                     do {
-                        _ = try NSJSONSerialization.dataWithJSONObject(json, options: [])
+                        _ = try JSONSerialization.data(withJSONObject: json)
                     } catch {
                         XCTFail("error encoding json: \(error)")
                     }
@@ -362,7 +362,7 @@ class JSONBenchmarks: XCTestCase {
     func testEncodePrettyPerformance() {
         do {
             let json = try JSON.decode(bigJson)
-            measureBlock {
+            measure {
                 for _ in 0..<10 {
                     _ = JSON.encodeAsData(json, pretty: true)
                 }
@@ -375,10 +375,10 @@ class JSONBenchmarks: XCTestCase {
     func testEncodePrettyCocoaPerformance() {
         do {
             let json = try JSON.decode(bigJson).ns
-            measureBlock {
+            measure {
                 for _ in 0..<10 {
                     do {
-                        _ = try NSJSONSerialization.dataWithJSONObject(json, options: [.PrettyPrinted])
+                        _ = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted])
                     } catch {
                         XCTFail("error encoding json: \(error)")
                     }
@@ -390,28 +390,28 @@ class JSONBenchmarks: XCTestCase {
     }
 }
 
-private func matchesJSON(a: JSON, _ b: JSON) -> Bool {
+private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     switch (a, b) {
-    case (.Array(let a), .Array(let b)):
+    case (.array(let a), .array(let b)):
         return a.count == b.count && !zip(a, b).contains({!matchesJSON($0, $1)})
-    case (.Object(let a), .Object(let b)):
+    case (.object(let a), .object(let b)):
         var seen = Set<String>()
         for (key, value) in a {
             seen.insert(key)
-            guard let bValue = b[key] where matchesJSON(value, bValue) else {
+            guard let bValue = b[key], matchesJSON(value, bValue) else {
                 return false
             }
         }
-        return seen.isSupersetOf(b.keys)
-    case (.String(let a), .String(let b)):
+        return seen.isSuperset(of: b.keys)
+    case (.string(let a), .string(let b)):
         return a == b
-    case (.Int64(let a), .Int64(let b)):
+    case (.int64(let a), .int64(let b)):
         return a == b
-    case (.Double(let a), .Double(let b)):
+    case (.double(let a), .double(let b)):
         return a == b
-    case (.Null, .Null):
+    case (.null, .null):
         return true
-    case (.Bool(let a), .Bool(let b)):
+    case (.bool(let a), .bool(let b)):
         return a == b
     default:
         return false

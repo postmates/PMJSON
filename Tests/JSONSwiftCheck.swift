@@ -33,7 +33,7 @@ class JSONSwiftCheck: XCTestCase {
             return forAll(g) { json in
                 do {
                     let object = json.ns
-                    let data = try NSJSONSerialization.dataWithJSONObject(object, options: [])
+                    let data = try JSONSerialization.data(withJSONObject: object)
                     let decoded = try JSON.decode(data)
                     return decoded.approximatelyEqual(json)
                 } catch {
@@ -47,15 +47,15 @@ class JSONSwiftCheck: XCTestCase {
             return forAll(g) { json in
                 do {
                     let object = json.ns
-                    guard NSJSONSerialization.isValidJSONObject(object) else {
+                    guard JSONSerialization.isValidJSONObject(object) else {
                         return TestResult.failed("JSON object is not valid for NSJSONSerialization").counterexample(String(json))
                     }
-                    let data = try NSJSONSerialization.dataWithJSONObject(object, options: .PrettyPrinted)
+                    let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
                     do {
                         let decoded = try JSON.decode(data)
                         return decoded.approximatelyEqual(json)
                     } catch {
-                        return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(data: data, encoding: NSUTF8StringEncoding) ?? "(decode failure)").counterexample(String(json))
+                        return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(data: data, encoding: String.Encoding.utf8) ?? "(decode failure)").counterexample(String(json))
                     }
                 } catch {
                     return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(json))
@@ -94,7 +94,7 @@ class JSONSwiftCheck: XCTestCase {
             return forAll(g) { json in
                 do {
                     let data = JSON.encodeAsData(json, pretty: false)
-                    let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
+                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
                     let json2 = try JSON(ns: cocoa)
                     return json2.approximatelyEqual(json)
                 } catch {
@@ -108,7 +108,7 @@ class JSONSwiftCheck: XCTestCase {
             return forAll(g) { json in
                 do {
                     let data = JSON.encodeAsData(json, pretty: true)
-                    let cocoa = try NSJSONSerialization.JSONObjectWithData(data, options: [.AllowFragments])
+                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
                     let json2 = try JSON(ns: cocoa)
                     return json2.approximatelyEqual(json)
                 } catch {
@@ -124,7 +124,7 @@ class JSONSwiftCheck: XCTestCase {
                 // debugDescription is the JSON-encoded string wrapped in "JSON()".
                 let encoded = JSON.encodeAsString(json, pretty: false)
                 var streamOutput = ""
-                json.writeTo(&streamOutput)
+                json.write(to: &streamOutput)
                 guard streamOutput == encoded else {
                     return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(json))
                 }
@@ -145,7 +145,7 @@ class JSONSwiftCheck: XCTestCase {
                 // debugDescription is the JSON-encoded string wrapped in "JSONObject()".
                 let encoded = JSON.encodeAsString(JSON(jsonObj), pretty: false)
                 var streamOutput = ""
-                jsonObj.writeTo(&streamOutput)
+                jsonObj.write(to: &streamOutput)
                 guard streamOutput == encoded else {
                     return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(jsonObj))
                 }
@@ -163,15 +163,15 @@ class JSONSwiftCheck: XCTestCase {
 
 extension JSON {
     /// Performs an equality test, but accepts nearly-equal `Double` values.
-    private func approximatelyEqual(other: JSON) -> Swift.Bool {
+    private func approximatelyEqual(_ other: JSON) -> Bool {
         switch (self, other) {
-        case (.Double(let a), .Double(let b)):
+        case (.double(let a), .double(let b)):
             // we're going to cheat and just convert them to Floats and compare that way.
             // We just care about equal up to a given precision, and so dropping down to Float precision should give us that.
             return Float(a) == Float(b)
-        case (.Array(let a), .Array(let b)):
+        case (.array(let a), .array(let b)):
             return a.count == b.count && !zip(a, b).lazy.contains({ !$0.approximatelyEqual($1) })
-        case (.Object(let a), .Object(let b)):
+        case (.object(let a), .object(let b)):
             return a.count == b.count && !a.contains({ (k,v) in b[k].map({ !$0.approximatelyEqual(v) }) ?? true })
         default:
             return self == other
@@ -182,13 +182,13 @@ extension JSON {
 extension JSON: Arbitrary {
     public static var arbitrary: Gen<JSON> {
         return Gen.oneOf([
-            Gen.pure(JSON.Null),
-            JSON.Bool <^> Swift.Bool.arbitrary,
-            JSON.String <^> Swift.String.arbitrary,
-            JSON.Int64 <^> Swift.Int64.arbitrary,
-            JSON.Double <^> Swift.Double.arbitrary,
-            Gen.sized({ n in (JSON.Object <^> JSONObject.arbitrary).resize(n/2) }),
-            Gen.sized({ n in (JSON.Array <^> JSONArray.arbitrary).resize(n/2) })
+            Gen.pure(JSON.null),
+            JSON.bool <^> Bool.arbitrary,
+            JSON.string <^> String.arbitrary,
+            JSON.int64 <^> Int64.arbitrary,
+            JSON.double <^> Double.arbitrary,
+            Gen.sized({ n in (JSON.object <^> JSONObject.arbitrary).resize(n/2) }),
+            Gen.sized({ n in (JSON.array <^> JSONArray.arbitrary).resize(n/2) })
             ])
     }
     
@@ -196,19 +196,19 @@ extension JSON: Arbitrary {
     // non-trivial JSON structure. Don't use it. Code is provided just for curiosity's sake.
 //    public static func shrink(json: JSON) -> [JSON] {
 //        switch json {
-//        case .Null: return []
-//        case .Bool(let b): return Swift.Bool.shrink(b).map(JSON.Bool)
-//        case .String(let s): return Swift.String.shrink(s).map(JSON.String)
-//        case .Int64(let i): return Swift.Int64.shrink(i).map(JSON.Int64)
-//        case .Double(let d): return Swift.Double.shrink(d).map(JSON.Double)
-//        case .Object(let obj): return Swift.Dictionary.shrink(obj.dictionary).map({ JSON.Object(JSONObject($0)) })
-//        case .Array(let ary): return Swift.ContiguousArray.shrink(ary).map(JSON.Array)
+//        case .null: return []
+//        case .bool(let b): return Bool.shrink(b).map(JSON.Bool)
+//        case .string(let s): return String.shrink(s).map(JSON.String)
+//        case .int64(let i): return Int64.shrink(i).map(JSON.Int64)
+//        case .double(let d): return Double.shrink(d).map(JSON.Double)
+//        case .object(let obj): return Dictionary.shrink(obj.dictionary).map({ JSON.Object(JSONObject($0)) })
+//        case .array(let ary): return ContiguousArray.shrink(ary).map(JSON.Array)
 //        }
 //    }
 }
 
 extension JSONObject: Arbitrary {
     public static var arbitrary: Gen<JSONObject> {
-        return Gen.sized({ n in ({ JSONObject($0) } <^> Dictionary<Swift.String,JSON>.arbitrary).resize(n/2) })
+        return Gen.sized({ n in ({ JSONObject($0) } <^> Dictionary<String,JSON>.arbitrary).resize(n/2) })
     }
 }

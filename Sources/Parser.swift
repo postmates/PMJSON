@@ -19,15 +19,15 @@
 #endif
 
 /// A streaming JSON parser that consumes a sequence of unicode scalars.
-public struct JSONParser<Seq: SequenceType where Seq.Generator.Element == UnicodeScalar>: SequenceType {
+public struct JSONParser<Seq: Sequence where Seq.Iterator.Element == UnicodeScalar>: Sequence {
     public init(_ seq: Seq) {
         base = seq
     }
     
     public var strict: Bool = false
     
-    public func generate() -> JSONParserGenerator<Seq.Generator> {
-        var gen = JSONParserGenerator(base.generate())
+    public func makeIterator() -> JSONParserGenerator<Seq.Iterator> {
+        var gen = JSONParserGenerator(base.makeIterator())
         gen.strict = strict
         return gen
     }
@@ -36,7 +36,7 @@ public struct JSONParser<Seq: SequenceType where Seq.Generator.Element == Unicod
 }
 
 /// The generator for JSONParser.
-public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == UnicodeScalar>: JSONEventGenerator {
+public struct JSONParserGenerator<Gen: IteratorProtocol where Gen.Element == UnicodeScalar>: JSONEventGenerator {
     public init(_ gen: Gen) {
         base = PeekGenerator(gen)
     }
@@ -49,113 +49,113 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
             // which are guaranteed to shift to other states (if they don't return) so the loop is finite
             while true {
                 switch state {
-                case .ParseArrayComma:
+                case .parseArrayComma:
                     switch skipWhitespace() {
                     case ","?:
-                        state = .ParseArray(first: false)
+                        state = .parseArray(first: false)
                         continue
                     case "]"?:
                         try popStack()
-                        return .ArrayEnd
-                    case .Some:
-                        throw error(.InvalidSyntax)
+                        return .arrayEnd
+                    case .some:
+                        throw error(.invalidSyntax)
                     case nil:
-                        throw error(.UnexpectedEOF)
+                        throw error(.unexpectedEOF)
                     }
-                case .ParseObjectComma:
+                case .parseObjectComma:
                     switch skipWhitespace() {
                     case ","?:
-                        state = .ParseObjectKey(first: false)
+                        state = .parseObjectKey(first: false)
                         continue
                     case "}"?:
                         try popStack()
-                        return .ObjectEnd
-                    case .Some:
-                        throw error(.InvalidSyntax)
+                        return .objectEnd
+                    case .some:
+                        throw error(.invalidSyntax)
                     case nil:
-                        throw error(.UnexpectedEOF)
+                        throw error(.unexpectedEOF)
                     }
-                case .Initial:
-                    guard let c = skipWhitespace() else { throw error(.UnexpectedEOF) }
+                case .initial:
+                    guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     let evt = try parseValue(c)
                     switch evt {
-                    case .ArrayStart, .ObjectStart:
+                    case .arrayStart, .objectStart:
                         break
                     default:
-                        state = .ParseEnd
+                        state = .parseEnd
                     }
                     return evt
-                case .ParseArray(let first):
-                    guard let c = skipWhitespace() else { throw error(.UnexpectedEOF) }
+                case .parseArray(let first):
+                    guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     switch c {
                     case "]":
                         if !first && strict {
-                            throw error(.TrailingComma)
+                            throw error(.trailingComma)
                         }
                         try popStack()
-                        return .ArrayEnd
+                        return .arrayEnd
                     case ",":
-                        throw error(.MissingValue)
+                        throw error(.missingValue)
                     default:
                         let evt = try parseValue(c)
                         switch evt {
-                        case .ArrayStart, .ObjectStart:
+                        case .arrayStart, .objectStart:
                             break
                         default:
-                            state = .ParseArrayComma
+                            state = .parseArrayComma
                         }
                         return evt
                     }
-                case .ParseObjectKey(let first):
-                    guard let c = skipWhitespace() else { throw error(.UnexpectedEOF) }
+                case .parseObjectKey(let first):
+                    guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     switch c {
                     case "}":
                         if !first && strict {
-                            throw error(.TrailingComma)
+                            throw error(.trailingComma)
                         }
                         try popStack()
-                        return .ObjectEnd
+                        return .objectEnd
                     case ",", ":":
-                        throw error(.MissingKey)
+                        throw error(.missingKey)
                     default:
                         let evt = try parseValue(c)
                         switch evt {
-                        case .StringValue:
-                            state = .ParseObjectValue
+                        case .stringValue:
+                            state = .parseObjectValue
                         default:
-                            throw error(.NonStringKey)
+                            throw error(.nonStringKey)
                         }
                         return evt
                     }
-                case .ParseObjectValue:
-                    guard skipWhitespace() == ":" else { throw error(.ExpectedColon) }
-                    guard let c = skipWhitespace() else { throw error(.UnexpectedEOF) }
+                case .parseObjectValue:
+                    guard skipWhitespace() == ":" else { throw error(.expectedColon) }
+                    guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     switch c {
                     case ",", "}":
-                        throw error(.MissingValue)
+                        throw error(.missingValue)
                     default:
                         let evt = try parseValue(c)
                         switch evt {
-                        case .ArrayStart, .ObjectStart:
+                        case .arrayStart, .objectStart:
                             break
                         default:
-                            state = .ParseObjectComma
+                            state = .parseObjectComma
                         }
                         return evt
                     }
-                case .ParseEnd:
+                case .parseEnd:
                     if skipWhitespace() != nil {
-                        throw error(.TrailingCharacters)
+                        throw error(.trailingCharacters)
                     }
-                    state = .Finished
+                    state = .finished
                     return nil
-                case .Finished:
+                case .finished:
                     return nil
                 }
             }
         } catch let error as JSONParserError {
-            state = .Finished
-            return .Error(error)
+            state = .finished
+            return .error(error)
         } catch {
             fatalError("unexpected error \(error)")
         }
@@ -166,31 +166,31 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
             fatalError("exhausted stack")
         }
         switch stack.last {
-        case .Array?:
-            state = .ParseArrayComma
-        case .Object?:
-            state = .ParseObjectComma
+        case .array?:
+            state = .parseArrayComma
+        case .object?:
+            state = .parseObjectComma
         case nil:
-            state = .ParseEnd
+            state = .parseEnd
         }
     }
     
-    private mutating func parseValue(c: UnicodeScalar) throws -> JSONEvent {
+    private mutating func parseValue(_ c: UnicodeScalar) throws -> JSONEvent {
         switch c {
         case "[":
-            state = .ParseArray(first: true)
-            stack.append(.Array)
-            return .ArrayStart
+            state = .parseArray(first: true)
+            stack.append(.array)
+            return .arrayStart
         case "{":
-            state = .ParseObjectKey(first: true)
-            stack.append(.Object)
-            return .ObjectStart
+            state = .parseObjectKey(first: true)
+            stack.append(.object)
+            return .objectStart
         case "\"":
             var s = ""
             while let c = bump() {
                 switch c {
                 case "\"":
-                    return .StringValue(s)
+                    return .stringValue(s)
                 case "\\":
                     let c = try bumpRequired()
                     switch c {
@@ -204,34 +204,37 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                         let codeUnit = try parseFourHex()
                         if UTF16.isLeadSurrogate(codeUnit) {
                             guard try (bumpRequired() == "\\" && bumpRequired() == "u") else {
-                                throw error(.LoneLeadingSurrogateInUnicodeEscape)
+                                throw error(.loneLeadingSurrogateInUnicodeEscape)
                             }
                             let trail = try parseFourHex()
                             if UTF16.isTrailSurrogate(trail) {
                                 let lead = UInt32(codeUnit)
                                 let trail = UInt32(trail)
-                                s.append(UnicodeScalar(((lead - 0xD800) << 10) + (trail - 0xDC00) + 0x10000))
+                                // XXX: Xcode8b3 claims the full expression is too complex, so we have to split it up
+                                let val = ((lead - 0xD800) << 10) + (trail - 0xDC00)
+                                let scalar = UnicodeScalar(val + 0x10000)
+                                s.append(scalar)
                             } else {
-                                throw error(.LoneLeadingSurrogateInUnicodeEscape)
+                                throw error(.loneLeadingSurrogateInUnicodeEscape)
                             }
                         } else {
                             s.append(UnicodeScalar(codeUnit))
                         }
                     default:
-                        throw error(.InvalidEscape)
+                        throw error(.invalidEscape)
                     }
                 case "\0"..."\u{1F}":
-                    throw error(.InvalidSyntax)
+                    throw error(.invalidSyntax)
                 default:
                     s.append(c)
                 }
             }
-            throw error(.UnexpectedEOF)
+            throw error(.unexpectedEOF)
         case "-", "0"..."9":
             var tempBuffer: ContiguousArray<Int8>
             if let buffer = replace(&self.tempBuffer, with: nil) {
                 tempBuffer = buffer
-                tempBuffer.removeAll(keepCapacity: true)
+                tempBuffer.removeAll(keepingCapacity: true)
             } else {
                 tempBuffer = ContiguousArray()
                 tempBuffer.reserveCapacity(12)
@@ -246,7 +249,7 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                 case ".":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
-                    guard let c = bump(), case "0"..."9" = c else { throw error(.InvalidNumber) }
+                    guard let c = bump(), case "0"..."9" = c else { throw error(.invalidNumber) }
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
                     loop: while let c = base.peek() {
                         switch c {
@@ -256,14 +259,14 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                         case "e", "E":
                             bump()
                             tempBuffer.append(Int8(truncatingBitPattern: c.value))
-                            guard let c = bump() else { throw error(.InvalidNumber) }
+                            guard let c = bump() else { throw error(.invalidNumber) }
                             tempBuffer.append(Int8(truncatingBitPattern: c.value))
                             switch c {
                             case "-", "+":
-                                guard let c = bump(), case "0"..."9" = c else { throw error(.InvalidNumber) }
+                                guard let c = bump(), case "0"..."9" = c else { throw error(.invalidNumber) }
                                 tempBuffer.append(Int8(truncatingBitPattern: c.value))
                             case "0"..."9": break
-                            default: throw error(.InvalidNumber)
+                            default: throw error(.invalidNumber)
                             }
                             while let c = base.peek() {
                                 switch c {
@@ -280,11 +283,11 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                         }
                     }
                     tempBuffer.append(0)
-                    return .DoubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
                 case "e", "E":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
-                    guard let c = bump(), case "0"..."9" = c else { throw error(.InvalidNumber) }
+                    guard let c = bump(), case "0"..."9" = c else { throw error(.invalidNumber) }
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
                     loop: while let c = base.peek() {
                         switch c {
@@ -296,13 +299,13 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                         }
                     }
                     tempBuffer.append(0)
-                    return .DoubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
                 default:
                     break outerLoop
                 }
             }
             if tempBuffer.count == 1 && tempBuffer[0] == 0x2d /* - */ {
-                throw error(.InvalidNumber)
+                throw error(.invalidNumber)
             }
             tempBuffer.append(0)
             let num = tempBuffer.withUnsafeBufferPointer({ ptr -> Int64? in
@@ -315,30 +318,30 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
                 }
             })
             if let num = num {
-                return .Int64Value(num)
+                return .int64Value(num)
             }
             // out of range, fall back to Double
-            return .DoubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+            return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
         case "t":
             let line = self.line, column = self.column
             guard case "r"? = bump(), case "u"? = bump(), case "e"? = bump() else {
-                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
+                throw JSONParserError(code: .invalidSyntax, line: line, column: column)
             }
-            return .BooleanValue(true)
+            return .booleanValue(true)
         case "f":
             let line = self.line, column = self.column
             guard case "a"? = bump(), case "l"? = bump(), case "s"? = bump(), case "e"? = bump() else {
-                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
+                throw JSONParserError(code: .invalidSyntax, line: line, column: column)
             }
-            return .BooleanValue(false)
+            return .booleanValue(false)
         case "n":
             let line = self.line, column = self.column
             guard case "u"? = bump(), case "l"? = bump(), case "l"? = bump() else {
-                throw JSONParserError(code: .InvalidSyntax, line: line, column: column)
+                throw JSONParserError(code: .invalidSyntax, line: line, column: column)
             }
-            return .NullValue
+            return .nullValue
         default:
-            throw error(.InvalidSyntax)
+            throw error(.invalidSyntax)
         }
     }
     
@@ -365,13 +368,13 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
             case "A"..."F":
                 codepoint += c.value - 55
             default:
-                throw error(.InvalidEscape)
+                throw error(.invalidEscape)
             }
         }
         return UInt16(truncatingBitPattern: codepoint)
     }
     
-    @inline(__always) private mutating func bump() -> UnicodeScalar? {
+    @inline(__always) @discardableResult private mutating func bump() -> UnicodeScalar? {
         let c = base.next()
         if c == "\n" {
             line += 1
@@ -383,11 +386,11 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
     }
     
     @inline(__always) private mutating func bumpRequired() throws -> UnicodeScalar {
-        guard let c = bump() else { throw error(.UnexpectedEOF) }
+        guard let c = bump() else { throw error(.unexpectedEOF) }
         return c
     }
     
-    private func error(code: JSONParserError.Code) -> JSONParserError {
+    private func error(_ code: JSONParserError.Code) -> JSONParserError {
         return JSONParserError(code: code, line: line, column: column)
     }
     
@@ -397,33 +400,33 @@ public struct JSONParserGenerator<Gen: GeneratorType where Gen.Element == Unicod
     public private(set) var column: UInt = 0
     
     private var base: PeekGenerator<Gen>
-    private var state: State = .Initial
+    private var state: State = .initial
     private var stack: [Stack] = []
     private var tempBuffer: ContiguousArray<Int8>?
 }
 
 private enum State {
     /// Initial state
-    case Initial
+    case initial
     /// Parse an element or the end of the array
-    case ParseArray(first: Bool)
+    case parseArray(first: Bool)
     /// Parse a comma or the end of the array
-    case ParseArrayComma
+    case parseArrayComma
     /// Parse an object key or the end of the array
-    case ParseObjectKey(first: Bool)
+    case parseObjectKey(first: Bool)
     /// Parse a colon followed by an object value
-    case ParseObjectValue
+    case parseObjectValue
     /// Parse a comma or the end of the object
-    case ParseObjectComma
+    case parseObjectComma
     /// Parse whitespace or EOF
-    case ParseEnd
+    case parseEnd
     /// Parsing has completed
-    case Finished
+    case finished
 }
 
 private enum Stack {
-    case Array
-    case Object
+    case array
+    case object
 }
 
 /// A streaming JSON parser event.
@@ -432,36 +435,36 @@ public enum JSONEvent {
     /// Inside of an object, each key/value pair is emitted as a
     /// `StringValue` for the key followed by the `JSONEvent` sequence
     /// that describes the value.
-    case ObjectStart
+    case objectStart
     /// The end of an object.
-    case ObjectEnd
+    case objectEnd
     /// The start of an array.
-    case ArrayStart
+    case arrayStart
     /// The end of an array.
-    case ArrayEnd
+    case arrayEnd
     /// A boolean value.
-    case BooleanValue(Bool)
+    case booleanValue(Bool)
     /// A signed 64-bit integral value.
-    case Int64Value(Int64)
+    case int64Value(Int64)
     /// A double value.
-    case DoubleValue(Double)
+    case doubleValue(Double)
     /// A string value.
-    case StringValue(String)
+    case stringValue(String)
     /// The null value.
-    case NullValue
+    case nullValue
     /// A parser error.
-    case Error(JSONParserError)
+    case error(JSONParserError)
 }
 
 /// A generator of `JSONEvent`s that records column/line info.
-public protocol JSONEventGenerator: GeneratorType {
+public protocol JSONEventGenerator: IteratorProtocol {
     /// The line of the last emitted token.
     var line: UInt { get }
     /// The column of the last emitted token.
     var column: UInt { get }
 }
 
-public struct JSONParserError: ErrorType, CustomStringConvertible {
+public struct JSONParserError: ErrorProtocol, CustomStringConvertible {
     public let code: Code
     public let line: UInt
     public let column: UInt
@@ -476,33 +479,33 @@ public struct JSONParserError: ErrorType, CustomStringConvertible {
     
     public enum Code: Int {
         /// A generic syntax error.
-        case InvalidSyntax
+        case invalidSyntax
         /// An invalid number.
-        case InvalidNumber
+        case invalidNumber
         /// An invalid string escape.
-        case InvalidEscape
+        case invalidEscape
         /// A unicode string escape with an invalid code point.
-        case InvalidUnicodeScalar
+        case invalidUnicodeScalar
         /// A unicode string escape representing a leading surrogate without
         /// a corresponding trailing surrogate.
-        case LoneLeadingSurrogateInUnicodeEscape
+        case loneLeadingSurrogateInUnicodeEscape
         /// A control character in a string.
-        case ControlCharacterInString
+        case controlCharacterInString
         /// A comma was found where a colon was expected in an object.
-        case ExpectedColon
+        case expectedColon
         /// A comma or colon was found in an object without a key.
-        case MissingKey
+        case missingKey
         /// An object key was found that was not a string.
-        case NonStringKey
+        case nonStringKey
         /// A comma or object end was encountered where a value was expected.
-        case MissingValue
+        case missingValue
         /// A trailing comma was found in an array or object. Only emitted when `strict` mode is enabled.
-        case TrailingComma
+        case trailingComma
         /// Trailing (non-whitespace) characters found after the close
         /// of the root value.
-        case TrailingCharacters
+        case trailingCharacters
         /// EOF was found before the root value finished parsing.
-        case UnexpectedEOF
+        case unexpectedEOF
     }
     
     public var description: String {
@@ -510,7 +513,7 @@ public struct JSONParserError: ErrorType, CustomStringConvertible {
     }
 }
 
-private struct PeekGenerator<Base: GeneratorType> {
+private struct PeekGenerator<Base: IteratorProtocol> {
     init(_ base: Base) {
         self.base = base
     }
@@ -520,7 +523,7 @@ private struct PeekGenerator<Base: GeneratorType> {
             return elt
         }
         let elt = base.next()
-        peeked = .Some(elt)
+        peeked = .some(elt)
         return elt
     }
     
@@ -536,7 +539,7 @@ private struct PeekGenerator<Base: GeneratorType> {
     private var peeked: Base.Element??
 }
 
-private func replace<T>(inout a: T, with b: T) -> T {
+private func replace<T>(_ a: inout T, with b: T) -> T {
     var b = b
     swap(&a, &b)
     return b
