@@ -1234,7 +1234,6 @@ public extension JSONObject {
 
 // MARK: - JSONArray helpers
 
-// FIXME: Swift 3: Use `rethrows`.
 public extension JSON {
     /// Returns an `Array` containing the results of mapping `transform` over `array`.
     ///
@@ -1246,11 +1245,8 @@ public extension JSON {
     /// - Returns: An array with the results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.map` instead.
-    static func map<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T) throws -> [T] {
-        return try array.enumerated().map({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    static func map<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T) rethrows -> [T] {
+        return try array.enumerated().map({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
     /// Returns an `Array` containing the non-`nil` results of mapping `transform` over `array`.
@@ -1263,11 +1259,8 @@ public extension JSON {
     /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.flatMap` instead.
-    static func flatMap<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T?) throws -> [T] {
-        return try array.enumerated().flatMap({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    static func flatMap<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T?) rethrows -> [T] {
+        return try array.enumerated().flatMap({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
     /// Returns an `Array` containing the concatenated results of mapping `transform` over `array`.
@@ -1280,18 +1273,10 @@ public extension JSON {
     /// - Returns: An array with the concatenated results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.flatMap` instead.
-    static func flatMap<S: Sequence>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element] {
-        // FIXME: Use SequenceType.flatMap() once it becomes @noescape
-        var results: [S.Iterator.Element] = []
-        for (i, elt) in array.enumerated() {
-            try scoped(i) {
-                results.append(contentsOf: try transform(elt))
-            }
-        }
-        return results
+    static func flatMap<S: Sequence>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> S) rethrows -> [S.Iterator.Element] {
+        return try array.enumerated().flatMap({ (i, elt) in
+            return try scoped(i, { try transform(elt) })
+        })
     }
 }
 
@@ -1609,7 +1594,7 @@ internal func getRequired(_ ary: JSONArray, index: Int, type: JSONError.JSONType
 }
 
 @inline(__always)
-internal func scoped<T>(_ key: String, f: @noescape () throws -> T) throws -> T {
+internal func scoped<T>(_ key: String, _ f: @noescape () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
@@ -1618,7 +1603,7 @@ internal func scoped<T>(_ key: String, f: @noescape () throws -> T) throws -> T 
 }
 
 @inline(__always)
-internal func scoped<T>(_ index: Int, f: @noescape () throws -> T) throws -> T {
+internal func scoped<T>(_ index: Int, _ f: @noescape () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
