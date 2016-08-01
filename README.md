@@ -162,7 +162,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 #### Development
 
 * Add setters for basic accessors so you can write code like `json["foo"].object?["key"] = "bar"`.
-* Add optional `NSError` userInfo provider for `JSONError`. Setting this up requires calling `JSONError.registerNSErrorUserInfoProvider()`.
+* Provide a localized description for errors when bridged to `NSError`.
+* Support Swift 3.0.
 
 #### v0.9.3 (2016-05-23)
 

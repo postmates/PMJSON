@@ -166,7 +166,7 @@ extension JSONObject {
     }
 }
 
-extension JSONObject: DictionaryLiteralConvertible {
+extension JSONObject: ExpressibleByDictionaryLiteral {
     /// Creates an object from a dictionary.
     public init(_ dictionary: [String: JSON]) {
         self.dictionary = dictionary

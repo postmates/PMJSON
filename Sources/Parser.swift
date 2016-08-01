@@ -464,7 +464,7 @@ public protocol JSONEventGenerator: IteratorProtocol {
     var column: UInt { get }
 }
 
-public struct JSONParserError: ErrorProtocol, CustomStringConvertible {
+public struct JSONParserError: Error, CustomStringConvertible {
     public let code: Code
     public let line: UInt
     public let column: UInt

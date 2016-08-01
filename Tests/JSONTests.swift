@@ -270,23 +270,20 @@ class JSONTests: XCTestCase {
     
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
     func testJSONErrorNSErrorDescription() throws {
-        if #available(iOS 9, OSX 10.11, *) {
-            JSONError.registerNSErrorUserInfoProvider()
-            let jserror: JSONError?
-            do {
-                let json: JSON = ["foo": 1]
-                _ = try json.getString("foo")
-                jserror = nil
-            } catch let error as JSONError {
-                jserror = error
-            }
-            guard let error = jserror else {
-                XCTFail("Expected error, found nothing")
-                return
-            }
-            let nserror = error as NSError
-            XCTAssertEqual(String(error), nserror.localizedDescription)
+        let jserror: JSONError?
+        do {
+            let json: JSON = ["foo": 1]
+            _ = try json.getString("foo")
+            jserror = nil
+        } catch let error as JSONError {
+            jserror = error
         }
+        guard let error = jserror else {
+            XCTFail("Expected error, found nothing")
+            return
+        }
+        let nserror = error as NSError
+        XCTAssertEqual(String(error), nserror.localizedDescription)
     }
     #endif
 }

@@ -199,32 +199,23 @@
     
     /// An error that is thrown when converting from `AnyObject` to `JSON`.
     /// - SeeAlso: `JSON.init(ns:)`
-    public enum JSONFoundationError: ErrorProtocol {
+    public enum JSONFoundationError: Error {
         /// Thrown when a non-JSON-compatible type is found.
         case incompatibleType
         /// Thrown when a dictionary has a key that is not a string.
         case nonStringKey
     }
     
-    public extension JSONError {
-        /// Registers the `NSError` userInfo provider for `JSONError`.
-        @available(iOS 9, OSX 10.11, *)
-        static func registerNSErrorUserInfoProvider() {
-            _ = _lazyRegister
+    extension JSONError: LocalizedError {
+        public var errorDescription: String? {
+            return String(self)
         }
-        
-        @available(iOS 9, OSX 10.11, *)
-        private static var _lazyRegister: () = {
-            NSError.setUserInfoValueProvider(forDomain: "PMJSON.JSONError") { (error, key) in
-                guard let error = error as ErrorProtocol as? JSONError else { return nil }
-                switch key {
-                case NSLocalizedDescriptionKey:
-                    return String(error)
-                default:
-                    return nil
-                }
-            }
-        }()
+    }
+    
+    extension JSONParserError: LocalizedError {
+        public var errorDescription: String? {
+            return String(self)
+        }
     }
     
     private struct UTF8Decoder: Sequence {

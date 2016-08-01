@@ -15,7 +15,7 @@
 // MARK: JSONError
 
 /// Errors thrown by the JSON `get*` or `to*` accessor families.
-public enum JSONError: ErrorProtocol, CustomStringConvertible {
+public enum JSONError: Error, CustomStringConvertible {
     /// Thrown when a given path is missing or has the wrong type.
     /// - Parameter path: The path of the key that caused the error.
     /// - Parameter expected: The type that was expected at this path.

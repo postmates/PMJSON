@@ -113,7 +113,7 @@ extension JSON: Streamable, CustomStringConvertible, CustomDebugStringConvertibl
     }
 }
 
-extension JSON: IntegerLiteralConvertible, FloatLiteralConvertible, BooleanLiteralConvertible, NilLiteralConvertible {
+extension JSON: ExpressibleByIntegerLiteral, ExpressibleByFloatLiteral, ExpressibleByBooleanLiteral, ExpressibleByNilLiteral {
     public init(integerLiteral value: Int64) {
         self = .int64(value)
     }
@@ -131,7 +131,7 @@ extension JSON: IntegerLiteralConvertible, FloatLiteralConvertible, BooleanLiter
     }
 }
 
-extension JSON: StringLiteralConvertible {
+extension JSON: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
         self = .string(value)
     }
@@ -145,7 +145,7 @@ extension JSON: StringLiteralConvertible {
     }
 }
 
-extension JSON: ArrayLiteralConvertible, DictionaryLiteralConvertible {
+extension JSON: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
     public init(arrayLiteral elements: JSON...) {
         self = .array(JSONArray(elements))
     }
