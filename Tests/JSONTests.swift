@@ -92,7 +92,7 @@ class JSONTests: XCTestCase {
             "concat": [["x": [1]], ["x": [2,3]], ["x": []], ["x": [4,5,6]]]
         ]
         
-        struct DummyError: ErrorProtocol {}
+        struct DummyError: Error {}
         
         // object-style accessors
         XCTAssertEqual([1,2,3], try dict.mapArray("xs", { try $0.getInt("x") }))
@@ -390,7 +390,7 @@ class JSONBenchmarks: XCTestCase {
 private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     switch (a, b) {
     case (.array(let a), .array(let b)):
-        return a.count == b.count && !zip(a, b).contains({!matchesJSON($0, $1)})
+        return a.count == b.count && !zip(a, b).contains(where: {!matchesJSON($0, $1)})
     case (.object(let a), .object(let b)):
         var seen = Set<String>()
         for (key, value) in a {

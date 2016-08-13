@@ -170,9 +170,9 @@ extension JSON {
             // We just care about equal up to a given precision, and so dropping down to Float precision should give us that.
             return Float(a) == Float(b)
         case (.array(let a), .array(let b)):
-            return a.count == b.count && !zip(a, b).lazy.contains({ !$0.approximatelyEqual($1) })
+            return a.count == b.count && !zip(a, b).lazy.contains(where: { !$0.approximatelyEqual($1) })
         case (.object(let a), .object(let b)):
-            return a.count == b.count && !a.contains({ (k,v) in b[k].map({ !$0.approximatelyEqual(v) }) ?? true })
+            return a.count == b.count && !a.contains(where: { (k,v) in b[k].map({ !$0.approximatelyEqual(v) }) ?? true })
         default:
             return self == other
         }
