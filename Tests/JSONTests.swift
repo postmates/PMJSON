@@ -67,6 +67,18 @@ class JSONTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
     }
     
+    func testReencode() throws {
+        // sample.json contains a lot of edge cases, so we'll make sure we can re-encode it and re-decode it and get the same thing
+        let data = try readFixture("sample", withExtension: "json")
+        let json = try JSON.decode(data)
+        let encoded = JSON.encodeAsData(json)
+        let json2 = try JSON.decode(encoded)
+        if !json.approximatelyEqual(json2) { // encoding/decoding again doesn't necessarily match the exact numeric precision of the original
+            // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+            XCTFail("Re-encoded JSON doesn't match original")
+        }
+    }
+    
     func testParserErrorDescription() {
         XCTAssertEqual(String(JSONParserError(code: .UnexpectedEOF, line: 5, column: 12)), "JSONParserError(UnexpectedEOF, line: 5, column: 12)")
     }

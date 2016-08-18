@@ -163,7 +163,7 @@ class JSONSwiftCheck: XCTestCase {
 
 extension JSON {
     /// Performs an equality test, but accepts nearly-equal `Double` values.
-    private func approximatelyEqual(other: JSON) -> Swift.Bool {
+    func approximatelyEqual(other: JSON) -> Swift.Bool {
         switch (self, other) {
         case (.Double(let a), .Double(let b)):
             // we're going to cheat and just convert them to Floats and compare that way.
