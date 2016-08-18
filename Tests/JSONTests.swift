@@ -24,6 +24,14 @@ let bigJson: NSData = {
     return s.dataUsingEncoding(NSUTF8StringEncoding)!
 }()
 
+struct NoSuchFixture: ErrorType {}
+func readFixture(name: String, withExtension ext: String?) throws -> NSData {
+    guard let url = NSBundle(forClass: JSONTests.self).URLForResource(name, withExtension: ext) else {
+        throw NoSuchFixture()
+    }
+    return try NSData(contentsOfURL: url, options: [])
+}
+
 class JSONTests: XCTestCase {
     func assertMatchesJSON(@autoclosure a: () throws -> JSON, @autoclosure _ b: () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
@@ -386,6 +394,32 @@ class JSONBenchmarks: XCTestCase {
             }
         } catch {
             XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testDecodeSampleJSONPerformance() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        measureBlock {
+            for _ in 0..<10 {
+                do {
+                    _ = try JSON.decode(data)
+                } catch {
+                    return XCTFail("error parsing json: \(error)")
+                }
+            }
+        }
+    }
+    
+    func testDecodeSampleJSONCocoaPerformance() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        measureBlock {
+            for _ in 0..<10 {
+                do {
+                    _ = try NSJSONSerialization.JSONObjectWithData(data, options: [])
+                } catch {
+                    return XCTFail("error parsing json: \(error)")
+                }
+            }
         }
     }
 }
