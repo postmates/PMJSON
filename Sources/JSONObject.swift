@@ -23,7 +23,7 @@ public struct JSONObject {
     }
     
     /// Creates an object from a sequence of `(String,JSON)` pairs.
-    public init<S: Sequence where S.Iterator.Element == (String,JSON)>(_ seq: S) {
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == (String,JSON) {
         // optimize for the case where the sequence doesn't contain duplicate keys
         dictionary = Dictionary(minimumCapacity: seq.underestimatedCount)
         for (key,value) in seq {
@@ -32,7 +32,7 @@ public struct JSONObject {
     }
     
     /// The JSON object represented as a `[String: JSON]`.
-    public private(set) var dictionary: [String: JSON]
+    public fileprivate(set) var dictionary: [String: JSON]
     
     public subscript(key: String) -> JSON? {
         @inline(__always) get {
@@ -88,17 +88,25 @@ extension JSONObject: Collection {
     
     /// Represents a position in a `JSONObject`.
     public struct Index: Comparable {
-        private var base: Dictionary<String,JSON>.Index
+        fileprivate var base: Dictionary<String,JSON>.Index
         
-        private init(_ base: Dictionary<String,JSON>.Index) {
+        fileprivate init(_ base: Dictionary<String,JSON>.Index) {
             self.base = base
+        }
+        
+        public static func ==(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
+            return lhs.base == rhs.base
+        }
+        
+        public static func <(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
+            return lhs.base < rhs.base
         }
     }
     
     public struct Iterator: IteratorProtocol {
         private var base: Dictionary<String,JSON>.Iterator
         
-        private init(_ base: Dictionary<String,JSON>.Iterator) {
+        fileprivate init(_ base: Dictionary<String,JSON>.Iterator) {
             self.base = base
         }
         
@@ -179,7 +187,7 @@ extension JSONObject: ExpressibleByDictionaryLiteral {
 }
 
 extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
-    public func write<Target : OutputStream>(to target: inout Target) {
+    public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(JSON(self), toStream: &target, pretty: false)
     }
     
@@ -193,23 +201,15 @@ extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConv
     }
 }
 
-extension JSONObject: Equatable {}
+extension JSONObject: Equatable {
+    public static func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
+        return lhs.dictionary == rhs.dictionary
+    }
+}
 
 extension JSONObject: CustomReflectable {
     public var customMirror: Mirror {
         let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map({ ($0,$1) })
         return Mirror(self, children: children, displayStyle: .dictionary)
     }
-}
-
-public func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
-    return lhs.dictionary == rhs.dictionary
-}
-
-public func ==(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
-    return lhs.base == rhs.base
-}
-
-public func <(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
-    return lhs.base < rhs.base
 }

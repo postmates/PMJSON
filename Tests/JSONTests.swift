@@ -24,12 +24,12 @@ let bigJson: Data = {
     return s.data(using: String.Encoding.utf8)!
 }()
 
-struct NoSuchFixture: ErrorType {}
-func readFixture(name: String, withExtension ext: String?) throws -> NSData {
-    guard let url = NSBundle(forClass: JSONTests.self).URLForResource(name, withExtension: ext) else {
+struct NoSuchFixture: Error {}
+func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
+    guard let url = Bundle(for: JSONTests.self).url(forResource: name, withExtension: ext) else {
         throw NoSuchFixture()
     }
-    return try NSData(contentsOfURL: url, options: [])
+    return try Data(contentsOf: url)
 }
 
 class JSONTests: XCTestCase {
@@ -40,7 +40,7 @@ class JSONTests: XCTestCase {
                 XCTFail("expected \(b), found \(a)", file: file, line: line)
             }
         } catch {
-            XCTFail(String(error), file: file, line: line)
+            XCTFail(String(describing: error), file: file, line: line)
         }
     }
     
@@ -80,7 +80,7 @@ class JSONTests: XCTestCase {
     }
     
     func testParserErrorDescription() {
-        XCTAssertEqual(String(JSONParserError(code: .unexpectedEOF, line: 5, column: 12)), "JSONParserError(unexpectedEOF, line: 5, column: 12)")
+        XCTAssertEqual(String(describing: JSONParserError(code: .unexpectedEOF, line: 5, column: 12)), "JSONParserError(unexpectedEOF, line: 5, column: 12)")
     }
     
     func testConversions() {
@@ -112,7 +112,7 @@ class JSONTests: XCTestCase {
             "concat": [["x": [1]], ["x": [2,3]], ["x": []], ["x": [4,5,6]]]
         ]
         
-        struct DummyError: ErrorProtocol {}
+        struct DummyError: Error {}
         
         // object-style accessors
         XCTAssertEqual([1,2,3], try dict.mapArray("xs", { try $0.getInt("x") }))
@@ -302,8 +302,7 @@ class JSONTests: XCTestCase {
             XCTFail("Expected error, found nothing")
             return
         }
-        let nserror = error as NSError
-        XCTAssertEqual(String(error), nserror.localizedDescription)
+        XCTAssertEqual(String(describing: error), error.localizedDescription)
     }
     #endif
 }
@@ -318,7 +317,7 @@ class JSONBenchmarks: XCTestCase {
             let cocoa2 = try JSONSerialization.jsonObject(with: JSON.encodeAsData(json)) as! NSObject
             XCTAssertEqual(jsonObj, cocoa2)
         } catch {
-            XCTFail(String(error))
+            XCTFail(String(describing: error))
         }
     }
     
@@ -408,7 +407,7 @@ class JSONBenchmarks: XCTestCase {
     
     func testDecodeSampleJSONPerformance() throws {
         let data = try readFixture("sample", withExtension: "json")
-        measureBlock {
+        measure {
             for _ in 0..<10 {
                 do {
                     _ = try JSON.decode(data)
@@ -421,10 +420,10 @@ class JSONBenchmarks: XCTestCase {
     
     func testDecodeSampleJSONCocoaPerformance() throws {
         let data = try readFixture("sample", withExtension: "json")
-        measureBlock {
+        measure {
             for _ in 0..<10 {
                 do {
-                    _ = try NSJSONSerialization.JSONObjectWithData(data, options: [])
+                    _ = try JSONSerialization.jsonObject(with: data)
                 } catch {
                     return XCTFail("error parsing json: \(error)")
                 }
@@ -436,7 +435,7 @@ class JSONBenchmarks: XCTestCase {
 private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     switch (a, b) {
     case (.array(let a), .array(let b)):
-        return a.count == b.count && !zip(a, b).contains({!matchesJSON($0, $1)})
+        return a.count == b.count && !zip(a, b).contains(where: {!matchesJSON($0, $1)})
     case (.object(let a), .object(let b)):
         var seen = Set<String>()
         for (key, value) in a {

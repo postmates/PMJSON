@@ -27,11 +27,11 @@ extension JSON {
     /// - Parameter json: The `JSON` to encode.
     /// - Parameter stream: The output stream to write the encoded JSON to.
     /// - Parameter pretty: If `true`, include extra whitespace for formatting. Default is `false`.
-    public static func encode<Target: OutputStream>(_ json: JSON, toStream stream: inout Target, pretty: Bool = false) {
+    public static func encode<Target: TextOutputStream>(_ json: JSON, toStream stream: inout Target, pretty: Bool = false) {
         encode(json, toStream: &stream, indent: pretty ? 0 : nil)
     }
     
-    private static func encode<Target: OutputStream>(_ json: JSON, toStream stream: inout Target, indent: Int?) {
+    private static func encode<Target: TextOutputStream>(_ json: JSON, toStream stream: inout Target, indent: Int?) {
         switch json {
         case .null: encodeNull(&stream)
         case .bool(let b): encodeBool(b, toStream: &stream)
@@ -43,23 +43,23 @@ extension JSON {
         }
     }
     
-    private static func encodeNull<Target: OutputStream>(_ stream: inout Target) {
+    private static func encodeNull<Target: TextOutputStream>(_ stream: inout Target) {
         stream.write("null")
     }
     
-    private static func encodeBool<Target: OutputStream>(_ value: Bool, toStream stream: inout Target) {
+    private static func encodeBool<Target: TextOutputStream>(_ value: Bool, toStream stream: inout Target) {
         stream.write(value ? "true" : "false")
     }
     
-    private static func encodeInt64<Target: OutputStream>(_ value: Int64, toStream stream: inout Target) {
+    private static func encodeInt64<Target: TextOutputStream>(_ value: Int64, toStream stream: inout Target) {
         stream.write(String(value))
     }
     
-    private static func encodeDouble<Target: OutputStream>(_ value: Double, toStream stream: inout Target) {
+    private static func encodeDouble<Target: TextOutputStream>(_ value: Double, toStream stream: inout Target) {
         stream.write(String(value))
     }
     
-    private static func encodeString<Target: OutputStream>(_ value: String, toStream stream: inout Target) {
+    private static func encodeString<Target: TextOutputStream>(_ value: String, toStream stream: inout Target) {
         stream.write("\"")
         let scalars = value.unicodeScalars
         var start = scalars.startIndex
@@ -97,7 +97,7 @@ extension JSON {
         stream.write("\"")
     }
     
-    private static func encodeObject<Target: OutputStream>(_ object: JSONObject, toStream stream: inout Target, indent: Int?) {
+    private static func encodeObject<Target: TextOutputStream>(_ object: JSONObject, toStream stream: inout Target, indent: Int?) {
         let indented = indent.map({$0+1})
         if let indent = indented {
             stream.write("{\n")
@@ -126,7 +126,7 @@ extension JSON {
         stream.write("}")
     }
     
-    private static func encodeArray<Target: OutputStream>(_ array: JSONArray, toStream stream: inout Target, indent: Int?) {
+    private static func encodeArray<Target: TextOutputStream>(_ array: JSONArray, toStream stream: inout Target, indent: Int?) {
         let indented = indent.map({$0+1})
         if let indent = indented {
             stream.write("[\n")
@@ -153,7 +153,7 @@ extension JSON {
         stream.write("]")
     }
     
-    private static func writeIndent<Target: OutputStream>(_ indent: Int, toStream stream: inout Target) {
+    private static func writeIndent<Target: TextOutputStream>(_ indent: Int, toStream stream: inout Target) {
         for _ in stride(from: 4, through: indent, by: 4) {
             stream.write("        ")
         }

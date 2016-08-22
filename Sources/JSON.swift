@@ -65,41 +65,42 @@ public extension JSON {
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: Sequence where S.Iterator.Element == JSON>(_ seq: S) {
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSON {
         self = .array(JSONArray(seq))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: Sequence where S.Iterator.Element == JSONObject>(_ seq: S) {
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONObject {
         self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: Sequence where S.Iterator.Element == JSONArray>(_ seq: S) {
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONArray {
         self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
 }
 
 public typealias JSONArray = ContiguousArray<JSON>
 
-extension JSON: Equatable {}
-public func ==(lhs: JSON, rhs: JSON) -> Bool {
-    switch (lhs, rhs) {
-    case (.null, .null): return true
-    case (.bool(let a), .bool(let b)): return a == b
-    case (.string(let a), .string(let b)): return a == b
-    case (.int64(let a), .int64(let b)): return a == b
-    case (.double(let a), .double(let b)): return a == b
-    case (.int64(let a), .double(let b)): return Double(a) == b
-    case (.double(let a), .int64(let b)): return a == Double(b)
-    case (.object(let a), .object(let b)): return a == b
-    case (.array(let a), .array(let b)): return a == b
-    default: return false
+extension JSON: Equatable {
+    public static func ==(lhs: JSON, rhs: JSON) -> Bool {
+        switch (lhs, rhs) {
+        case (.null, .null): return true
+        case (.bool(let a), .bool(let b)): return a == b
+        case (.string(let a), .string(let b)): return a == b
+        case (.int64(let a), .int64(let b)): return a == b
+        case (.double(let a), .double(let b)): return a == b
+        case (.int64(let a), .double(let b)): return Double(a) == b
+        case (.double(let a), .int64(let b)): return a == Double(b)
+        case (.object(let a), .object(let b)): return a == b
+        case (.array(let a), .array(let b)): return a == b
+        default: return false
+        }
     }
 }
 
 extension JSON: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
-    public func write<Target : OutputStream>(to target: inout Target) {
+    public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(self, toStream: &target, pretty: false)
     }
     

@@ -31,13 +31,13 @@
         /// - Parameter pretty: If `true`, include extra whitespace for formatting. Default is `false`.
         /// - Returns: An `NSData` with the JSON representation of *json*.
         public static func encodeAsData(_ json: JSON, pretty: Bool = false) -> Data {
-            struct Output: OutputStream {
+            struct Output: TextOutputStream {
                 // NB: We use NSMutableData instead of Data because it's significantly faster as of Xcode 8b3
                 var data = NSMutableData()
                 mutating func write(_ string: String) {
                     let oldLen = data.length
                     data.increaseLength(by: string.utf8.count)
-                    let ptr = UnsafeMutablePointer<UInt8>(data.mutableBytes) + oldLen
+                    let ptr = data.mutableBytes.assumingMemoryBound(to: UInt8.self) + oldLen
                     for (i, x) in string.utf8.enumerated() {
                         ptr[i] = x
                     }
@@ -51,16 +51,9 @@
     
     extension JSON {
         /// Converts a JSON-compatible Foundation object into a `JSON` value.
-        /// - Note: Deprecated in favor of `init(ns:)`.
         /// - Throws: `JSONFoundationError` if the object is not JSON-compatible.
-        @available(*, deprecated, renamed: "init(ns:)")
-        public init(plist: AnyObject) throws {
-            try self.init(ns: plist)
-        }
-        
-        /// Converts a JSON-compatible Foundation object into a `JSON` value.
-        /// - Throws: `JSONFoundationError` if the object is not JSON-compatible.
-        public init(ns object: AnyObject) throws {
+        public init(ns: Any) throws {
+            let object = ns as AnyObject
             if object === kCFBooleanTrue {
                 self = .bool(true)
                 return
@@ -73,11 +66,11 @@
                 self = .null
             case let n as NSNumber:
                 let typeChar: UnicodeScalar
-                let objCType = UnsafePointer<UInt8>(n.objCType)
+                let objCType = n.objCType
                 if objCType[0] == 0 || objCType[1] != 0 {
                     typeChar = "?"
                 } else {
-                    typeChar = UnicodeScalar(objCType[0])
+                    typeChar = UnicodeScalar(UInt8(bitPattern: objCType[0]))
                 }
                 switch typeChar {
                 case "c", "i", "s", "l", "q", "C", "I", "S", "L", "B":
@@ -113,17 +106,10 @@
         }
         
         /// Returns the JSON as a JSON-compatible Foundation object.
-        /// - Note: Deprecated in favor of `ns`.
-        @available(*, deprecated, renamed: "ns")
-        public var plist: AnyObject {
-            return ns
-        }
-        
-        /// Returns the JSON as a JSON-compatible Foundation object.
-        public var ns: AnyObject {
+        public var ns: Any {
             switch self {
             case .null: return NSNull()
-            case .bool(let b): return b as NSNumber
+            case .bool(let b): return NSNumber(value: b)
             case .string(let s): return s
             case .int64(let i): return NSNumber(value: i)
             case .double(let d): return d
@@ -134,17 +120,10 @@
         }
         
         /// Returns the JSON as a JSON-compatible Foundation object, discarding any nulls.
-        /// - Note: Deprecated in favor of `nsNoNull`.
-        @available(*, deprecated, renamed: "nsNoNull")
-        public var plistNoNull: AnyObject? {
-            return nsNoNull
-        }
-        
-        /// Returns the JSON as a JSON-compatible Foundation object, discarding any nulls.
-        public var nsNoNull: AnyObject? {
+        public var nsNoNull: Any? {
             switch self {
             case .null: return nil
-            case .bool(let b): return b as NSNumber
+            case .bool(let b): return NSNumber(value: b)
             case .string(let s): return s
             case .int64(let i): return NSNumber(value: i)
             case .double(let d): return d
@@ -157,15 +136,8 @@
     
     extension JSONObject {
         /// Returns the JSON as a JSON-compatible dictionary.
-        /// - Note: Deprecated in favor of `ns`.
-        @available(*, deprecated, renamed: "ns")
-        public var plist: [NSObject: AnyObject] {
-            return ns
-        }
-        
-        /// Returns the JSON as a JSON-compatible dictionary.
-        public var ns: [NSObject: AnyObject] {
-            var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
+        public var ns: [AnyHashable: Any] {
+            var dict: [AnyHashable: Any] = Dictionary(minimumCapacity: count)
             for (key, value) in self {
                 dict[key] = value.ns
             }
@@ -173,15 +145,8 @@
         }
         
         /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
-        /// - Note: Deprecated in favor of `nsNoNull`.
-        @available(*, deprecated, renamed: "nsNoNull")
-        public var plistNoNull: [NSObject: AnyObject] {
-            return nsNoNull
-        }
-        
-        /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
-        public var nsNoNull: [NSObject: AnyObject] {
-            var dict: [NSObject: AnyObject] = Dictionary(minimumCapacity: count)
+        public var nsNoNull: [AnyHashable: Any] {
+            var dict: [AnyHashable: Any] = Dictionary(minimumCapacity: count)
             for (key, value) in self {
                 if let value = value.nsNoNull {
                     dict[key] = value
@@ -208,13 +173,13 @@
     
     extension JSONError: LocalizedError {
         public var errorDescription: String? {
-            return String(self)
+            return String(describing: self)
         }
     }
     
     extension JSONParserError: LocalizedError {
         public var errorDescription: String? {
-            return String(self)
+            return String(describing: self)
         }
     }
     
@@ -229,17 +194,17 @@
         
         private let data: NSData
         
-        private struct Iterator: IteratorProtocol {
+        fileprivate struct Iterator: IteratorProtocol {
             init(data: NSData) {
                 // NB: We use NSData instead of using Data's iterator because it's significantly faster as of Xcode 8b3
                 self.data = data
-                let ptr = UnsafeBufferPointer(start: UnsafePointer<UInt8>(data.bytes), count: data.length)
-                gen = ptr.makeIterator()
+                let ptr = UnsafeBufferPointer(start: data.bytes.assumingMemoryBound(to: UInt8.self), count: data.length)
+                iter = ptr.makeIterator()
                 utf8 = UTF8()
             }
             
             mutating func next() -> UnicodeScalar? {
-                switch utf8.decode(&gen) {
+                switch utf8.decode(&iter) {
                 case .scalarValue(let scalar): return scalar
                 case .error: return "\u{FFFD}"
                 case .emptyInput: return nil
@@ -247,7 +212,7 @@
             }
             
             private let data: NSData
-            private var gen: UnsafeBufferPointerIterator<UInt8>
+            private var iter: UnsafeBufferPointerIterator<UInt8>
             private var utf8: UTF8
         }
     }

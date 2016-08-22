@@ -19,7 +19,7 @@
 #endif
 
 /// A streaming JSON parser that consumes a sequence of unicode scalars.
-public struct JSONParser<Seq: Sequence where Seq.Iterator.Element == UnicodeScalar>: Sequence {
+public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == UnicodeScalar {
     public init(_ seq: Seq) {
         base = seq
     }
@@ -36,7 +36,7 @@ public struct JSONParser<Seq: Sequence where Seq.Iterator.Element == UnicodeScal
 }
 
 /// The generator for JSONParser.
-public struct JSONParserGenerator<Gen: IteratorProtocol where Gen.Element == UnicodeScalar>: JSONEventGenerator {
+public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator where Gen.Element == UnicodeScalar {
     public init(_ gen: Gen) {
         base = PeekGenerator(gen)
     }
@@ -186,20 +186,20 @@ public struct JSONParserGenerator<Gen: IteratorProtocol where Gen.Element == Uni
             stack.append(.object)
             return .objectStart
         case "\"":
-            var s = ""
+            var scalars = String.UnicodeScalarView()
             while let c = bump() {
                 switch c {
                 case "\"":
-                    return .stringValue(s)
+                    return .stringValue(String(scalars))
                 case "\\":
                     let c = try bumpRequired()
                     switch c {
-                    case "\"", "\\", "/": s.append(c)
-                    case "b": s.append(UnicodeScalar(0x8))
-                    case "f": s.append(UnicodeScalar(0xC))
-                    case "n": s.append("\n" as UnicodeScalar)
-                    case "r": s.append("\r" as UnicodeScalar)
-                    case "t": s.append("\t" as UnicodeScalar)
+                    case "\"", "\\", "/": scalars.append(c)
+                    case "b": scalars.append(UnicodeScalar(0x8))
+                    case "f": scalars.append(UnicodeScalar(0xC))
+                    case "n": scalars.append("\n" as UnicodeScalar)
+                    case "r": scalars.append("\r" as UnicodeScalar)
+                    case "t": scalars.append("\t" as UnicodeScalar)
                     case "u":
                         let codeUnit = try parseFourHex()
                         if UTF16.isLeadSurrogate(codeUnit) {
@@ -212,13 +212,13 @@ public struct JSONParserGenerator<Gen: IteratorProtocol where Gen.Element == Uni
                                 let trail = UInt32(trail)
                                 // XXX: Xcode8b3 claims the full expression is too complex, so we have to split it up
                                 let val = ((lead - 0xD800) << 10) + (trail - 0xDC00)
-                                let scalar = UnicodeScalar(val + 0x10000)
-                                s.append(scalar)
+                                let scalar = UnicodeScalar(val + 0x10000)!
+                                scalars.append(scalar)
                             } else {
                                 throw error(.loneLeadingSurrogateInUnicodeEscape)
                             }
                         } else {
-                            s.append(UnicodeScalar(codeUnit))
+                            scalars.append(UnicodeScalar(codeUnit)!)
                         }
                     default:
                         throw error(.invalidEscape)
@@ -226,7 +226,7 @@ public struct JSONParserGenerator<Gen: IteratorProtocol where Gen.Element == Uni
                 case "\0"..."\u{1F}":
                     throw error(.invalidSyntax)
                 default:
-                    s.append(c)
+                    scalars.append(c)
                 }
             }
             throw error(.unexpectedEOF)

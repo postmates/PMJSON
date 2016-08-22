@@ -42,7 +42,7 @@ public enum JSONError: Error, CustomStringConvertible {
         }
     }
     
-    private func withPrefix(_ prefix: String) -> JSONError {
+    fileprivate func withPrefix(_ prefix: String) -> JSONError {
         func prefixPath(_ path: String?, with prefix: String) -> String {
             guard let path = path, !path.isEmpty else { return prefix }
             if path.unicodeScalars.first == "[" {
@@ -500,7 +500,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object, or any error thrown by `transform`.
-    func getObject<T>(_ key: String, _ transform: @noescape (JSONObject) throws -> T) throws -> T {
+    func getObject<T>(_ key: String, _ transform: (JSONObject) throws -> T) throws -> T {
         return try getObject().getObject(key, transform)
     }
     
@@ -510,7 +510,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
     ///   or any error thrown by `transform`.
-    func getObjectOrNil<T>(_ key: String, _ transform: @noescape (JSONObject) throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ key: String, _ transform: (JSONObject) throws -> T?) throws -> T? {
         return try getObject().getObjectOrNil(key, transform)
     }
     
@@ -542,7 +542,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object, or any error thrown by `transform`.
-    func getArray<T>(_ key: String, _ transform: @noescape (JSONArray) throws -> T) throws -> T {
+    func getArray<T>(_ key: String, _ transform: (JSONArray) throws -> T) throws -> T {
         let dict = try getObject()
         let value = try getRequired(dict, key: key, type: .array)
         return try scoped(key) { try transform(value.getArray()) }
@@ -554,7 +554,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
     ///   or any error thrown by `transform`.
-    func getArrayOrNil<T>(_ key: String, _ transform: @noescape (JSONArray) throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ key: String, _ transform: (JSONArray) throws -> T?) throws -> T? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(transform) }
@@ -795,7 +795,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
-    func getObject<T>(_ index: Int, _ f: @noescape (JSONObject) throws -> T) throws -> T {
+    func getObject<T>(_ index: Int, _ f: (JSONObject) throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .object)
         return try scoped(index) { try f(value.getObject()) }
@@ -807,7 +807,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ////  or any error thrown by `transform`.
-    func getObjectOrNil<T>(_ index: Int, _ f: @noescape (JSONObject) throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ index: Int, _ f: (JSONObject) throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getObjectOrNil().flatMap(f) }
@@ -842,7 +842,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
-    func getArray<T>(_ index: Int, _ f: @noescape (JSONArray) throws -> T) throws -> T {
+    func getArray<T>(_ index: Int, _ f: (JSONArray) throws -> T) throws -> T {
         let ary = try getArray()
         let value = try getRequired(ary, index: index, type: .array)
         return try scoped(index) { try f(value.getArray()) }
@@ -854,7 +854,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ///   or any error thrown by `transform`.
-    func getArrayOrNil<T>(_ index: Int, _ f: @noescape (JSONArray) throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ index: Int, _ f: (JSONArray) throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getArrayOrNil().flatMap(f) }
@@ -1086,7 +1086,7 @@ public extension JSONObject {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
     ///   error thrown by `transform`.
-    func getObject<T>(_ key: String, _ f: @noescape (JSONObject) throws -> T) throws -> T {
+    func getObject<T>(_ key: String, _ f: (JSONObject) throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .object)
         return try scoped(key) { try f(value.getObject()) }
     }
@@ -1096,7 +1096,7 @@ public extension JSONObject {
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
-    func getObjectOrNil<T>(_ key: String, _ f: @noescape (JSONObject) throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ key: String, _ f: (JSONObject) throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getObjectOrNil().flatMap(f) }
     }
@@ -1128,7 +1128,7 @@ public extension JSONObject {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
     ///   error thrown by `transform`.
-    func getArray<T>(_ key: String, _ f: @noescape (JSONArray) throws -> T) throws -> T {
+    func getArray<T>(_ key: String, _ f: (JSONArray) throws -> T) throws -> T {
         let value = try getRequired(self, key: key, type: .array)
         return try scoped(key) { try f(value.getArray()) }
     }
@@ -1138,7 +1138,7 @@ public extension JSONObject {
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
-    func getArrayOrNil<T>(_ key: String, _ f: @noescape (JSONArray) throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ key: String, _ f: (JSONArray) throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
     }
@@ -1245,7 +1245,7 @@ public extension JSON {
     /// - Returns: An array with the results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    static func map<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T) rethrows -> [T] {
+    static func map<T>(_ array: JSONArray, _ transform: (JSON) throws -> T) rethrows -> [T] {
         return try array.enumerated().map({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
@@ -1259,7 +1259,7 @@ public extension JSON {
     /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    static func flatMap<T>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> T?) rethrows -> [T] {
+    static func flatMap<T>(_ array: JSONArray, _ transform: (JSON) throws -> T?) rethrows -> [T] {
         return try array.enumerated().flatMap({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
@@ -1273,7 +1273,7 @@ public extension JSON {
     /// - Returns: An array with the concatenated results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    static func flatMap<S: Sequence>(_ array: JSONArray, _ transform: @noescape (JSON) throws -> S) rethrows -> [S.Iterator.Element] {
+    static func flatMap<S: Sequence>(_ array: JSONArray, _ transform: (JSON) throws -> S) rethrows -> [S.Iterator.Element] {
         return try array.enumerated().flatMap({ (i, elt) in
             return try scoped(i, { try transform(elt) })
         })
@@ -1292,7 +1292,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(_ key: String, _ transform: @noescape (JSON) throws -> T) throws -> [T] {
+    func mapArray<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(key, { try JSON.map($0, transform) })
     }
     
@@ -1307,7 +1307,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(_ index: Int, _ transform: @noescape (JSON) throws -> T) throws -> [T] {
+    func mapArray<T>(_ index: Int, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(index, { try JSON.map($0, transform) })
     }
     
@@ -1325,7 +1325,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or `key` exists but the value is not
     ///   an array or `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(_ key: String, _ transform: @noescape (JSON) throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.map($0, transform) })
     }
     
@@ -1343,7 +1343,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the subscript value is not an
     ///   array or `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(_ index: Int, _ transform: @noescape (JSON) throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(index, { try JSON.map($0, transform) })
     }
     
@@ -1358,7 +1358,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ key: String, _ transform: @noescape (JSON) throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1373,7 +1373,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: Sequence>(_ key: String, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element] {
+    func flatMapArray<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1388,7 +1388,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ index: Int, _ transform: @noescape (JSON) throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1403,7 +1403,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: Sequence>(_ index: Int, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element] {
+    func flatMapArray<S: Sequence>(_ index: Int, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1421,7 +1421,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ key: String, _ transform: @noescape (JSON) throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1439,7 +1439,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1457,7 +1457,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ index: Int, _ transform: @noescape (JSON) throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1475,7 +1475,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: Sequence>(_ index: Int, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ index: Int, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
     }
 }
@@ -1492,7 +1492,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(_ key: String, _ transform: @noescape (JSON) throws -> T) throws -> [T] {
+    func mapArray<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(key, { try JSON.map($0, transform) })
     }
     
@@ -1510,7 +1510,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(_ key: String, _ transform: @noescape (JSON) throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.map($0, transform) })
     }
     
@@ -1525,7 +1525,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ key: String, _ transform: @noescape (JSON) throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1540,7 +1540,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: Sequence>(_ key: String, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element] {
+    func flatMapArray<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1558,7 +1558,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ key: String, _ transform: @noescape (JSON) throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1576,7 +1576,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: @noescape (JSON) throws -> S) throws -> [S.Iterator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
 }
@@ -1594,7 +1594,7 @@ internal func getRequired(_ ary: JSONArray, index: Int, type: JSONError.JSONType
 }
 
 @inline(__always)
-internal func scoped<T>(_ key: String, _ f: @noescape () throws -> T) rethrows -> T {
+internal func scoped<T>(_ key: String, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
@@ -1603,7 +1603,7 @@ internal func scoped<T>(_ key: String, _ f: @noescape () throws -> T) rethrows -
 }
 
 @inline(__always)
-internal func scoped<T>(_ index: Int, _ f: @noescape () throws -> T) rethrows -> T {
+internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {

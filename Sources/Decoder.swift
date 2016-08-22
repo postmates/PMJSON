@@ -28,7 +28,7 @@ extension JSON {
     /// - parameters:
     ///   - strict: If `true`, trailing commas in arrays/objects are treated as an error.
     /// - throws: `JSONParserError`
-    public static func decode<Seq: Sequence where Seq.Iterator.Element == UnicodeScalar>(_ scalars: Seq, strict: Bool = false) throws -> JSON {
+    public static func decode<Seq: Sequence>(_ scalars: Seq, strict: Bool = false) throws -> JSON where Seq.Iterator.Element == UnicodeScalar {
         var parser = JSONParser(scalars)
         parser.strict = strict
         var decoder = JSONDecoder(parser)
@@ -37,7 +37,7 @@ extension JSON {
 }
 
 /// A JSON decoder.
-private struct JSONDecoder<Seq: Sequence where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent> {
+private struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
     init(_ parser: Seq) {
         gen = parser.makeIterator()
     }
