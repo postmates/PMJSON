@@ -24,6 +24,14 @@ let bigJson: Data = {
     return s.data(using: String.Encoding.utf8)!
 }()
 
+struct NoSuchFixture: ErrorType {}
+func readFixture(name: String, withExtension ext: String?) throws -> NSData {
+    guard let url = NSBundle(forClass: JSONTests.self).URLForResource(name, withExtension: ext) else {
+        throw NoSuchFixture()
+    }
+    return try NSData(contentsOfURL: url, options: [])
+}
+
 class JSONTests: XCTestCase {
     func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
@@ -57,6 +65,18 @@ class JSONTests: XCTestCase {
     
     func testSurrogatePair() {
         assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
+    }
+    
+    func testReencode() throws {
+        // sample.json contains a lot of edge cases, so we'll make sure we can re-encode it and re-decode it and get the same thing
+        let data = try readFixture("sample", withExtension: "json")
+        let json = try JSON.decode(data)
+        let encoded = JSON.encodeAsData(json)
+        let json2 = try JSON.decode(encoded)
+        if !json.approximatelyEqual(json2) { // encoding/decoding again doesn't necessarily match the exact numeric precision of the original
+            // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+            XCTFail("Re-encoded JSON doesn't match original")
+        }
     }
     
     func testParserErrorDescription() {
@@ -383,6 +403,32 @@ class JSONBenchmarks: XCTestCase {
             }
         } catch {
             XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testDecodeSampleJSONPerformance() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        measureBlock {
+            for _ in 0..<10 {
+                do {
+                    _ = try JSON.decode(data)
+                } catch {
+                    return XCTFail("error parsing json: \(error)")
+                }
+            }
+        }
+    }
+    
+    func testDecodeSampleJSONCocoaPerformance() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        measureBlock {
+            for _ in 0..<10 {
+                do {
+                    _ = try NSJSONSerialization.JSONObjectWithData(data, options: [])
+                } catch {
+                    return XCTFail("error parsing json: \(error)")
+                }
+            }
         }
     }
 }

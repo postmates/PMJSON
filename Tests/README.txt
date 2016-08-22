@@ -1,0 +1,1 @@
+The file sample.json comes from https://code.google.com/archive/p/json-test-suite/ and is covered by the Apache License Version 2.0.
