@@ -69,13 +69,13 @@ And finally, the `getObject()` and `getArray()` accessors provide variants that 
 
 ```json
 {
-    "object": {
-        "elements": [
-            {
-                "name": null
-            }
-        ]
-    }
+  "object": {
+    "elements": [
+      {
+        "name": null
+      }
+    ]
+  }
 }
 ```
 
@@ -96,6 +96,12 @@ try json.getObject("object", { try $0.getArray("elements", { try $0.getObject(0,
 The error thrown by this code will have the description `"object.elements[0].name: expected string, found null"`.
 
 All of these accessors are also available on the `JSONObject` type (which is the type that represents an object).
+
+The last code snippet above looks very verbose, but in practice you don't end up writing code like that. Instead you'll often end up just writing things like
+
+```swift
+try json.mapArray("elements", Element.init(json:))
+```
 
 ### Helpers
 
