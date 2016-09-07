@@ -186,7 +186,7 @@ extension JSONObject: ExpressibleByDictionaryLiteral {
     }
 }
 
-extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
+extension JSONObject: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
     public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(JSON(self), toStream: &target, pretty: false)
     }
