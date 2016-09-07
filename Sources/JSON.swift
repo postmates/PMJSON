@@ -99,7 +99,7 @@ extension JSON: Equatable {
     }
 }
 
-extension JSON: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
+extension JSON: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
     public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(self, toStream: &target, pretty: false)
     }
