@@ -119,6 +119,23 @@ Installing as a framework requires a minimum of iOS 8, OS X 10.9, watchOS 2.0, o
 
 ## Installation
 
+After installing with any mechanism, you can use this by adding `import PMJSON` to your code.
+
+### Swift Package Manager
+
+The [Swift Package Manager][] may be used to install PMJSON by adding it to your `dependencies` list:
+
+```swift
+let package = Package(
+    name: "YourPackage",
+    dependencies: [
+        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 1)
+    ]
+)
+```
+
+[Swift Package Manager]: https://swift.org/package-manager/
+
 ### Carthage
 
 To install using [Carthage][], add the following to your Cartfile:
@@ -127,29 +144,21 @@ To install using [Carthage][], add the following to your Cartfile:
 github "postmates/PMJSON" ~> 1.0
 ```
 
+This release supports Swift 3. If you want Swift 2.3 support, you can use
+
+```
+github "postmates/PMJSON" "v0.9.4"
+```
+
+### CocoaPods
+
+**Important**: CocoaPods support for v0.9.4 and v1.0 is currently not available until CocoaPods puts out a release candidate of 1.1.0. The following instructions work for Swift 2.2.
+
 To install using [CocoaPods][], add the following to your Podfile:
 
 ```
-pod 'PMJSON', '~> 1.0'
+pod 'PMJSON', '~> 0.9'
 ```
-
-Once installed, you can use this by adding `import PMJSON` to your code.
-
-### Swift Package Manager
-
-When using a recent Swift development snapshot, the [Swift Package Manager][] may be used to install PMJSON by adding it to your `dependencies` list:
-
-```swift
-let package = Package(
-    name: "YourPackage",
-    dependencies: [
-        .Package(url: "https://github.com/postmates/PMJSON.git",
-                 versions: Version(major: 1, minor: 0, patch: 0)..<Version(major: 2, minor: 0, patch: 0))
-    ]
-)
-```
-
-[Swift Package Manager]: https://swift.org/package-manager/
 
 ## License
 
