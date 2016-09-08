@@ -183,12 +183,12 @@ extension JSON: Arbitrary {
     public static var arbitrary: Gen<JSON> {
         return Gen.oneOf([
             Gen.pure(JSON.null),
-            JSON.bool <^> Bool.arbitrary,
-            JSON.string <^> String.arbitrary,
-            JSON.int64 <^> Int64.arbitrary,
-            JSON.double <^> Double.arbitrary,
-            Gen.sized({ n in (JSON.object <^> JSONObject.arbitrary).resize(n/2) }),
-            Gen.sized({ n in (JSON.array <^> JSONArray.arbitrary).resize(n/2) })
+            Bool.arbitrary.map(JSON.bool),
+            String.arbitrary.map(JSON.string),
+            Int64.arbitrary.map(JSON.int64),
+            Double.arbitrary.map(JSON.double),
+            Gen.sized({ n in (JSONObject.arbitrary.map(JSON.object)).resize(n/2) }),
+            Gen.sized({ n in (JSONArray.arbitrary.map(JSON.array)).resize(n/2) })
             ])
     }
     
@@ -209,6 +209,6 @@ extension JSON: Arbitrary {
 
 extension JSONObject: Arbitrary {
     public static var arbitrary: Gen<JSONObject> {
-        return Gen.sized({ n in ({ JSONObject($0) } <^> Dictionary<String,JSON>.arbitrary).resize(n/2) })
+        return Gen.sized({ n in Dictionary<String,JSON>.arbitrary.map({ JSONObject($0) }).resize(n/2) })
     }
 }
