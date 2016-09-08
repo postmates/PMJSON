@@ -15,45 +15,45 @@
 /// A single JSON-compatible value.
 public enum JSON {
     /// The null value.
-    case Null
+    case null
     /// A boolean.
-    case Bool(Swift.Bool)
+    case bool(Bool)
     /// A string.
-    case String(Swift.String)
+    case string(String)
     /// A 64-bit integer.
-    case Int64(Swift.Int64)
+    case int64(Int64)
     /// A number.
     /// When decoding, any integer that doesn't fit in 64 bits and any floating-point number
     /// is decoded as a `Double`.
-    case Double(Swift.Double)
+    case double(Double)
     /// An object.
-    case Object(JSONObject)
+    case object(JSONObject)
     /// An array.
-    case Array(JSONArray)
+    case array(JSONArray)
     
     /// Initializes `self` as a boolean with the value `bool`.
-    public init(_ bool: Swift.Bool) {
-        self = .Bool(bool)
+    public init(_ bool: Bool) {
+        self = .bool(bool)
     }
     /// Initializes `self` as a string with the value `str`.
-    public init(_ str: Swift.String) {
-        self = .String(str)
+    public init(_ str: String) {
+        self = .string(str)
     }
     /// Initializes `self` as a 64-bit integer with the value `i`.
-    public init(_ i: Swift.Int64) {
-        self = .Int64(i)
+    public init(_ i: Int64) {
+        self = .int64(i)
     }
     /// Initializes `self` as a double with the value `d`.
-    public init(_ d: Swift.Double) {
-        self = .Double(d)
+    public init(_ d: Double) {
+        self = .double(d)
     }
     /// Initializes `self` as an object with the value `obj`.
     public init(_ obj: JSONObject) {
-        self = .Object(obj)
+        self = .object(obj)
     }
     /// Initializes `self` as an array with the value `ary`.
     public init(_ ary: JSONArray) {
-        self = .Array(ary)
+        self = .array(ary)
     }
 }
 
@@ -61,109 +61,110 @@ public enum JSON {
 public extension JSON {
     /// Initializes `self` as a 64-bit integer with the value `i`.
     public init(_ i: Int) {
-        self = .Int64(Swift.Int64(i))
+        self = .int64(Int64(i))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: SequenceType where S.Generator.Element == JSON>(_ seq: S) {
-        self = .Array(JSONArray(seq))
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSON {
+        self = .array(JSONArray(seq))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: SequenceType where S.Generator.Element == JSONObject>(_ seq: S) {
-        self = .Array(JSONArray(seq.lazy.map(JSON.init)))
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONObject {
+        self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
-    public init<S: SequenceType where S.Generator.Element == JSONArray>(_ seq: S) {
-        self = .Array(JSONArray(seq.lazy.map(JSON.init)))
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONArray {
+        self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
 }
 
 public typealias JSONArray = ContiguousArray<JSON>
 
-extension JSON: Equatable {}
-public func ==(lhs: JSON, rhs: JSON) -> Bool {
-    switch (lhs, rhs) {
-    case (.Null, .Null): return true
-    case (.Bool(let a), .Bool(let b)): return a == b
-    case (.String(let a), .String(let b)): return a == b
-    case (.Int64(let a), .Int64(let b)): return a == b
-    case (.Double(let a), .Double(let b)): return a == b
-    case (.Int64(let a), .Double(let b)): return Double(a) == b
-    case (.Double(let a), .Int64(let b)): return a == Double(b)
-    case (.Object(let a), .Object(let b)): return a == b
-    case (.Array(let a), .Array(let b)): return a == b
-    default: return false
+extension JSON: Equatable {
+    public static func ==(lhs: JSON, rhs: JSON) -> Bool {
+        switch (lhs, rhs) {
+        case (.null, .null): return true
+        case (.bool(let a), .bool(let b)): return a == b
+        case (.string(let a), .string(let b)): return a == b
+        case (.int64(let a), .int64(let b)): return a == b
+        case (.double(let a), .double(let b)): return a == b
+        case (.int64(let a), .double(let b)): return Double(a) == b
+        case (.double(let a), .int64(let b)): return a == Double(b)
+        case (.object(let a), .object(let b)): return a == b
+        case (.array(let a), .array(let b)): return a == b
+        default: return false
+        }
     }
 }
 
-extension JSON: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
-    public func writeTo<Target : OutputStreamType>(inout target: Target) {
+extension JSON: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
+    public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(self, toStream: &target, pretty: false)
     }
     
-    public var description: Swift.String {
+    public var description: String {
         return JSON.encodeAsString(self, pretty: false)
     }
     
-    public var debugDescription: Swift.String {
+    public var debugDescription: String {
         let desc = JSON.encodeAsString(self, pretty: false)
         return "JSON(\(desc))"
     }
 }
 
-extension JSON: IntegerLiteralConvertible, FloatLiteralConvertible, BooleanLiteralConvertible, NilLiteralConvertible {
-    public init(integerLiteral value: Swift.Int64) {
-        self = .Int64(value)
+extension JSON: ExpressibleByIntegerLiteral, ExpressibleByFloatLiteral, ExpressibleByBooleanLiteral, ExpressibleByNilLiteral {
+    public init(integerLiteral value: Int64) {
+        self = .int64(value)
     }
     
-    public init(floatLiteral value: Swift.Double) {
-        self = .Double(value)
+    public init(floatLiteral value: Double) {
+        self = .double(value)
     }
     
-    public init(booleanLiteral value: Swift.Bool) {
-        self = .Bool(value)
+    public init(booleanLiteral value: Bool) {
+        self = .bool(value)
     }
     
     public init(nilLiteral: ()) {
-        self = .Null
+        self = .null
     }
 }
 
-extension JSON: StringLiteralConvertible {
-    public init(stringLiteral value: Swift.String) {
-        self = .String(value)
+extension JSON: ExpressibleByStringLiteral {
+    public init(stringLiteral value: String) {
+        self = .string(value)
     }
     
-    public init(extendedGraphemeClusterLiteral value: Swift.String) {
-        self = .String(value)
+    public init(extendedGraphemeClusterLiteral value: String) {
+        self = .string(value)
     }
     
-    public init(unicodeScalarLiteral value: Swift.String) {
-        self = .String(value)
+    public init(unicodeScalarLiteral value: String) {
+        self = .string(value)
     }
 }
 
-extension JSON: ArrayLiteralConvertible, DictionaryLiteralConvertible {
+extension JSON: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
     public init(arrayLiteral elements: JSON...) {
-        self = .Array(JSONArray(elements))
+        self = .array(JSONArray(elements))
     }
     
-    public init(dictionaryLiteral elements: (Swift.String, JSON)...) {
-        self = .Object(JSONObject(elements))
+    public init(dictionaryLiteral elements: (String, JSON)...) {
+        self = .object(JSONObject(elements))
     }
 }
 
 extension JSON: CustomReflectable {
-    public func customMirror() -> Mirror {
+    public var customMirror: Mirror {
         switch self {
-        case .Null, .Bool, .String, .Int64, .Double: return Mirror(self, children: [])
-        case .Object(let obj):
+        case .null, .bool, .string, .int64, .double: return Mirror(self, children: [])
+        case .object(let obj):
             let children: LazyMapCollection<JSONObject, Mirror.Child> = obj.lazy.map({ ($0, $1) })
-            return Mirror(self, children: children, displayStyle: .Dictionary)
-        case .Array(let ary):
-            return Mirror(self, unlabeledChildren: ary, displayStyle: .Collection)
+            return Mirror(self, children: children, displayStyle: .dictionary)
+        case .array(let ary):
+            return Mirror(self, unlabeledChildren: ary, displayStyle: .collection)
         }
     }
 }

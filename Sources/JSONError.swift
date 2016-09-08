@@ -15,36 +15,36 @@
 // MARK: JSONError
 
 /// Errors thrown by the JSON `get*` or `to*` accessor families.
-public enum JSONError: ErrorType, CustomStringConvertible {
+public enum JSONError: Error, CustomStringConvertible {
     /// Thrown when a given path is missing or has the wrong type.
     /// - Parameter path: The path of the key that caused the error.
     /// - Parameter expected: The type that was expected at this path.
     /// - Parameter actual: The type of the value found at the path, or `nil` if there was no value.
-    case MissingOrInvalidType(path: String?, expected: ExpectedType, actual: JSONType?)
+    case missingOrInvalidType(path: String?, expected: ExpectedType, actual: JSONType?)
     /// Thrown when an integral value is coerced to a smaller type (e.g. `Int64` to `Int`) and the
     /// value doesn't fit in the smaller type.
     /// - Parameter path: The path of the value that cuased the error.
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
-    case OutOfRangeInt64(path: String?, value: Int64, expected: Any.Type)
+    case outOfRangeInt64(path: String?, value: Int64, expected: Any.Type)
     /// Thrown when a floating-point value is coerced to a smaller type (e.g. `Double` to `Int`)
     /// and the value doesn't fit in the smaller type.
     /// - Parameter path: The path of the value that cuased the error.
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
-    case OutOfRangeDouble(path: String?, value: Double, expected: Any.Type)
+    case outOfRangeDouble(path: String?, value: Double, expected: Any.Type)
     
     public var description: String {
         switch self {
-        case let .MissingOrInvalidType(path, expected, actual): return "\(path.map({$0+": "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
-        case let .OutOfRangeInt64(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
-        case let .OutOfRangeDouble(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .missingOrInvalidType(path, expected, actual): return "\(path.map({$0+": "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
+        case let .outOfRangeInt64(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .outOfRangeDouble(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         }
     }
     
-    private func withPrefix(prefix: String) -> JSONError {
-        func prefixPath(path: String?, with prefix: String) -> String {
-            guard let path = path where !path.isEmpty else { return prefix }
+    fileprivate func withPrefix(_ prefix: String) -> JSONError {
+        func prefixPath(_ path: String?, with prefix: String) -> String {
+            guard let path = path, !path.isEmpty else { return prefix }
             if path.unicodeScalars.first == "[" {
                 return prefix + path
             } else {
@@ -52,47 +52,47 @@ public enum JSONError: ErrorType, CustomStringConvertible {
             }
         }
         switch self {
-        case let .MissingOrInvalidType(path, expected, actual):
-            return .MissingOrInvalidType(path: prefixPath(path, with: prefix), expected: expected, actual: actual)
-        case let .OutOfRangeInt64(path, value, expected):
-            return .OutOfRangeInt64(path: prefixPath(path, with: prefix), value: value, expected: expected)
-        case let .OutOfRangeDouble(path, value, expected):
-            return .OutOfRangeDouble(path: prefixPath(path, with: prefix), value: value, expected: expected)
+        case let .missingOrInvalidType(path, expected, actual):
+            return .missingOrInvalidType(path: prefixPath(path, with: prefix), expected: expected, actual: actual)
+        case let .outOfRangeInt64(path, value, expected):
+            return .outOfRangeInt64(path: prefixPath(path, with: prefix), value: value, expected: expected)
+        case let .outOfRangeDouble(path, value, expected):
+            return .outOfRangeDouble(path: prefixPath(path, with: prefix), value: value, expected: expected)
         }
     }
     
     public enum ExpectedType: CustomStringConvertible {
-        case Required(JSONType)
-        case Optional(JSONType)
+        case required(JSONType)
+        case optional(JSONType)
         
         public var description: String {
             switch self {
-            case .Required(let type): return type.description
-            case .Optional(let type): return "\(type) or null"
+            case .required(let type): return type.description
+            case .optional(let type): return "\(type) or null"
             }
         }
     }
     
     public enum JSONType: String, CustomStringConvertible {
-        case Null = "null"
-        case Bool = "bool"
-        case String = "string"
-        case Number = "number"
-        case Object = "object"
-        case Array = "array"
+        case null = "null"
+        case bool = "bool"
+        case string = "string"
+        case number = "number"
+        case object = "object"
+        case array = "array"
         
-        internal static func forValue(value: JSON) -> JSONType {
+        internal static func forValue(_ value: JSON) -> JSONType {
             switch value {
-            case .Null: return .Null
-            case .Bool: return .Bool
-            case .String: return .String
-            case .Int64, .Double: return .Number
-            case .Object: return .Object
-            case .Array: return .Array
+            case .null: return .null
+            case .bool: return .bool
+            case .string: return .string
+            case .int64, .double: return .number
+            case .object: return .object
+            case .array: return .array
             }
         }
         
-        public var description: Swift.String {
+        public var description: String {
             return rawValue
         }
     }
@@ -103,52 +103,52 @@ public extension JSON {
     /// Returns the bool value if the receiver is a bool.
     /// - Returns: A `Bool` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getBool() throws -> Swift.Bool {
-        guard let b = bool else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Bool), actual: .forValue(self)) }
+    func getBool() throws -> Bool {
+        guard let b = self.bool else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.bool), actual: .forValue(self)) }
         return b
     }
     
     /// Returns the bool value if the receiver is a bool.
     /// - Returns: A `Bool` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getBoolOrNil() throws -> Swift.Bool? {
-        if let b = bool { return b }
+    func getBoolOrNil() throws -> Bool? {
+        if let b = self.bool { return b }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Bool), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.bool), actual: .forValue(self)) }
     }
     
     /// Returns the string value if the receiver is a string.
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getString() throws -> Swift.String {
-        guard let str = string else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.String), actual: .forValue(self)) }
+    func getString() throws -> String {
+        guard let str = self.string else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.string), actual: .forValue(self)) }
         return str
     }
     
     /// Returns the string value if the receiver is a string.
     /// - Returns: A `String` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getStringOrNil() throws -> Swift.String? {
-        if let str = string { return str }
+    func getStringOrNil() throws -> String? {
+        if let str = self.string { return str }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.String), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.string), actual: .forValue(self)) }
     }
     
     /// Returns the 64-bit integral value if the receiver is a number.
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getInt64() throws -> Swift.Int64 {
-        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+    func getInt64() throws -> Int64 {
+        guard let val = self.int64 else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
         return val
     }
     
     /// Returns the 64-bit integral value value if the receiver is a number.
     /// - Returns: An `Int64` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getInt64OrNil() throws -> Swift.Int64? {
-        if let val = int64 { return val }
+    func getInt64OrNil() throws -> Int64? {
+        if let val = self.int64 { return val }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
     }
     
     /// Returns the integral value if the receiver is a number.
@@ -156,9 +156,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
     ///   is too large to fit in an `Int`.
     func getInt() throws -> Int {
-        guard let val = int64 else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+        guard let val = self.int64 else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
         let truncated = Int(truncatingBitPattern: val)
-        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
         return truncated
     }
     
@@ -167,36 +167,36 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
     ///   is too large to fit in an `Int`.
     func getIntOrNil() throws -> Int? {
-        if let val = int64 {
+        if let val = self.int64 {
             let truncated = Int(truncatingBitPattern: val)
-            guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+            guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
             return truncated
         } else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
     }
     
     /// Returns the double value if the receiver is a number.
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getDouble() throws -> Swift.Double {
-        guard let val = double else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .forValue(self)) }
+    func getDouble() throws -> Double {
+        guard let val = self.double else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
         return val
     }
     
     /// Returns the double value if the receiver is a number.
     /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
-    func getDoubleOrNil() throws -> Swift.Double? {
-        if let val = double { return val }
+    func getDoubleOrNil() throws -> Double? {
+        if let val = self.double { return val }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Number), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
     }
     
     /// Returns the object value if the receiver is an object.
     /// - Returns: An object value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getObject() throws -> JSONObject {
-        guard let dict = object else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Object), actual: .forValue(self)) }
+        guard let dict = self.object else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.object), actual: .forValue(self)) }
         return dict
     }
     
@@ -204,16 +204,16 @@ public extension JSON {
     /// - Returns: An object value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getObjectOrNil() throws -> JSONObject? {
-        if let dict = object { return dict }
+        if let dict = self.object { return dict }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Object), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.object), actual: .forValue(self)) }
     }
     
     /// Returns the array value if the receiver is an array.
     /// - Returns: An array value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getArray() throws -> JSONArray {
-        guard let ary = array else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Array), actual: .forValue(self)) }
+        guard let ary = self.array else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.array), actual: .forValue(self)) }
         return ary
     }
     
@@ -221,9 +221,9 @@ public extension JSON {
     /// - Returns: An array value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getArrayOrNil() throws -> JSONArray? {
-        if let ary = array { return ary }
+        if let ary = self.array { return ary }
         else if isNull { return nil }
-        else { throw JSONError.MissingOrInvalidType(path: nil, expected: .Optional(.Array), actual: .forValue(self)) }
+        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.array), actual: .forValue(self)) }
     }
 }
 
@@ -231,25 +231,25 @@ public extension JSON {
     /// Returns the receiver coerced to a string value.
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the receiver is an object or array.
-    func toString() throws -> Swift.String {
-        return try toStringMaybeNil(.Required(.String)) ?? "null"
+    func toString() throws -> String {
+        return try toStringMaybeNil(.required(.string)) ?? "null"
     }
     
     /// Returns the receiver coerced to a string value.
     /// - Returns: A `String` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is an object or array.
-    func toStringOrNil() throws -> Swift.String? {
-        return try toStringMaybeNil(.Optional(.String))
+    func toStringOrNil() throws -> String? {
+        return try toStringMaybeNil(.optional(.string))
     }
     
-    private func toStringMaybeNil(expected: JSONError.ExpectedType) throws -> Swift.String? {
+    private func toStringMaybeNil(_ expected: JSONError.ExpectedType) throws -> String? {
         switch self {
-        case .String(let s): return s
-        case .Null: return nil
-        case .Bool(let b): return Swift.String(b)
-        case .Int64(let i): return Swift.String(i)
-        case .Double(let d): return Swift.String(d)
-        default: throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        case .string(let s): return s
+        case .null: return nil
+        case .bool(let b): return String(b)
+        case .int64(let i): return String(i)
+        case .double(let d): return String(d)
+        default: throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
         }
     }
     
@@ -260,9 +260,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is `null`, a boolean, an object,
     ///   an array, a string that cannot be coerced to a 64-bit integral value,
     ///   or a floating-point value that does not fit in 64 bits.
-    func toInt64() throws -> Swift.Int64 {
-        guard let val = try toInt64MaybeNil(.Required(.Number)) else {
-            throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .Null)
+    func toInt64() throws -> Int64 {
+        guard let val = try toInt64MaybeNil(.required(.number)) else {
+            throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null)
         }
         return val
     }
@@ -274,34 +274,34 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is a boolean, an object, an array,
     ///   a string that cannot be coerced to a 64-bit integral value,
     ///   or a floating-point value that does not fit in 64 bits.
-    func toInt64OrNil() throws -> Swift.Int64? {
-        return try toInt64MaybeNil(.Optional(.Number))
+    func toInt64OrNil() throws -> Int64? {
+        return try toInt64MaybeNil(.optional(.number))
     }
     
-    private func toInt64MaybeNil(expected: JSONError.ExpectedType) throws -> Swift.Int64? {
+    private func toInt64MaybeNil(_ expected: JSONError.ExpectedType) throws -> Int64? {
         switch self {
-        case .Int64(let i):
+        case .int64(let i):
             return i
-        case .Double(let d):
+        case .double(let d):
             guard let val = convertDoubleToInt64(d) else {
-                throw JSONError.OutOfRangeDouble(path: nil, value: d, expected: Swift.Int64.self)
+                throw JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self)
             }
             return val
-        case .String(let s):
-            if let i = Swift.Int64(s, radix: 10) {
+        case .string(let s):
+            if let i = Int64(s, radix: 10) {
                 return i
-            } else if let d = Swift.Double(s) {
+            } else if let d = Double(s) {
                 guard let val = convertDoubleToInt64(d) else {
-                    throw JSONError.OutOfRangeDouble(path: nil, value: d, expected: Swift.Int64.self)
+                    throw JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self)
                 }
                 return val
             }
-        case .Null:
+        case .null:
             return nil
         default:
             break
         }
-        throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
     }
     
     /// Returns the receiver coerced to an integral value.
@@ -314,7 +314,7 @@ public extension JSON {
     func toInt() throws -> Int {
         let val = try toInt64()
         let truncated = Int(truncatingBitPattern: val)
-        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
         return truncated
     }
     
@@ -328,7 +328,7 @@ public extension JSON {
     func toIntOrNil() throws -> Int? {
         guard let val = try toInt64OrNil() else { return nil }
         let truncated = Int(truncatingBitPattern: val)
-        guard Swift.Int64(truncated) == val else { throw JSONError.OutOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
         return truncated
     }
     
@@ -336,9 +336,9 @@ public extension JSON {
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the receiver is `null`, a boolean, an object, an array,
     ///   or a string that cannot be coerced to a floating-point value.
-    func toDouble() throws -> Swift.Double {
-        guard let val = try toDoubleMaybeNil(.Required(.Number)) else {
-            throw JSONError.MissingOrInvalidType(path: nil, expected: .Required(.Number), actual: .Null)
+    func toDouble() throws -> Double {
+        guard let val = try toDoubleMaybeNil(.required(.number)) else {
+            throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null)
         }
         return val
     }
@@ -347,17 +347,17 @@ public extension JSON {
     /// - Returns: A `Double` value, or `nil` if the receiver is `null`.
     /// - Throws: `JSONError` if the receiver is a boolean, an object, an array,
     ///   or a string that cannot be coerced to a floating-point value.
-    func toDoubleOrNil() throws -> Swift.Double? {
-        return try toDoubleMaybeNil(.Optional(.Number))
+    func toDoubleOrNil() throws -> Double? {
+        return try toDoubleMaybeNil(.optional(.number))
     }
     
-    private func toDoubleMaybeNil(expected: JSONError.ExpectedType) throws -> Swift.Double? {
+    private func toDoubleMaybeNil(_ expected: JSONError.ExpectedType) throws -> Double? {
         switch self {
-        case .Int64(let i): return Swift.Double(i)
-        case .Double(let d): return d
-        case .String(let s): return Swift.Double(s)
-        case .Null: return nil
-        default: throw JSONError.MissingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        case .int64(let i): return Double(i)
+        case .double(let d): return d
+        case .string(let s): return Double(s)
+        case .null: return nil
+        default: throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
         }
     }
 }
@@ -369,9 +369,9 @@ public extension JSON {
     /// - Returns: A `Bool` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
-    func getBool(key: Swift.String) throws -> Swift.Bool {
+    func getBool(_ key: String) throws -> Bool {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .String)
+        let value = try getRequired(dict, key: key, type: .string)
         return try scoped(key) { try value.getBool() }
     }
     
@@ -379,7 +379,7 @@ public extension JSON {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Bool` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
-    func getBoolOrNil(key: Swift.String) throws -> Swift.Bool? {
+    func getBoolOrNil(_ key: String) throws -> Bool? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getBoolOrNil() }
@@ -390,9 +390,9 @@ public extension JSON {
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
-    func getString(key: Swift.String) throws -> Swift.String {
+    func getString(_ key: String) throws -> String {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .String)
+        let value = try getRequired(dict, key: key, type: .string)
         return try scoped(key) { try value.getString() }
     }
     
@@ -400,7 +400,7 @@ public extension JSON {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
-    func getStringOrNil(key: Swift.String) throws -> Swift.String? {
+    func getStringOrNil(_ key: String) throws -> String? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getStringOrNil() }
@@ -411,9 +411,9 @@ public extension JSON {
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
-    func getInt64(key: Swift.String) throws -> Swift.Int64 {
+    func getInt64(_ key: String) throws -> Int64 {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.getInt64() }
     }
     
@@ -421,7 +421,7 @@ public extension JSON {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
-    func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+    func getInt64OrNil(_ key: String) throws -> Int64? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
@@ -433,9 +433,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type,
     ///   or if the 64-bit integral value is too large to fit in an `Int`, or if
     ///   the receiver is not an object.
-    func getInt(key: Swift.String) throws -> Int {
+    func getInt(_ key: String) throws -> Int {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.getInt() }
     }
     
@@ -444,7 +444,7 @@ public extension JSON {
     /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral
     ///   value is too large to fit in an `Int`, or if the receiver is not an object.
-    func getIntOrNil(key: Swift.String) throws -> Int? {
+    func getIntOrNil(_ key: String) throws -> Int? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getIntOrNil() }
@@ -455,9 +455,9 @@ public extension JSON {
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
-    func getDouble(key: Swift.String) throws -> Swift.Double {
+    func getDouble(_ key: String) throws -> Double {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.getDouble() }
     }
     
@@ -465,7 +465,7 @@ public extension JSON {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
-    func getDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+    func getDoubleOrNil(_ key: String) throws -> Double? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getDoubleOrNil() }
@@ -479,7 +479,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
     /// - SeeAlso: `getObject(_:_:)`
-    func getObject(key: Swift.String) throws -> JSONObject {
+    func getObject(_ key: String) throws -> JSONObject {
         return try getObject(key, { $0 })
     }
     
@@ -490,7 +490,7 @@ public extension JSON {
     /// - Returns: An object value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
-    func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
+    func getObjectOrNil(_ key: String) throws -> JSONObject? {
         return try getObjectOrNil(key, { $0 })
     }
     
@@ -500,7 +500,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object, or any error thrown by `transform`.
-    func getObject<T>(key: Swift.String, @noescape _ transform: JSONObject throws -> T) throws -> T {
+    func getObject<T>(_ key: String, _ transform: (JSONObject) throws -> T) throws -> T {
         return try getObject().getObject(key, transform)
     }
     
@@ -510,7 +510,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
     ///   or any error thrown by `transform`.
-    func getObjectOrNil<T>(key: Swift.String, @noescape _ transform: JSONObject throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ key: String, _ transform: (JSONObject) throws -> T?) throws -> T? {
         return try getObject().getObjectOrNil(key, transform)
     }
     
@@ -521,7 +521,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object.
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(key: Swift.String) throws -> JSONArray {
+    func getArray(_ key: String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
@@ -532,7 +532,7 @@ public extension JSON {
     /// - Returns: An array value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
+    func getArrayOrNil(_ key: String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
@@ -542,9 +542,9 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or if
     ///   the receiver is not an object, or any error thrown by `transform`.
-    func getArray<T>(key: Swift.String, @noescape _ transform: JSONArray throws -> T) throws -> T {
+    func getArray<T>(_ key: String, _ transform: (JSONArray) throws -> T) throws -> T {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Array)
+        let value = try getRequired(dict, key: key, type: .array)
         return try scoped(key) { try transform(value.getArray()) }
     }
     
@@ -554,7 +554,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an object,
     ///   or any error thrown by `transform`.
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSONArray throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ key: String, _ transform: (JSONArray) throws -> T?) throws -> T? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(transform) }
@@ -568,9 +568,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist, the value is an object or an array,
     ///   or if the receiver is not an object.
     /// - SeeAlso: `toString()`.
-    func toString(key: Swift.String) throws -> Swift.String {
+    func toString(_ key: String) throws -> String {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .String)
+        let value = try getRequired(dict, key: key, type: .string)
         return try scoped(key) { try value.toString() }
     }
     
@@ -579,7 +579,7 @@ public extension JSON {
     /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an object.
     /// - SeeAlso: `toStringOrNil()`.
-    func toStringOrNil(key: Swift.String) throws -> Swift.String? {
+    func toStringOrNil(_ key: String) throws -> String? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.toStringOrNil() }
@@ -591,9 +591,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
     ///   an array, a string that cannot be coerced to a 64-bit integral value, or a floating-point
     ///   value that does not fit in 64 bits, or if the receiver is not an object.
-    func toInt64(key: Swift.String) throws -> Swift.Int64 {
+    func toInt64(_ key: String) throws -> Int64 {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.toInt64() }
     }
     
@@ -603,7 +603,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
     ///   that does not fit in 64 bits, or if the receiver is not an object.
-    func toInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+    func toInt64OrNil(_ key: String) throws -> Int64? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.toInt64OrNil() }
@@ -615,9 +615,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
     ///   an array, a string that cannot be coerced to an integral value, or a floating-point
     ///   value that does not fit in an `Int`, or if the receiver is not an object.
-    func toInt(key: Swift.String) throws -> Int {
+    func toInt(_ key: String) throws -> Int {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.toInt() }
     }
     
@@ -627,7 +627,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to an integral value, or a floating-point value
     ///   that does not fit in an `Int`, or if the receiver is not an object.
-    func toIntOrNil(key: Swift.String) throws -> Int? {
+    func toIntOrNil(_ key: String) throws -> Int? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.toIntOrNil() }
@@ -639,9 +639,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean,
     ///   an object, an array, or a string that cannot be coerced to a floating-point value,
     ///   or if the receiver is not an object.
-    func toDouble(key: Swift.String) throws -> Swift.Double {
+    func toDouble(_ key: String) throws -> Double {
         let dict = try getObject()
-        let value = try getRequired(dict, key: key, type: .Number)
+        let value = try getRequired(dict, key: key, type: .number)
         return try scoped(key) { try value.toDouble() }
     }
     
@@ -650,7 +650,7 @@ public extension JSON {
     /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
     ///   cannot be coerced to a floating-point value, or if the receiver is not an object.
-    func toDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+    func toDoubleOrNil(_ key: String) throws -> Double? {
         let dict = try getObject()
         guard let value = dict[key] else { return nil }
         return try scoped(key) { try value.toDoubleOrNil() }
@@ -664,9 +664,9 @@ public extension JSON {
     /// - Returns: A `Bool` value.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
-    func getBool(index: Int) throws -> Swift.Bool {
+    func getBool(_ index: Int) throws -> Bool {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Bool)
+        let value = try getRequired(ary, index: index, type: .bool)
         return try scoped(index) { try value.getBool() }
     }
     
@@ -674,7 +674,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Bool` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
-    func getBoolOrNil(index: Int) throws -> Swift.Bool? {
+    func getBoolOrNil(_ index: Int) throws -> Bool? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getBoolOrNil() }
@@ -685,9 +685,9 @@ public extension JSON {
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
-    func getString(index: Int) throws -> Swift.String {
+    func getString(_ index: Int) throws -> String {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .String)
+        let value = try getRequired(ary, index: index, type: .string)
         return try scoped(index) { try value.getString() }
     }
     
@@ -695,7 +695,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `String` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
-    func getStringOrNil(index: Int) throws -> Swift.String? {
+    func getStringOrNil(_ index: Int) throws -> String? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getStringOrNil() }
@@ -706,9 +706,9 @@ public extension JSON {
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
-    func getInt64(index: Int) throws -> Swift.Int64 {
+    func getInt64(_ index: Int) throws -> Int64 {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.getInt64() }
     }
     
@@ -716,7 +716,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: An `Int64` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
-    func getInt64OrNil(index: Int) throws -> Swift.Int64? {
+    func getInt64OrNil(_ index: Int) throws -> Int64? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getInt64OrNil() }
@@ -728,9 +728,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the 64-bit integral value is too large to fit in an `Int`, or if
     ///   the receiver is not an array.
-    func getInt(index: Int) throws -> Int {
+    func getInt(_ index: Int) throws -> Int {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.getInt() }
     }
     
@@ -739,7 +739,7 @@ public extension JSON {
     /// - Returns: An `Int` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral value
     ///   is too large to fit in an `Int`, or if the receiver is not an array.
-    func getIntOrNil(index: Int) throws -> Int? {
+    func getIntOrNil(_ index: Int) throws -> Int? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getIntOrNil() }
@@ -750,9 +750,9 @@ public extension JSON {
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
-    func getDouble(index: Int) throws -> Swift.Double {
+    func getDouble(_ index: Int) throws -> Double {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.getDouble() }
     }
     
@@ -760,7 +760,7 @@ public extension JSON {
     /// - Parameter index: The index that's used to subscript the receiver.
     /// - Returns: A `Double` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
-    func getDoubleOrNil(index: Int) throws -> Swift.Double? {
+    func getDoubleOrNil(_ index: Int) throws -> Double? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getDoubleOrNil() }
@@ -774,7 +774,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `getObject(_:_:)`
-    func getObject(index: Int) throws -> JSONObject {
+    func getObject(_ index: Int) throws -> JSONObject {
         return try getObject(index, { $0 })
     }
     
@@ -785,7 +785,7 @@ public extension JSON {
     /// - Returns: An object value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
-    func getObjectOrNil(index: Int) throws -> JSONObject? {
+    func getObjectOrNil(_ index: Int) throws -> JSONObject? {
         return try getObjectOrNil(index, { $0 })
     }
     
@@ -795,9 +795,9 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
-    func getObject<T>(index: Int, @noescape _ f: JSONObject throws -> T) throws -> T {
+    func getObject<T>(_ index: Int, _ f: (JSONObject) throws -> T) throws -> T {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Object)
+        let value = try getRequired(ary, index: index, type: .object)
         return try scoped(index) { try f(value.getObject()) }
     }
     
@@ -807,7 +807,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ////  or any error thrown by `transform`.
-    func getObjectOrNil<T>(index: Int, @noescape _ f: JSONObject throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ index: Int, _ f: (JSONObject) throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getObjectOrNil().flatMap(f) }
@@ -821,7 +821,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(index: Int) throws -> JSONArray {
+    func getArray(_ index: Int) throws -> JSONArray {
         return try getArray(index, { $0 })
     }
     
@@ -832,7 +832,7 @@ public extension JSON {
     /// - Returns: An array value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(index: Int) throws -> JSONArray? {
+    func getArrayOrNil(_ index: Int) throws -> JSONArray? {
         return try getArrayOrNil(index, { $0 })
     }
     
@@ -842,9 +842,9 @@ public extension JSON {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the index is out of bounds or the value is the wrong type,
     ///   or if the receiver is not an array, or any error thrown by `transform`.
-    func getArray<T>(index: Int, @noescape _ f: JSONArray throws -> T) throws -> T {
+    func getArray<T>(_ index: Int, _ f: (JSONArray) throws -> T) throws -> T {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Array)
+        let value = try getRequired(ary, index: index, type: .array)
         return try scoped(index) { try f(value.getArray()) }
     }
     
@@ -854,7 +854,7 @@ public extension JSON {
     /// - Returns: The result of calling the given block, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the receiver is not an array,
     ///   or any error thrown by `transform`.
-    func getArrayOrNil<T>(index: Int, @noescape _ f: JSONArray throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ index: Int, _ f: (JSONArray) throws -> T?) throws -> T? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.getArrayOrNil().flatMap(f) }
@@ -868,9 +868,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the index is out of bounds or the value is an object or an array,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `toString()`.
-    func toString(index: Int) throws -> Swift.String {
+    func toString(_ index: Int) throws -> String {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .String)
+        let value = try getRequired(ary, index: index, type: .string)
         return try scoped(index) { try value.toString() }
     }
     
@@ -879,7 +879,7 @@ public extension JSON {
     /// - Returns: A `String` value, or `nil` if the index is out of bounds or the value is `null`.
     /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an array.
     /// - SeeAlso: `toStringOrNil()`.
-    func toStringOrNil(index: Int) throws -> Swift.String? {
+    func toStringOrNil(_ index: Int) throws -> String? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.toStringOrNil() }
@@ -892,9 +892,9 @@ public extension JSON {
     ///   an object, an array, a string that cannot be coerced to a 64-bit integral value, or a
     ///   floating-point value that does not fit in 64 bits, or if the receiver is not an array.
     /// - SeeAlso: `toInt64()`.
-    func toInt64(index: Int) throws -> Swift.Int64 {
+    func toInt64(_ index: Int) throws -> Int64 {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.toInt64() }
     }
     
@@ -905,7 +905,7 @@ public extension JSON {
     ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
     ///   that does not fit in 64 bits, or if the receiver is not an array.
     /// - SeeAlso: `toInt64OrNil()`.
-    func toInt64OrNil(index: Int) throws -> Swift.Int64? {
+    func toInt64OrNil(_ index: Int) throws -> Int64? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.toInt64OrNil() }
@@ -918,9 +918,9 @@ public extension JSON {
     ///   an object, an array, a string that cannot be coerced to an integral value, or a
     ///   floating-point value that does not fit in an `Int`, or if the receiver is not an array.
     /// - SeeAlso: `toInt()`.
-    func toInt(index: Int) throws -> Int {
+    func toInt(_ index: Int) throws -> Int {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.toInt() }
     }
     
@@ -931,7 +931,7 @@ public extension JSON {
     ///   that cannot be coerced to an integral value, or a floating-point value
     ///   that does not fit in an `Int`, or if the receiver is not an array.
     /// - SeeAlso: `toIntOrNil()`.
-    func toIntOrNil(index: Int) throws -> Int? {
+    func toIntOrNil(_ index: Int) throws -> Int? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.toIntOrNil() }
@@ -944,9 +944,9 @@ public extension JSON {
     ///   an object, an array, or a string that cannot be coerced to a floating-point value,
     ///   or if the receiver is not an array.
     /// - SeeAlso: `toDouble()`.
-    func toDouble(index: Int) throws -> Swift.Double {
+    func toDouble(_ index: Int) throws -> Double {
         let ary = try getArray()
-        let value = try getRequired(ary, index: index, type: .Number)
+        let value = try getRequired(ary, index: index, type: .number)
         return try scoped(index) { try value.toDouble() }
     }
     
@@ -956,7 +956,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
     ///   cannot be coerced to a floating-point value, or if the receiver is not an array.
     /// - SeeAlso: `toDouble()`.
-    func toDoubleOrNil(index: Int) throws -> Swift.Double? {
+    func toDoubleOrNil(_ index: Int) throws -> Double? {
         let ary = try getArray()
         guard let value = ary[safe: index] else { return nil }
         return try scoped(index) { try value.toDoubleOrNil() }
@@ -970,8 +970,8 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Bool` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
-    func getBool(key: Swift.String) throws -> Swift.Bool {
-        let value = try getRequired(self, key: key, type: .String)
+    func getBool(_ key: String) throws -> Bool {
+        let value = try getRequired(self, key: key, type: .string)
         return try scoped(key) { try value.getBool() }
     }
     
@@ -979,7 +979,7 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Bool` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
-    func getBoolOrNil(key: Swift.String) throws -> Swift.Bool? {
+    func getBoolOrNil(_ key: String) throws -> Bool? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getBoolOrNil() }
     }
@@ -988,8 +988,8 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
-    func getString(key: Swift.String) throws -> Swift.String {
-        let value = try getRequired(self, key: key, type: .String)
+    func getString(_ key: String) throws -> String {
+        let value = try getRequired(self, key: key, type: .string)
         return try scoped(key) { try value.getString() }
     }
     
@@ -997,7 +997,7 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
-    func getStringOrNil(key: Swift.String) throws -> Swift.String? {
+    func getStringOrNil(_ key: String) throws -> String? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getStringOrNil() }
     }
@@ -1006,8 +1006,8 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
-    func getInt64(key: Swift.String) throws -> Swift.Int64 {
-        let value = try getRequired(self, key: key, type: .Number)
+    func getInt64(_ key: String) throws -> Int64 {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.getInt64() }
     }
     
@@ -1015,7 +1015,7 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: An `Int64` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
-    func getInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+    func getInt64OrNil(_ key: String) throws -> Int64? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getInt64OrNil() }
     }
@@ -1025,8 +1025,8 @@ public extension JSONObject {
     /// - Returns: An `Int` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type,
     ///   or if the 64-bit integral value is too large to fit in an `Int`.
-    func getInt(key: Swift.String) throws -> Int {
-        let value = try getRequired(self, key: key, type: .Number)
+    func getInt(_ key: String) throws -> Int {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.getInt() }
     }
     
@@ -1035,7 +1035,7 @@ public extension JSONObject {
     /// - Returns: An `Int` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or if the 64-bit integral
     ///   value is too large to fit in an `Int`.
-    func getIntOrNil(key: Swift.String) throws -> Int? {
+    func getIntOrNil(_ key: String) throws -> Int? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getIntOrNil() }
     }
@@ -1044,8 +1044,8 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
-    func getDouble(key: Swift.String) throws -> Swift.Double {
-        let value = try getRequired(self, key: key, type: .Number)
+    func getDouble(_ key: String) throws -> Double {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.getDouble() }
     }
     
@@ -1053,7 +1053,7 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
-    func getDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+    func getDoubleOrNil(_ key: String) throws -> Double? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getDoubleOrNil() }
     }
@@ -1065,7 +1065,7 @@ public extension JSONObject {
     /// - Returns: An object value.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     /// - SeeAlso: `getObject(_:_:)`
-    func getObject(key: Swift.String) throws -> JSONObject {
+    func getObject(_ key: String) throws -> JSONObject {
         return try getObject(key, { $0 })
     }
     
@@ -1076,7 +1076,7 @@ public extension JSONObject {
     /// - Returns: An object value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getObjectOrNil(_:_:)`
-    func getObjectOrNil(key: Swift.String) throws -> JSONObject? {
+    func getObjectOrNil(_ key: String) throws -> JSONObject? {
         return try getObjectOrNil(key, { $0 })
     }
     
@@ -1086,8 +1086,8 @@ public extension JSONObject {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
     ///   error thrown by `transform`.
-    func getObject<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T) throws -> T {
-        let value = try getRequired(self, key: key, type: .Object)
+    func getObject<T>(_ key: String, _ f: (JSONObject) throws -> T) throws -> T {
+        let value = try getRequired(self, key: key, type: .object)
         return try scoped(key) { try f(value.getObject()) }
     }
     
@@ -1096,7 +1096,7 @@ public extension JSONObject {
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
-    func getObjectOrNil<T>(key: Swift.String, @noescape _ f: JSONObject throws -> T?) throws -> T? {
+    func getObjectOrNil<T>(_ key: String, _ f: (JSONObject) throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getObjectOrNil().flatMap(f) }
     }
@@ -1107,7 +1107,7 @@ public extension JSONObject {
     /// - Parameter key: The key that's used to subscript the receiver.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type.
     /// - SeeAlso: `getArray(_:_:)`
-    func getArray(key: Swift.String) throws -> JSONArray {
+    func getArray(_ key: String) throws -> JSONArray {
         return try getArray(key, { $0 })
     }
     
@@ -1118,7 +1118,7 @@ public extension JSONObject {
     /// - Returns: An array value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type.
     /// - SeeAlso: `getArrayOrNil(_:_:)`
-    func getArrayOrNil(key: Swift.String) throws -> JSONArray? {
+    func getArrayOrNil(_ key: String) throws -> JSONArray? {
         return try getArrayOrNil(key, { $0 })
     }
     
@@ -1128,8 +1128,8 @@ public extension JSONObject {
     /// - Returns: The result of calling the given block.
     /// - Throws: `JSONError` if the key doesn't exist or the value is the wrong type, or any
     ///   error thrown by `transform`.
-    func getArray<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T) throws -> T {
-        let value = try getRequired(self, key: key, type: .Array)
+    func getArray<T>(_ key: String, _ f: (JSONArray) throws -> T) throws -> T {
+        let value = try getRequired(self, key: key, type: .array)
         return try scoped(key) { try f(value.getArray()) }
     }
     
@@ -1138,7 +1138,7 @@ public extension JSONObject {
     /// - Parameter transform: A block that's called with the result of subscripting the receiver with `key`.
     /// - Returns: The result of calling the given block, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value has the wrong type, or any error thrown by `transform`.
-    func getArrayOrNil<T>(key: Swift.String, @noescape _ f: JSONArray throws -> T?) throws -> T? {
+    func getArrayOrNil<T>(_ key: String, _ f: (JSONArray) throws -> T?) throws -> T? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.getArrayOrNil().flatMap(f) }
     }
@@ -1151,8 +1151,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the key doesn't exist, the value is an object or an array,
     ///   or if the receiver is not an object.
     /// - SeeAlso: `toString()`.
-    func toString(key: Swift.String) throws -> Swift.String {
-        let value = try getRequired(self, key: key, type: .String)
+    func toString(_ key: String) throws -> String {
+        let value = try getRequired(self, key: key, type: .string)
         return try scoped(key) { try value.toString() }
     }
     
@@ -1161,7 +1161,7 @@ public extension JSONObject {
     /// - Returns: A `String` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value is an object or an array, or if the receiver is not an object.
     /// - SeeAlso: `toStringOrNil()`.
-    func toStringOrNil(key: Swift.String) throws -> Swift.String? {
+    func toStringOrNil(_ key: String) throws -> String? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.toStringOrNil() }
     }
@@ -1172,8 +1172,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
     ///   an array, a string that cannot be coerced to a 64-bit integral value, or a floating-point
     ///   value that does not fit in 64 bits, or if the receiver is not an object.
-    func toInt64(key: Swift.String) throws -> Swift.Int64 {
-        let value = try getRequired(self, key: key, type: .Number)
+    func toInt64(_ key: String) throws -> Int64 {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.toInt64() }
     }
     
@@ -1183,7 +1183,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to a 64-bit integral value, or a floating-point value
     ///   that does not fit in 64 bits, or if the receiver is not an object.
-    func toInt64OrNil(key: Swift.String) throws -> Swift.Int64? {
+    func toInt64OrNil(_ key: String) throws -> Int64? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.toInt64OrNil() }
     }
@@ -1194,8 +1194,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean, an object,
     ///   an array, a string that cannot be coerced to an integral value, or a floating-point
     ///   value that does not fit in an `Int`, or if the receiver is not an object.
-    func toInt(key: Swift.String) throws -> Int {
-        let value = try getRequired(self, key: key, type: .Number)
+    func toInt(_ key: String) throws -> Int {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.toInt() }
     }
     
@@ -1205,7 +1205,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the the value is a boolean, an object, an array, a string
     ///   that cannot be coerced to an integral value, or a floating-point value
     ///   that does not fit in an `Int`, or if the receiver is not an object.
-    func toIntOrNil(key: Swift.String) throws -> Int? {
+    func toIntOrNil(_ key: String) throws -> Int? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.toIntOrNil() }
     }
@@ -1216,8 +1216,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if the key doesn't exist or the value is `null`, a boolean,
     ///   an object, an array, or a string that cannot be coerced to a floating-point value,
     ///   or if the receiver is not an object.
-    func toDouble(key: Swift.String) throws -> Swift.Double {
-        let value = try getRequired(self, key: key, type: .Number)
+    func toDouble(_ key: String) throws -> Double {
+        let value = try getRequired(self, key: key, type: .number)
         return try scoped(key) { try value.toDouble() }
     }
     
@@ -1226,7 +1226,7 @@ public extension JSONObject {
     /// - Returns: A `Double` value, or `nil` if the key doesn't exist or the value is `null`.
     /// - Throws: `JSONError` if the value is a boolean, an object, an array, or a string that
     ///   cannot be coerced to a floating-point value, or if the receiver is not an object.
-    func toDoubleOrNil(key: Swift.String) throws -> Swift.Double? {
+    func toDoubleOrNil(_ key: String) throws -> Double? {
         guard let value = self[key] else { return nil }
         return try scoped(key) { try value.toDoubleOrNil() }
     }
@@ -1234,7 +1234,6 @@ public extension JSONObject {
 
 // MARK: - JSONArray helpers
 
-// FIXME: Swift 3: Use `rethrows`.
 public extension JSON {
     /// Returns an `Array` containing the results of mapping `transform` over `array`.
     ///
@@ -1246,11 +1245,8 @@ public extension JSON {
     /// - Returns: An array with the results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.map` instead.
-    static func map<T>(array: JSONArray, @noescape _ transform: JSON throws -> T) throws -> [T] {
-        return try array.enumerate().map({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    static func map<T>(_ array: JSONArray, _ transform: (JSON) throws -> T) rethrows -> [T] {
+        return try array.enumerated().map({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
     /// Returns an `Array` containing the non-`nil` results of mapping `transform` over `array`.
@@ -1263,11 +1259,8 @@ public extension JSON {
     /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.flatMap` instead.
-    static func flatMap<T>(array: JSONArray, @noescape _ transform: JSON throws -> T?) throws -> [T] {
-        return try array.enumerate().flatMap({ i, elt in try scoped(i, f: { try transform(elt) }) })
+    static func flatMap<T>(_ array: JSONArray, _ transform: (JSON) throws -> T?) rethrows -> [T] {
+        return try array.enumerated().flatMap({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
     /// Returns an `Array` containing the concatenated results of mapping `transform` over `array`.
@@ -1280,18 +1273,10 @@ public extension JSON {
     /// - Returns: An array with the concatenated results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    /// - Bug: This method must be marked as `throws` instead of `rethrows` because of Swift compiler
-    ///   limitations. If you want to map an array with a non-throwing transform function, use
-    ///   `SequenceType.flatMap` instead.
-    static func flatMap<S: SequenceType>(array: JSONArray, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
-        // FIXME: Use SequenceType.flatMap() once it becomes @noescape
-        var results: [S.Generator.Element] = []
-        for (i, elt) in array.enumerate() {
-            try scoped(i) {
-                results.appendContentsOf(try transform(elt))
-            }
-        }
-        return results
+    static func flatMap<S: Sequence>(_ array: JSONArray, _ transform: (JSON) throws -> S) rethrows -> [S.Iterator.Element] {
+        return try array.enumerated().flatMap({ (i, elt) in
+            return try scoped(i, { try transform(elt) })
+        })
     }
 }
 
@@ -1307,7 +1292,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T] {
+    func mapArray<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(key, { try JSON.map($0, transform) })
     }
     
@@ -1322,7 +1307,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T) throws -> [T] {
+    func mapArray<T>(_ index: Int, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(index, { try JSON.map($0, transform) })
     }
     
@@ -1340,7 +1325,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or `key` exists but the value is not
     ///   an array or `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.map($0, transform) })
     }
     
@@ -1358,7 +1343,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the subscript value is not an
     ///   array or `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(index, { try JSON.map($0, transform) })
     }
     
@@ -1373,7 +1358,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1388,7 +1373,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+    func flatMapArray<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1403,7 +1388,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1418,7 +1403,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: SequenceType>(index: Swift.Int, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+    func flatMapArray<S: Sequence>(_ index: Int, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1436,7 +1421,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1454,7 +1439,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1472,7 +1457,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(index: Swift.Int, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
     }
     
@@ -1490,7 +1475,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: SequenceType>(index: Swift.Int, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ index: Int, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
     }
 }
@@ -1507,7 +1492,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T] {
+    func mapArray<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T] {
         return try getArray(key, { try JSON.map($0, transform) })
     }
     
@@ -1525,7 +1510,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func mapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T) throws -> [T]? {
+    func mapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.map($0, transform) })
     }
     
@@ -1540,7 +1525,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T] {
+    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1555,7 +1540,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArray<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element] {
+    func flatMapArray<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element] {
         return try getArray(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1573,7 +1558,7 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(key: Swift.String, @noescape _ transform: JSON throws -> T?) throws -> [T]? {
+    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
     
@@ -1591,25 +1576,25 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
-    func flatMapArrayOrNil<S: SequenceType>(key: Swift.String, @noescape _ transform: JSON throws -> S) throws -> [S.Generator.Element]? {
+    func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
     }
 }
 
 // MARK: -
 
-internal func getRequired(dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
-    guard let value = dict[key] else { throw JSONError.MissingOrInvalidType(path: key, expected: .Required(type), actual: nil) }
+internal func getRequired(_ dict: JSONObject, key: String, type: JSONError.JSONType) throws -> JSON {
+    guard let value = dict[key] else { throw JSONError.missingOrInvalidType(path: key, expected: .required(type), actual: nil) }
     return value
 }
 
-internal func getRequired(ary: JSONArray, index: Int, type: JSONError.JSONType) throws -> JSON {
-    guard let value = ary[safe: index] else { throw JSONError.MissingOrInvalidType(path: "[\(index)]", expected: .Required(type), actual: nil) }
+internal func getRequired(_ ary: JSONArray, index: Int, type: JSONError.JSONType) throws -> JSON {
+    guard let value = ary[safe: index] else { throw JSONError.missingOrInvalidType(path: "[\(index)]", expected: .required(type), actual: nil) }
     return value
 }
 
 @inline(__always)
-internal func scoped<T>(key: String, @noescape f: () throws -> T) throws -> T {
+internal func scoped<T>(_ key: String, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
@@ -1618,7 +1603,7 @@ internal func scoped<T>(key: String, @noescape f: () throws -> T) throws -> T {
 }
 
 @inline(__always)
-internal func scoped<T>(index: Int, @noescape f: () throws -> T) throws -> T {
+internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {

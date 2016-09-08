@@ -23,16 +23,16 @@ public struct JSONObject {
     }
     
     /// Creates an object from a sequence of `(String,JSON)` pairs.
-    public init<S: SequenceType where S.Generator.Element == (String,JSON)>(_ seq: S) {
+    public init<S: Sequence>(_ seq: S) where S.Iterator.Element == (String,JSON) {
         // optimize for the case where the sequence doesn't contain duplicate keys
-        dictionary = Dictionary(minimumCapacity: seq.underestimateCount())
+        dictionary = Dictionary(minimumCapacity: seq.underestimatedCount)
         for (key,value) in seq {
             dictionary[key] = value
         }
     }
     
     /// The JSON object represented as a `[String: JSON]`.
-    public private(set) var dictionary: [String: JSON]
+    public fileprivate(set) var dictionary: [String: JSON]
     
     public subscript(key: String) -> JSON? {
         @inline(__always) get {
@@ -44,7 +44,7 @@ public struct JSONObject {
     }
 }
 
-extension JSONObject: CollectionType {
+extension JSONObject: Collection {
     /// The position of the first element in a non-empty object.
     ///
     /// Identical to `endIndex` in an empty object.
@@ -70,34 +70,43 @@ extension JSONObject: CollectionType {
         return dictionary.count
     }
     
-    public func generate() -> Generator {
-        return Generator(dictionary.generate())
+    public func makeIterator() -> Iterator {
+        return Iterator(dictionary.makeIterator())
     }
     
     public subscript(position: Index) -> (String,JSON) {
         return dictionary[position.base]
     }
     
+    public func index(after i: Index) -> Index {
+        return Index(dictionary.index(after: i.base))
+    }
+    
+    public func formIndex(after i: inout Index) {
+        dictionary.formIndex(after: &i.base)
+    }
+    
     /// Represents a position in a `JSONObject`.
-    public struct Index: ForwardIndexType, Comparable {
-        private let base: Dictionary<String,JSON>.Index
+    public struct Index: Comparable {
+        fileprivate var base: Dictionary<String,JSON>.Index
         
-        private init(_ base: Dictionary<String,JSON>.Index) {
+        fileprivate init(_ base: Dictionary<String,JSON>.Index) {
             self.base = base
         }
         
-        /// Returns the next consecutive value after `self`.
-        ///
-        /// - Requires: The next value is representable.
-        public func successor() -> Index {
-            return Index(base.successor())
+        public static func ==(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
+            return lhs.base == rhs.base
+        }
+        
+        public static func <(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
+            return lhs.base < rhs.base
         }
     }
     
-    public struct Generator: GeneratorType {
-        private var base: Dictionary<String,JSON>.Generator
+    public struct Iterator: IteratorProtocol {
+        private var base: Dictionary<String,JSON>.Iterator
         
-        private init(_ base: Dictionary<String,JSON>.Generator) {
+        fileprivate init(_ base: Dictionary<String,JSON>.Iterator) {
             self.base = base
         }
         
@@ -127,29 +136,29 @@ extension JSONObject {
     }
     
     /// Returns the `Index` for the given key, or `nil` if the key is not present in the object.
-    public func indexForKey(key: String) -> Index? {
-        return dictionary.indexForKey(key).map(Index.init)
+    public func indexForKey(_ key: String) -> Index? {
+        return dictionary.index(forKey: key).map(Index.init)
     }
     
     /// Update the value stored in the object for the given key, or, if the key does not exist,
     /// add a new key-value pair to the object.
     ///
     /// Returns the value that was replaced, or `nil` if a new key-value pair was added.
-    public mutating func updateValue(value: JSON, forKey key: String) -> JSON? {
+    public mutating func updateValue(_ value: JSON, forKey key: String) -> JSON? {
         return dictionary.updateValue(value, forKey: key)
     }
     
     /// Remove the key-value pair at `index`.
     ///
     /// Invalidates all indices with respect to `self`.
-    public mutating func removeAtIndex(index: Index) -> (String,JSON)? {
-        return dictionary.removeAtIndex(index.base)
+    public mutating func removeAtIndex(_ index: Index) -> (String,JSON)? {
+        return dictionary.remove(at: index.base)
     }
     
     /// Remove a given key and the associated value from the object.
     /// Returns the value that was removed, or `nil` if the key was not present in the object.
-    public mutating func removeValueForKey(key: String) -> JSON? {
-        return dictionary.removeValueForKey(key)
+    public mutating func removeValueForKey(_ key: String) -> JSON? {
+        return dictionary.removeValue(forKey: key)
     }
     
     /// Remove all elements.
@@ -165,7 +174,7 @@ extension JSONObject {
     }
 }
 
-extension JSONObject: DictionaryLiteralConvertible {
+extension JSONObject: ExpressibleByDictionaryLiteral {
     /// Creates an object from a dictionary.
     public init(_ dictionary: [String: JSON]) {
         self.dictionary = dictionary
@@ -177,8 +186,8 @@ extension JSONObject: DictionaryLiteralConvertible {
     }
 }
 
-extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConvertible {
-    public func writeTo<Target : OutputStreamType>(inout target: Target) {
+extension JSONObject: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
+    public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(JSON(self), toStream: &target, pretty: false)
     }
     
@@ -192,23 +201,15 @@ extension JSONObject: Streamable, CustomStringConvertible, CustomDebugStringConv
     }
 }
 
-extension JSONObject: Equatable {}
-
-extension JSONObject: CustomReflectable {
-    public func customMirror() -> Mirror {
-        let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map({ ($0,$1) })
-        return Mirror(self, children: children, displayStyle: .Dictionary)
+extension JSONObject: Equatable {
+    public static func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
+        return lhs.dictionary == rhs.dictionary
     }
 }
 
-public func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
-    return lhs.dictionary == rhs.dictionary
-}
-
-public func ==(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
-    return lhs.base == rhs.base
-}
-
-public func <(lhs: JSONObject.Index, rhs: JSONObject.Index) -> Bool {
-    return lhs.base < rhs.base
+extension JSONObject: CustomReflectable {
+    public var customMirror: Mirror {
+        let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map({ ($0,$1) })
+        return Mirror(self, children: children, displayStyle: .dictionary)
+    }
 }
