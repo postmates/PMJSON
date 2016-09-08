@@ -157,12 +157,6 @@
     }
     
     /// An error that is thrown when converting from `AnyObject` to `JSON`.
-    /// - Note: Deprecated in favor of `JSONFoundationError`.
-    /// - SeeAlso: `JSON.init(ns:)`
-    @available(*, deprecated, renamed: "JSONFoundationError")
-    public typealias JSONPlistError = JSONFoundationError
-    
-    /// An error that is thrown when converting from `AnyObject` to `JSON`.
     /// - SeeAlso: `JSON.init(ns:)`
     public enum JSONFoundationError: Error {
         /// Thrown when a non-JSON-compatible type is found.

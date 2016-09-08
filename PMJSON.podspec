@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "PMJSON"
-  s.version      = "0.9.3"
+  s.version      = "1.0"
   s.summary      = "Pure Swift JSON encoding/decoding library"
   s.description  = "PMJSON provides a pure-Swift strongly-typed JSON encoder/decoder as well as a set of convenience methods for converting to/from Foundation objects and for decoding JSON structures."
 

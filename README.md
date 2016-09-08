@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v0.9.3-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v1.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -124,13 +124,13 @@ Installing as a framework requires a minimum of iOS 8, OS X 10.9, watchOS 2.0, o
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
-github "postmates/PMJSON" ~> 0.9
+github "postmates/PMJSON" ~> 1.0
 ```
 
 To install using [CocoaPods][], add the following to your Podfile:
 
 ```
-pod 'PMJSON', '~> 0.9'
+pod 'PMJSON', '~> 1.0'
 ```
 
 Once installed, you can use this by adding `import PMJSON` to your code.
@@ -144,7 +144,7 @@ let package = Package(
     name: "YourPackage",
     dependencies: [
         .Package(url: "https://github.com/postmates/PMJSON.git",
-                 versions: Version(major: 0, minor: 9, patch: 3)..<Version(major: 0, minor: 10, patch: 0))
+                 versions: Version(major: 1, minor: 0, patch: 0)..<Version(major: 2, minor: 0, patch: 0))
     ]
 )
 ```
@@ -165,11 +165,11 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### Development
+#### v1.0 (2016-09-08)
 
+* Support Swift 3.0.
 * Add setters for basic accessors so you can write code like `json["foo"].object?["key"] = "bar"`.
 * Provide a localized description for errors when bridged to `NSError`.
-* Support Swift 3.0.
 
 #### v0.9.3 (2016-05-23)
 
