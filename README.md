@@ -160,6 +160,8 @@ To install using [CocoaPods][], add the following to your Podfile:
 pod 'PMJSON', '~> 0.9'
 ```
 
+[CocoaPods]: https://cocoapods.org
+
 ## License
 
 Licensed under either of
