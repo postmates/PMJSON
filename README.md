@@ -15,6 +15,46 @@ The entire JSON encoder/decoder can be used without Foundation, by removing the 
 
 ## Usage
 
+Before diving into the details, here's a simple example of writing a decoder for a struct. There are a few different options for how to deal with malformed data (e.g. whether to ignore values of wrong types, and whether to try and coerce non-string values to strings or vice versa), but the following example will be fairly strict and throw an error for incorrectly-typed values:
+
+```swift
+struct Address {
+    var streetLine1: String
+    var streetLine2: String?
+    var city: String
+    var state: String?
+    var postalCode: String
+    var country: String?
+
+    init(json: JSON) throws {
+        streetLine1 = try json.getString("street_line1")
+        streetLine2 = try json.getStringOrNil("street_line2")
+        city = try json.getString("city")
+        state = try json.getStringOrNil("state")
+        postalCode = try json.toString("postal_code") // coerce numbers to strings
+        country = try json.getStringOrNil("country")
+    }
+}
+```
+
+And here's an example of decoding a nested array of values:
+
+```swift
+struct Person {
+    var firstName: String
+    var lastName: String? // some people don't have last names
+    var age: Int
+    var addresses: [Address]
+
+    init(json: JSON) throws {
+        firstName = try json.getString("firstName")
+        lastName = try json.getStringOrNil("lastName")
+        age = try json.getInt("age")
+        addresses = try json.mapArray("addresses", Address.init(json:))
+    }
+}
+```
+
 ### Parsing
 
 The JSON decoder is split into separate parser and decoder stages. The parser consums any sequence of unicode scalars, and produces a sequence of JSON "events" (similar to a SAX XML parser). The decoder accepts a sequence of JSON events and produces a `JSON` value. This architecture is designed such that you can use just the parser alone in order to decode directly to your own data structures and bypass the `JSON` representation entirely if desired. However, most clients are expected to use both components, and this is exposed via a simple method `JSON.decode(_:strict:)`.
