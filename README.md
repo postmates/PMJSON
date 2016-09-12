@@ -55,6 +55,22 @@ struct Person {
 }
 ```
 
+If you don't want to deal with errors and just want to handle optionals, you can do that too:
+
+```swift
+struct Config {
+    var name: String?
+    var doThatThing: Bool
+    var maxRetries: Int
+    
+    init(json: JSON) {
+        name = json["name"]?.string
+        doThatThing = json["doThatThing"]?.bool ?? false
+        maxRetries = json["maxRetries"]?.int ?? 10
+    }
+}
+```
+
 ### Parsing
 
 The JSON decoder is split into separate parser and decoder stages. The parser consums any sequence of unicode scalars, and produces a sequence of JSON "events" (similar to a SAX XML parser). The decoder accepts a sequence of JSON events and produces a `JSON` value. This architecture is designed such that you can use just the parser alone in order to decode directly to your own data structures and bypass the `JSON` representation entirely if desired. However, most clients are expected to use both components, and this is exposed via a simple method `JSON.decode(_:strict:)`.
