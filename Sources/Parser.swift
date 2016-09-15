@@ -210,9 +210,10 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
                             if UTF16.isTrailSurrogate(trail) {
                                 let lead = UInt32(codeUnit)
                                 let trail = UInt32(trail)
-                                // XXX: Xcode8b3 claims the full expression is too complex, so we have to split it up
-                                let val = ((lead - 0xD800) << 10) + (trail - 0xDC00)
-                                let scalar = UnicodeScalar(val + 0x10000)!
+                                // NB: The following is split up to avoid exponential time complexity in the type checker
+                                let leadComponent: UInt32 = (lead - 0xD800) << 10
+                                let trailComponent: UInt32 = trail - 0xDC00
+                                let scalar = UnicodeScalar(leadComponent + trailComponent + 0x10000)!
                                 scalars.append(scalar)
                             } else {
                                 throw error(.loneLeadingSurrogateInUnicodeEscape)

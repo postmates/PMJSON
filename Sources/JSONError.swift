@@ -36,9 +36,9 @@ public enum JSONError: Error, CustomStringConvertible {
     
     public var description: String {
         switch self {
-        case let .missingOrInvalidType(path, expected, actual): return "\(path.map({$0+": "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
-        case let .outOfRangeInt64(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
-        case let .outOfRangeDouble(path, value, expected): return "\(path.map({$0+": "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .missingOrInvalidType(path, expected, actual): return "\(path.map({"\($0): "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
+        case let .outOfRangeInt64(path, value, expected): return "\(path.map({"\($0): "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .outOfRangeDouble(path, value, expected): return "\(path.map({"\($0): "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         }
     }
     
