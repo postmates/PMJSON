@@ -49,7 +49,7 @@ private struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator
         switch token {
         case .none: break
         case .some(.error(let err)): throw err
-        case .some(let token): fatalError("unexpected token: \(token)")
+        case .some(let token): assertionFailure("unexpected token: \(token)")
         }
         return result
     }
