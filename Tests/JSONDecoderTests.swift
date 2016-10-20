@@ -33,17 +33,6 @@ func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
 }
 
 class JSONDecoderTests: XCTestCase {
-    func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure () -> JSON, file: StaticString = #file, line: UInt = #line) {
-        do {
-            let a = try a(), b = b()
-            if !matchesJSON(a, b) {
-                XCTFail("expected \(b), found \(a)", file: file, line: line)
-            }
-        } catch {
-            XCTFail(String(describing: error), file: file, line: line)
-        }
-    }
-    
     func testBasic() {
         assertMatchesJSON(try JSON.decode("42"), 42)
         assertMatchesJSON(try JSON.decode("\"hello\""), "hello")
@@ -303,6 +292,88 @@ class JSONDecoderTests: XCTestCase {
     #endif
 }
 
+/// Tests both `JSONDecoder`'s streaming mode and `JSONStreamDecoder`.
+class JSONStreamDecoderTests: XCTestCase {
+    func testDecoderStreamingMode() {
+        func decodeStream(_ input: String) throws -> [JSON] {
+            var parser = JSONParser(input.unicodeScalars)
+            parser.streaming = true
+            var decoder = JSONDecoder(parser)
+            return try decoder.decodeStream()
+        }
+        func assertMatchesEvents(_ input: String, _ expected: [JSON], file: StaticString = #file, line: UInt = #line) {
+            do {
+                let events = try decodeStream(input)
+                for (i, (event, value)) in zip(events, expected).enumerated() {
+                    if !matchesJSON(event, value) {
+                        XCTFail("event \(i+1) (\(event)) does not equal \(value)", file: file, line: line)
+                    }
+                    if events.count > expected.count {
+                        XCTFail("unexpected event \(expected.count+1)", file: file, line: line)
+                    }
+                    if events.count < expected.count {
+                        XCTFail("expected event \(events.count+1) (\(expected[events.count])), found nil", file: file, line: line)
+                    }
+                }
+            } catch {
+                XCTFail("assertMatchesEvents - error thrown: \(error)", file: file, line: line)
+            }
+        }
+        
+        assertMatchesEvents("", [])
+        assertMatchesEvents("  ", [])
+        assertMatchesEvents("true", [true])
+        assertMatchesEvents("true false", [true, false])
+        assertMatchesEvents("{\"a\": 1}{\"a\": 2}3", [["a": 1], ["a": 2], 3])
+        
+        
+        XCTAssertThrowsError(try decodeStream("true q")) { (error) in
+            switch error {
+            case let error as JSONParserError:
+                XCTAssertEqual(error, JSONParserError(code: .invalidSyntax, line: 0, column: 6))
+            default:
+                XCTFail("expected JSONParserError, found \(error)")
+            }
+        }
+    }
+    
+    func testStreamingDecoder() {
+        func assertMatchesValues(_ input: String, _ expected: [JSONStreamValue], file: StaticString = #file, line: UInt = #line) {
+            do {
+                for (i, (value, expected)) in zip(JSON.decodeStream(input), expected).enumerated() {
+                    switch (value, expected) {
+                    case let (.json(value), .json(expected)):
+                        if !matchesJSON(value, expected) {
+                            XCTFail("value \(i+1) - (\(value)) does not equal \(expected)", file: file, line: line)
+                        }
+                    case let (.error(error), .error(expected)):
+                        if error != expected {
+                            XCTFail("error \(i+1) - (\(error)) does not equal \(expected)", file: file, line: line)
+                        }
+                    case let (.json(value), .error(expected)):
+                        XCTFail("value \(i+1) - expected error \(expected), found value \(value)")
+                    case let (.error(error), .json(expected)):
+                        XCTFail("value \(i+1) - expected value \(expected), found error \(error)", file: file, line: line)
+                    }
+                }
+            }
+        }
+        func assertMatchesEvents(_ input: String, _ expected: [JSON], file: StaticString = #file, line: UInt = #line) {
+            assertMatchesValues(input, expected.map(JSONStreamValue.json), file: file, line: line)
+        }
+        
+        assertMatchesEvents("", [])
+        assertMatchesEvents("  ", [])
+        assertMatchesEvents("true", [true])
+        assertMatchesEvents("true false", [true, false])
+        assertMatchesEvents("{\"a\": 1}{\"a\": 2}3", [["a": 1], ["a": 2], 3])
+        
+        assertMatchesValues("true q", [.json(true), .error(JSONParserError(code: .invalidSyntax, line: 0, column: 6))])
+        // After a parser error, nothing more is parsed
+        assertMatchesValues("true q true", [.json(true), .error(JSONParserError(code: .invalidSyntax, line: 0, column: 6))])
+    }
+}
+
 class JSONBenchmarks: XCTestCase {
     func testCompareCocoa() {
         do {
@@ -428,19 +499,30 @@ class JSONBenchmarks: XCTestCase {
     }
 }
 
+func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure () -> JSON, file: StaticString = #file, line: UInt = #line) {
+    do {
+        let a = try a(), b = b()
+        if !matchesJSON(a, b) {
+            XCTFail("expected \(b), found \(a)", file: file, line: line)
+        }
+    } catch {
+        XCTFail(String(describing: error), file: file, line: line)
+    }
+}
+
+/// Similar to JSON's equality test but does not convert between integral and double values.
 private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     switch (a, b) {
     case (.array(let a), .array(let b)):
         return a.count == b.count && !zip(a, b).contains(where: {!matchesJSON($0, $1)})
     case (.object(let a), .object(let b)):
-        var seen = Set<String>()
+        guard a.count == b.count else { return false }
         for (key, value) in a {
-            seen.insert(key)
             guard let bValue = b[key], matchesJSON(value, bValue) else {
                 return false
             }
         }
-        return seen.isSuperset(of: b.keys)
+        return true
     case (.string(let a), .string(let b)):
         return a == b
     case (.int64(let a), .int64(let b)):

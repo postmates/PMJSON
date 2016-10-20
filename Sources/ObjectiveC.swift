@@ -156,6 +156,8 @@
         }
     }
     
+    // MARK: - Errors
+    
     /// An error that is thrown when converting from `AnyObject` to `JSON`.
     /// - SeeAlso: `JSON.init(ns:)`
     public enum JSONFoundationError: Error {
@@ -182,6 +184,17 @@
             return [NSLocalizedDescriptionKey: String(describing: self)]
         }
     }
+    
+    extension JSONDecoderError: LocalizedError {
+        public var failureReason: String? {
+            switch self {
+            case .streamEnded: return "The JSON event stream ended."
+            case .unexpectedToken: return "The JSON event stream contained more than one top-level value."
+            }
+        }
+    }
+    
+    // MARK: -
     
     private struct UTF8Decoder: Sequence {
         init(data: Data) {

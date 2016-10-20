@@ -14,48 +14,132 @@
 
 extension JSON {
     /// Decodes a string as JSON.
-    /// - parameters:
-    ///   - strict: If `true`, trailing commas in arrays/objects are treated as an error.
-    /// - throws: `JSONParserError`
+    /// - Parameter string: A string to parse as JSON.
+    /// - Parameter strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Returns: A `JSON` value.
+    /// - Throws: `JSONParserError`
     public static func decode(_ string: String, strict: Bool = false) throws -> JSON {
-        var parser = JSONParser(string.unicodeScalars)
-        parser.strict = strict
-        var decoder = JSONDecoder(parser)
-        return try decoder.decode()
+        return try decode(string.unicodeScalars, strict: strict)
     }
     
     /// Decodes a sequence of `UnicodeScalar`s as JSON.
-    /// - parameters:
-    ///   - strict: If `true`, trailing commas in arrays/objects are treated as an error.
-    /// - throws: `JSONParserError`
+    /// - Parameter scalars: A sequence of `UnicodeScalar`s to parse as JSON.
+    /// - Parameters strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Returns: A `JSON` value.
+    /// - Throws: `JSONParserError`
     public static func decode<Seq: Sequence>(_ scalars: Seq, strict: Bool = false) throws -> JSON where Seq.Iterator.Element == UnicodeScalar {
         var parser = JSONParser(scalars)
         parser.strict = strict
         var decoder = JSONDecoder(parser)
         return try decoder.decode()
     }
-}
-
-/// A JSON decoder.
-private struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
-    init(_ parser: Seq) {
-        gen = parser.makeIterator()
+    
+    /// Lazily decodes a string as a JSON stream.
+    ///
+    /// A JSON stream is a series of top-level JSON values. See `JSONStreamDecoder` for details.
+    ///
+    /// - Parameter string: A string to parse as a JSON stream.
+    /// - Parameter strict: IF `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Returns: A `JSONStreamDecoder`.
+    public static func decodeStream(_ string: String, strict: Bool = false) -> JSONStreamDecoder<JSONParser<String.UnicodeScalarView>> {
+        return decodeStream(string.unicodeScalars, strict: strict)
     }
     
-    mutating func decode() throws -> JSON {
+    /// Lazily decodes a sequence of `UnicodeScalar`s as a JSON stream.
+    ///
+    /// A JSON stream is a series of top-level JSON values. See `JSONStreamDecoder` for details.
+    ///
+    /// - Parameter scalars: A sequence of `UnicodeScalar`s to parse as a JSON stream.
+    /// - Parameter strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Returns: A `JSONStreamDecoder`.
+    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, strict: Bool = false) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
+        var parser = JSONParser(scalars)
+        parser.strict = strict
+        parser.streaming = true
+        return JSONStreamDecoder(parser)
+    }
+}
+
+/// A JSON decoder that consumes a stream of JSON events.
+///
+/// In most cases, you should use the convenience method `JSON.decode(_:)` to decode values
+/// instead of using this class directly.
+///
+/// - SeeAlso: `JSONParser`.
+public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
+    public init(_ parser: Seq) {
+        iter = parser.makeIterator()
+    }
+    
+    /// If `true`, the decoder will operate in streaming mode, allowing for multiple
+    /// top-level json values, with each call to `decode()` returning a successive value.
+    /// The default value of `false` means that `decode()` can only be called once, and
+    /// any JSON events past the first top-level value are considered an error.
+    ///
+    /// See `decode()` for more details on the streaming operation.
+    ///
+    /// - Important: When wrapping a `JSONParser`, the parser must separately be put into
+    ///   streaming mode, as `JSONDecoder` operates generically over a sequence of `JSONEvent`s.
+    public var streaming: Bool = false
+    
+    /// Decodes and returns a top-level JSON value from the event stream.
+    ///
+    /// When `streaming` is `false`, any events after the top-level value has been consumed
+    /// will throw an error, and any subsequent calls to `decode()` after the first call
+    /// will also throw an error. When `streaming` is `false`, after a top-level value has
+    /// been decoded, no more events will be consumed, and `decode()` can be called repeatedly
+    /// to decode more top-level events.
+    ///
+    /// Because the normal operation of this class is to decode one-shot values rather than
+    /// streams, this method returns a non-optional value. As such, when operating in a
+    /// streaming manner, this method will throw the special error `JSONDecoderError.streamEnded`
+    /// to signal that there are no more values. To make this easier to work with, a convenience
+    /// method `decodeStream()` is provided that returns an array of `JSON` values and automatically
+    /// handles `JSONDecoderError.streamEnded`, and the type `JSONStreamDecoder` provides a
+    /// lazy sequence interface to decoding a JSON stream.
+    ///
+    /// - Returns: A single top-level `JSON` value.
+    ///
+    /// - Throws: `JSONParserError`, `JSONDecoderError`.
+    public mutating func decode() throws -> JSON {
         bump()
+        if streaming && token == nil {
+            throw JSONDecoderError.streamEnded
+        }
         let result = try buildValue()
-        bump()
-        switch token {
-        case .none: break
-        case .some(.error(let err)): throw err
-        case .some(let token): assertionFailure("unexpected token: \(token)")
+        if !streaming {
+            bump()
+            switch token {
+            case .none: break
+            case .some(.error(let err)): throw err
+            case .some: throw JSONDecoderError.unexpectedToken
+            }
         }
         return result
     }
     
+    /// Decodes and returns an array of top-level JSON values from the event stream.
+    ///
+    /// This is a convenience method that sets `streaming` to `true` and then decodes
+    /// as many top-level JSON values as it can before the stream ends.
+    ///
+    /// - Returns: An array of top-level `JSON` values.
+    ///
+    /// - SeeAlso: `JSONStreamDecoder`.
+    public mutating func decodeStream() throws -> [JSON] {
+        streaming = true
+        var results: [JSON] = []
+        repeat {
+            do {
+                results.append(try decode())
+            } catch JSONDecoderError.streamEnded {
+                return results
+            }
+        } while true
+    }
+    
     private mutating func bump() {
-        token = gen.next()
+        token = iter.next()
     }
     
     private mutating func buildValue() throws -> JSON {
@@ -107,10 +191,77 @@ private struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator
     }
     
     private func error(_ code: JSONParserError.Code) -> JSONParserError {
-        return JSONParserError(code: code, line: gen.line, column: gen.column)
+        return JSONParserError(code: code, line: iter.line, column: iter.column)
     }
     
-    private var gen: Seq.Iterator
+    private var iter: Seq.Iterator
     private var token: JSONEvent?
     private var objectHighWaterMark: Int = 0
+}
+
+/// Errors that may be thrown by the `JSONDecoder` during the decode stage.
+public enum JSONDecoderError: Error {
+    /// Signals that a `JSONDecoder` operating in streaming mode has reached the end of the stream.
+    case streamEnded
+    /// Thrown when a `JSONDecoder` operating in one-shot mode finds extra tokens after the first top-level JSON value.
+    case unexpectedToken
+}
+
+/// A JSON decoder that decodes a stream of JSON events into a lazy sequence of top-level JSON values.
+///
+/// This is a sequence of zero or more `JSONStreamValue.json` values, ending with zero or one `JSONStreamValue.error` value.
+///
+/// - Important: When wrapping a `JSONParser`, the parser must separately be put into streaming mode, as `JSONStreamDecoder`
+///   operates generically over a sequence of `JSONEvent`s. You should consider using `JSON.decodeStream(_:)` instead to
+///   create the stream decoder.
+///
+/// - SeeAlso: `JSON.decodeStream(_:)`.
+public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
+    public init(_ parser: Seq) {
+        decoder = JSONDecoder(parser)
+        decoder.streaming = true
+    }
+    
+    public func makeIterator() -> JSONStreamDecoder<Seq> {
+        return self
+    }
+    
+    public mutating func next() -> JSONStreamValue? {
+        do {
+            return try JSONStreamValue.json(decoder.decode())
+        } catch JSONDecoderError.streamEnded {
+            return nil
+        } catch let error as JSONParserError {
+            return JSONStreamValue.error(error)
+        } catch {
+            // This shouldn't be reachable. A `JSONDecoder` operating in streaming mode can throw only
+            // `JSONParserError`s or `JSONDecoderError.streamEnded`.
+            return nil
+        }
+    }
+    
+    private var decoder: JSONDecoder<Seq>
+}
+
+public enum JSONStreamValue: Equatable {
+    case json(JSON)
+    case error(JSONParserError)
+    
+    /// Unwraps the contained `JSON` value or throws the contained error.
+    ///
+    /// - Throws: `JSONParserError`.
+    public func unwrap() throws -> JSON {
+        switch self {
+        case .json(let value): return value
+        case .error(let error): throw error
+        }
+    }
+    
+    public static func ==(lhs: JSONStreamValue, rhs: JSONStreamValue) -> Bool {
+        switch (lhs, rhs) {
+        case let (.json(a), .json(b)): return a == b
+        case let (.error(a), .error(b)): return a == b
+        default: return false
+        }
+    }
 }
