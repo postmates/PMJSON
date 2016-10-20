@@ -250,6 +250,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Support Swift 3.0.
 * Add setters for basic accessors so you can write code like `json["foo"].object?["key"] = "bar"`.
 * Provide a localized description for errors when bridged to `NSError`.
+* Add support to `JSONParser` for streams of JSON values (e.g. `"[1][2]"`).
 
 #### v0.9.3 (2016-05-23)
 

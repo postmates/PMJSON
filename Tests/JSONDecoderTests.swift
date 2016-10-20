@@ -1,5 +1,5 @@
 //
-//  JSONTests.swift
+//  JSONDecoderTests.swift
 //  JSONTests
 //
 //  Created by Kevin Ballard on 10/8/15.
@@ -26,13 +26,13 @@ let bigJson: Data = {
 
 struct NoSuchFixture: Error {}
 func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
-    guard let url = Bundle(for: JSONTests.self).url(forResource: name, withExtension: ext) else {
+    guard let url = Bundle(for: JSONDecoderTests.self).url(forResource: name, withExtension: ext) else {
         throw NoSuchFixture()
     }
     return try Data(contentsOf: url)
 }
 
-class JSONTests: XCTestCase {
+class JSONDecoderTests: XCTestCase {
     func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure () -> JSON, file: StaticString = #file, line: UInt = #line) {
         do {
             let a = try a(), b = b()
@@ -77,10 +77,6 @@ class JSONTests: XCTestCase {
             // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
             XCTFail("Re-encoded JSON doesn't match original")
         }
-    }
-    
-    func testParserErrorDescription() {
-        XCTAssertEqual(String(describing: JSONParserError(code: .unexpectedEOF, line: 5, column: 12)), "JSONParserError(unexpectedEOF, line: 5, column: 12)")
     }
     
     func testConversions() {

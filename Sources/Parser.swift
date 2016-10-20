@@ -24,11 +24,26 @@ public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == 
         base = seq
     }
     
+    /// If `true`, trailing commas in dictionaries and arrays are treated as an error.
+    /// Defaults to `false`.
     public var strict: Bool = false
+    
+    /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
+    /// The default value of `false` makes the parser throw an error if there's any non-whitespace
+    /// characters after the first JSON value.
+    ///
+    /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
+    /// events for the second JSON array after the first one, but if `streaming` is `false` it will
+    /// throw an error upon encountering the second `[`.
+    ///
+    /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
+    ///   parser will return `nil` instead of throwing an `.unexpectedEOF` error.
+    public var streaming: Bool = false
     
     public func makeIterator() -> JSONParserGenerator<Seq.Iterator> {
         var gen = JSONParserGenerator(base.makeIterator())
         gen.strict = strict
+        gen.streaming = streaming
         return gen
     }
     
@@ -41,12 +56,26 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
         base = PeekGenerator(gen)
     }
     
+    /// If `true`, trailing commas in dictionaries and arrays are treated as an error.
+    /// Defaults to `false`.
     public var strict: Bool = false
+    
+    /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
+    /// The default value of `false` makes the parser throw an error if there's any non-whitespace
+    /// characters after the first JSON value.
+    ///
+    /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
+    /// events for the second JSON array after the first one, but if `streaming` is `false` it will
+    /// throw an error upon encountering the second `[`.
+    ///
+    /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
+    ///   parser will return `nil` instead of throwing an `.unexpectedEOF` error.
+    public var streaming: Bool = false
     
     public mutating func next() -> JSONEvent? {
         do {
-            // the only states that may loop are ParseArrayComma and ParseObjectComma
-            // which are guaranteed to shift to other states (if they don't return) so the loop is finite
+            // the only states that may loop are parseArrayComma, parseObjectComma, and (if streaming) parseEnd,
+            // which are all guaranteed to shift to other states (if they don't return) so the loop is finite
             while true {
                 switch state {
                 case .parseArrayComma:
@@ -76,7 +105,14 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
                         throw error(.unexpectedEOF)
                     }
                 case .initial:
-                    guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
+                    guard let c = skipWhitespace() else {
+                        if streaming {
+                            state = .finished
+                            return nil
+                        } else {
+                            throw error(.unexpectedEOF)
+                        }
+                    }
                     let evt = try parseValue(c)
                     switch evt {
                     case .arrayStart, .objectStart:
@@ -144,11 +180,14 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
                         return evt
                     }
                 case .parseEnd:
-                    if skipWhitespace() != nil {
+                    if streaming {
+                        state = .initial
+                    } else if skipWhitespace() != nil {
                         throw error(.trailingCharacters)
+                    } else {
+                        state = .finished
+                        return nil
                     }
-                    state = .finished
-                    return nil
                 case .finished:
                     return nil
                 }
@@ -539,6 +578,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         case trailingComma
         /// Trailing (non-whitespace) characters found after the close
         /// of the root value.
+        /// - Note: This error cannot be thrown if the parser is in streaming mode.
         case trailingCharacters
         /// EOF was found before the root value finished parsing.
         case unexpectedEOF
