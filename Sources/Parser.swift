@@ -29,15 +29,15 @@ public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == 
     public var strict: Bool = false
     
     /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
-    /// The default value of `false` makes the parser throw an error if there's any non-whitespace
+    /// The default value of `false` makes the parser emit an error if there's any non-whitespace
     /// characters after the first JSON value.
     ///
     /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
     /// events for the second JSON array after the first one, but if `streaming` is `false` it will
-    /// throw an error upon encountering the second `[`.
+    /// emit an error upon encountering the second `[`.
     ///
     /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
-    ///   parser will return `nil` instead of throwing an `.unexpectedEOF` error.
+    ///   parser will return `nil` instead of emitting an `.unexpectedEOF` error.
     public var streaming: Bool = false
     
     public func makeIterator() -> JSONParserGenerator<Seq.Iterator> {
@@ -61,15 +61,15 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
     public var strict: Bool = false
     
     /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
-    /// The default value of `false` makes the parser throw an error if there's any non-whitespace
+    /// The default value of `false` makes the parser emit an error if there's any non-whitespace
     /// characters after the first JSON value.
     ///
     /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
     /// events for the second JSON array after the first one, but if `streaming` is `false` it will
-    /// throw an error upon encountering the second `[`.
+    /// emit an error upon encountering the second `[`.
     ///
     /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
-    ///   parser will return `nil` instead of throwing an `.unexpectedEOF` error.
+    ///   parser will return `nil` instead of emitting an `.unexpectedEOF` error.
     public var streaming: Bool = false
     
     public mutating func next() -> JSONEvent? {
