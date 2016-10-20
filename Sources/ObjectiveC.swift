@@ -171,9 +171,15 @@
         }
     }
     
-    extension JSONParserError: LocalizedError {
-        public var errorDescription: String? {
-            return String(describing: self)
+    extension JSONParserError: CustomNSError {
+        public static let errorDomain: String = "PMJSON.JSONParserError"
+        
+        public var errorCode: Int {
+            return code.rawValue
+        }
+        
+        public var errorUserInfo: [String: Any] {
+            return [NSLocalizedDescriptionKey: String(describing: self)]
         }
     }
     

@@ -236,6 +236,11 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add `Hashable` to `JSONEvent` and `JSONParserError`.
+* Make `JSONParserError` conform to `CustomNSError` for better Obj-C errors.
+
 #### v1.0.1 (2016-09-15)
 
 * Fix CocoaPods.

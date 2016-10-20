@@ -431,7 +431,7 @@ private enum Stack {
 }
 
 /// A streaming JSON parser event.
-public enum JSONEvent {
+public enum JSONEvent: Hashable {
     /// The start of an object.
     /// Inside of an object, each key/value pair is emitted as a
     /// `StringValue` for the key followed by the `JSONEvent` sequence
@@ -455,6 +455,41 @@ public enum JSONEvent {
     case nullValue
     /// A parser error.
     case error(JSONParserError)
+    
+    public var hashValue: Int {
+        switch self {
+        case .objectStart: return 1
+        case .objectEnd: return 2
+        case .arrayStart: return 3
+        case .arrayEnd: return 4
+        case .booleanValue(let b): return b.hashValue << 3 + 5
+        case .int64Value(let i): return i.hashValue << 3 + 6
+        case .doubleValue(let d): return d.hashValue << 3 + 7
+        case .stringValue(let s): return s.hashValue << 3 + 8
+        case .nullValue: return 9
+        case .error(let error): return error.hashValue << 3 + 10
+        }
+    }
+    
+    public static func ==(lhs: JSONEvent, rhs: JSONEvent) -> Bool {
+        switch (lhs, rhs) {
+        case (.objectStart, .objectStart), (.objectEnd, .objectEnd),
+             (.arrayStart, .arrayStart), (.arrayEnd, .arrayEnd), (.nullValue, .nullValue):
+            return true
+        case let (.booleanValue(a), .booleanValue(b)):
+            return a == b
+        case let (.int64Value(a), .int64Value(b)):
+            return a == b
+        case let (.doubleValue(a), .doubleValue(b)):
+            return a == b
+        case let (.stringValue(a), .stringValue(b)):
+            return a == b
+        case let (.error(a), .error(b)):
+            return a == b
+        default:
+            return false
+        }
+    }
 }
 
 /// A generator of `JSONEvent`s that records column/line info.
@@ -465,7 +500,7 @@ public protocol JSONEventGenerator: IteratorProtocol {
     var column: UInt { get }
 }
 
-public struct JSONParserError: Error, CustomStringConvertible {
+public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     public let code: Code
     public let line: UInt
     public let column: UInt
@@ -511,6 +546,14 @@ public struct JSONParserError: Error, CustomStringConvertible {
     
     public var description: String {
         return "JSONParserError(\(code), line: \(line), column: \(column))"
+    }
+    
+    public var hashValue: Int {
+        return Int(bitPattern: line << 18) ^ Int(bitPattern: column << 4) ^ code.rawValue
+    }
+    
+    public static func ==(lhs: JSONParserError, rhs: JSONParserError) -> Bool {
+        return (lhs.code, lhs.line, lhs.column) == (rhs.code, rhs.line, rhs.column)
     }
 }
 
