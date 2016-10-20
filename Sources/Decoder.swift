@@ -222,6 +222,17 @@ public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where
         decoder.streaming = true
     }
     
+    /// Returns an array of all decoded values, or throws an error if one occurs.
+    ///
+    /// This eagerly decodes the rest of the JSON stream and returns all values. If a parse error occurs at any point,
+    /// the error is thrown and all values are discarded.
+    ///
+    /// - Returns: An array of `JSON` values.
+    /// - Throws: `JSONParserError`.
+    public func values() throws -> [JSON] {
+        return try map({ try $0.unwrap() })
+    }
+    
     public func makeIterator() -> JSONStreamDecoder<Seq> {
         return self
     }
@@ -246,6 +257,22 @@ public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where
 public enum JSONStreamValue: Equatable {
     case json(JSON)
     case error(JSONParserError)
+    
+    /// Returns the contained `JSON` value, otherwise `nil`.
+    public var json: JSON? {
+        switch self {
+        case .json(let json): return json
+        case .error: return nil
+        }
+    }
+    
+    /// Returns the contained error, otherwise `nil`.
+    public var error: JSONParserError? {
+        switch self {
+        case .json: return nil
+        case .error(let error): return error
+        }
+    }
     
     /// Unwraps the contained `JSON` value or throws the contained error.
     ///

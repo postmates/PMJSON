@@ -339,23 +339,42 @@ class JSONStreamDecoderTests: XCTestCase {
     
     func testStreamingDecoder() {
         func assertMatchesValues(_ input: String, _ expected: [JSONStreamValue], file: StaticString = #file, line: UInt = #line) {
+            for (i, (value, expected)) in zip(JSON.decodeStream(input), expected).enumerated() {
+                switch (value, expected) {
+                case let (.json(value), .json(expected)):
+                    if !matchesJSON(value, expected) {
+                        XCTFail("value \(i+1) - (\(value)) does not equal \(expected)", file: file, line: line)
+                    }
+                case let (.error(error), .error(expected)):
+                    if error != expected {
+                        XCTFail("error \(i+1) - (\(error)) does not equal \(expected)", file: file, line: line)
+                    }
+                case let (.json(value), .error(expected)):
+                    XCTFail("value \(i+1) - expected error \(expected), found value \(value)", file: file, line: line)
+                case let (.error(error), .json(expected)):
+                    XCTFail("value \(i+1) - expected value \(expected), found error \(error)", file: file, line: line)
+                }
+            }
+            // Also check the behavior of values()
             do {
-                for (i, (value, expected)) in zip(JSON.decodeStream(input), expected).enumerated() {
-                    switch (value, expected) {
-                    case let (.json(value), .json(expected)):
-                        if !matchesJSON(value, expected) {
-                            XCTFail("value \(i+1) - (\(value)) does not equal \(expected)", file: file, line: line)
-                        }
-                    case let (.error(error), .error(expected)):
-                        if error != expected {
-                            XCTFail("error \(i+1) - (\(error)) does not equal \(expected)", file: file, line: line)
-                        }
-                    case let (.json(value), .error(expected)):
-                        XCTFail("value \(i+1) - expected error \(expected), found value \(value)")
-                    case let (.error(error), .json(expected)):
-                        XCTFail("value \(i+1) - expected value \(expected), found error \(error)", file: file, line: line)
+                let expectedValues = try expected.map({ try $0.unwrap() })
+                do {
+                    let values = try JSON.decodeStream(input).values()
+                    XCTAssertEqual(values, expectedValues, file: file, line: line)
+                } catch {
+                    XCTFail("unexpected error found decoding JSON stream - \(error)", file: file, line: line)
+                }
+            } catch let expectedError as JSONParserError {
+                XCTAssertThrowsError(try JSON.decodeStream(input).values()) { (error) in
+                    switch error {
+                    case let error as JSONParserError:
+                        XCTAssertEqual(error, expectedError, file: file, line: line)
+                    default:
+                        XCTFail("expected \(expectedError), found \(error)", file: file, line: line)
                     }
                 }
+            } catch {
+                XCTFail(file: file, line: line) // unreachable
             }
         }
         func assertMatchesEvents(_ input: String, _ expected: [JSON], file: StaticString = #file, line: UInt = #line) {
