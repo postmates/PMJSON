@@ -40,20 +40,20 @@ public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == 
     ///   parser will return `nil` instead of emitting an `.unexpectedEOF` error.
     public var streaming: Bool = false
     
-    public func makeIterator() -> JSONParserGenerator<Seq.Iterator> {
-        var gen = JSONParserGenerator(base.makeIterator())
-        gen.strict = strict
-        gen.streaming = streaming
-        return gen
+    public func makeIterator() -> JSONParserIterator<Seq.Iterator> {
+        var iter = JSONParserIterator(base.makeIterator())
+        iter.strict = strict
+        iter.streaming = streaming
+        return iter
     }
     
     private let base: Seq
 }
 
-/// The generator for JSONParser.
-public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator where Gen.Element == UnicodeScalar {
-    public init(_ gen: Gen) {
-        base = PeekGenerator(gen)
+/// The iterator for `JSONParser`.
+public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator where Iter.Element == UnicodeScalar {
+    public init(_ iter: Iter) {
+        base = PeekIterator(iter)
     }
     
     /// If `true`, trailing commas in dictionaries and arrays are treated as an error.
@@ -439,11 +439,14 @@ public struct JSONParserGenerator<Gen: IteratorProtocol>: JSONEventGenerator whe
     /// The column of the last emitted token.
     public private(set) var column: UInt = 0
     
-    private var base: PeekGenerator<Gen>
+    private var base: PeekIterator<Iter>
     private var state: State = .initial
     private var stack: [Stack] = []
     private var tempBuffer: ContiguousArray<Int8>?
 }
+
+@available(*, renamed: "JSONParserIterator")
+typealias JSONParserGenerator<Gen: IteratorProtocol> = JSONParserIterator<Gen> where Gen.Element == UnicodeScalar
 
 private enum State {
     /// Initial state
@@ -531,13 +534,16 @@ public enum JSONEvent: Hashable {
     }
 }
 
-/// A generator of `JSONEvent`s that records column/line info.
-public protocol JSONEventGenerator: IteratorProtocol {
+/// An iterator of `JSONEvent`s that records column/line info.
+public protocol JSONEventIterator: IteratorProtocol {
     /// The line of the last emitted token.
     var line: UInt { get }
     /// The column of the last emitted token.
     var column: UInt { get }
 }
+
+@available(*, renamed: "JSONEventIterator")
+public typealias JSONEventGenerator = JSONEventIterator
 
 public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     public let code: Code
@@ -597,7 +603,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     }
 }
 
-private struct PeekGenerator<Base: IteratorProtocol> {
+private struct PeekIterator<Base: IteratorProtocol> {
     init(_ base: Base) {
         self.base = base
     }

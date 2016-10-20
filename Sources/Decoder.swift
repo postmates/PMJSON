@@ -66,7 +66,7 @@ extension JSON {
 /// instead of using this class directly.
 ///
 /// - SeeAlso: `JSONParser`.
-public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
+public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, Seq.Iterator.Element == JSONEvent {
     public init(_ parser: Seq) {
         iter = parser.makeIterator()
     }
@@ -216,7 +216,7 @@ public enum JSONDecoderError: Error {
 ///   create the stream decoder.
 ///
 /// - SeeAlso: `JSON.decodeStream(_:)`.
-public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where Seq.Iterator: JSONEventGenerator, Seq.Iterator.Element == JSONEvent {
+public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where Seq.Iterator: JSONEventIterator, Seq.Iterator.Element == JSONEvent {
     public init(_ parser: Seq) {
         decoder = JSONDecoder(parser)
         decoder.streaming = true
