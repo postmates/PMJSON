@@ -107,6 +107,18 @@ And, again, a convenience method is provided for working with `NSData`:
 let data = JSON.encodeAsData(json)
 ```
 
+#### JSON Streams
+
+PMJSON supports parsing JSON streams, which are multiple top-level JSON values with optional whitespace delimiters (such as `{"a": 1}{"a": 2}`). The easiest way to use this is with `JSON.decodeStream(_:)` which returns a lazy sequence of `JSONStreamValue`s, which contain either a `JSON` value or a `JSONParserError` error. You can also use `JSONParser`s and `JSONDecoder`s directly for more fine-grained control over streaming.
+
+#### `JSONParser` and `JSONDecoder`
+
+As mentioned above, the JSON decoder is split into separate parser and decoder stages. `JSONParser` is the parser stage, and it wraps any sequence of `UnicodeScalar`s, and itself is a sequence of `JSONEvent`s. A `JSONEvent` is a single step of JSON parsing, such as `.objectStart` when a `{` is encountered, or `.stringValue(_)` when a `"string"` is encountered. You can use `JSONParser` directly to emit a stream of events if you want to do any kind of lazy processing of JSON (such as if you're dealing with a single massive JSON blob and don't want to decode the whole thing into memory at once).
+
+Similarly, `JSONDecoder` is the decoder stage. It wraps a sequence of `JSONEvent`s, and decodes that sequence into a proper `JSON` value. The wrapped sequence must also conform to a separate protocol `JSONEventIterator` that provides line/column information, which are used when emitting errors. You can use `JSONDecoder` directly if you want to wrap a sequence of events other than `JSONParser`, or if you want a different interface to JSON stream decoding than `JSONStreamDecoder` provides.
+
+Because of this split nature, you can easily provide your own event stream, or your own decoding stage. Or you can do things like wrap `JSONParser` in an adaptor that modfiies the events before passing them to the decoder (which may be more efficient than converting the resulting `JSON` value).
+
 ### Accessors
 
 Besides encoding/decoding, this library also provides a comprehensive suite of accessors for getting data out of `JSON` values. There are 4 types of basic accessors provided:
@@ -240,6 +252,9 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 * Add `Hashable` to `JSONEvent` and `JSONParserError`.
 * Make `JSONParserError` conform to `CustomNSError` for better Obj-C errors.
+* Full JSON stream support. `JSONParser` and `JSONDecoder` can now both operate in streaming mode, a new type `JSONStreamDecoder` was added as a lazy sequence of JSON values, and a convenience method `JSON.decodeStream(_:)` was added.
+* Rename `JSONEventGenerator` to `JSONEventIterator` and `JSONParserGenerator` to `JSONParserIterator`. The old names are available (but deprecated) for backwards compatibility.
+* Add support for pattern matching with `JSONParserError`. It should now work just like any other error, allowing you to say e.g. `if case JSONParserError.invalidSyntax = error { … }`.
 
 #### v1.0.1 (2016-09-15)
 
