@@ -501,12 +501,12 @@ public enum JSONEvent: Hashable {
         case .objectEnd: return 2
         case .arrayStart: return 3
         case .arrayEnd: return 4
-        case .booleanValue(let b): return b.hashValue << 3 + 5
-        case .int64Value(let i): return i.hashValue << 3 + 6
-        case .doubleValue(let d): return d.hashValue << 3 + 7
-        case .stringValue(let s): return s.hashValue << 3 + 8
+        case .booleanValue(let b): return b.hashValue << 4 + 5
+        case .int64Value(let i): return i.hashValue << 4 + 6
+        case .doubleValue(let d): return d.hashValue << 4 + 7
+        case .stringValue(let s): return s.hashValue << 4 + 8
         case .nullValue: return 9
-        case .error(let error): return error.hashValue << 3 + 10
+        case .error(let error): return error.hashValue << 4 + 10
         }
     }
     
