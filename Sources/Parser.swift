@@ -546,6 +546,36 @@ public protocol JSONEventIterator: IteratorProtocol {
 public typealias JSONEventGenerator = JSONEventIterator
 
 public struct JSONParserError: Error, Hashable, CustomStringConvertible {
+    /// A generic syntax error.
+    public static let invalidSyntax: Code = .invalidSyntax
+    /// An invalid number.
+    public static let invalidNumber: Code = .invalidNumber
+    /// An invalid string escape.
+    public static let invalidEscape: Code = .invalidEscape
+    /// A unicode string escape with an invalid code point.
+    public static let invalidUnicodeScalar: Code = .invalidUnicodeScalar
+    /// A unicode string escape representing a leading surrogate without
+    /// a corresponding trailing surrogate.
+    public static let loneLeadingSurrogateInUnicodeEscape: Code = .loneLeadingSurrogateInUnicodeEscape
+    /// A control character in a string.
+    public static let controlCharacterInString: Code = .controlCharacterInString
+    /// A comma was found where a colon was expected in an object.
+    public static let expectedColon: Code = .expectedColon
+    /// A comma or colon was found in an object without a key.
+    public static let missingKey: Code = .missingKey
+    /// An object key was found that was not a string.
+    public static let nonStringKey: Code = .nonStringKey
+    /// A comma or object end was encountered where a value was expected.
+    public static let missingValue: Code = .missingValue
+    /// A trailing comma was found in an array or object. Only emitted when `strict` mode is enabled.
+    public static let trailingComma: Code = .trailingComma
+    /// Trailing (non-whitespace) characters found after the close
+    /// of the root value.
+    /// - Note: This error cannot be thrown if the parser is in streaming mode.
+    public static let trailingCharacters: Code = .trailingCharacters
+    /// EOF was found before the root value finished parsing.
+    public static let unexpectedEOF: Code = .unexpectedEOF
+    
     public let code: Code
     public let line: UInt
     public let column: UInt
@@ -588,6 +618,14 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         case trailingCharacters
         /// EOF was found before the root value finished parsing.
         case unexpectedEOF
+        
+        public static func ~=(lhs: Code, rhs: Error) -> Bool {
+            if let error = rhs as? JSONParserError {
+                return lhs == error.code
+            } else {
+                return false
+            }
+        }
     }
     
     public var description: String {

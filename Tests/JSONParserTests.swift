@@ -44,6 +44,18 @@ class JSONParserTests: XCTestCase {
         
         assertParserEvents("[1]q", streaming: true, [.arrayStart, .int64Value(1), .arrayEnd, .error(JSONParserError(code: .invalidSyntax, line: 0, column: 4))])
     }
+    
+    func testErrorPatternMatching() {
+        // Make sure ~= works on JSONParserError.Code like it does on Foundation errors.
+        
+        do {
+            throw JSONParserError(code: .unexpectedEOF, line: 5, column: 12)
+        } catch JSONParserError.unexpectedEOF {
+            // success
+        } catch {
+            XCTFail()
+        }
+    }
 }
 
 private func assertParserEvents(_ input: String, streaming: Bool = false, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) {
