@@ -243,7 +243,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         let codeUnit = try parseFourHex()
                         if UTF16.isLeadSurrogate(codeUnit) {
                             guard try (bumpRequired() == "\\" && bumpRequired() == "u") else {
-                                throw error(.loneLeadingSurrogateInUnicodeEscape)
+                                throw error(.invalidSurrogateEscape)
                             }
                             let trail = try parseFourHex()
                             if UTF16.isTrailSurrogate(trail) {
@@ -255,10 +255,13 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                                 let scalar = UnicodeScalar(leadComponent + trailComponent + 0x10000)!
                                 scalars.append(scalar)
                             } else {
-                                throw error(.loneLeadingSurrogateInUnicodeEscape)
+                                throw error(.invalidSurrogateEscape)
                             }
+                        } else if let scalar = UnicodeScalar(codeUnit) {
+                            scalars.append(scalar)
                         } else {
-                            scalars.append(UnicodeScalar(codeUnit)!)
+                            // Must be a lone trail surrogate
+                            throw error(.invalidSurrogateEscape)
                         }
                     default:
                         throw error(.invalidEscape)
@@ -554,9 +557,10 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     public static let invalidEscape: Code = .invalidEscape
     /// A unicode string escape with an invalid code point.
     public static let invalidUnicodeScalar: Code = .invalidUnicodeScalar
-    /// A unicode string escape representing a leading surrogate without
-    /// a corresponding trailing surrogate.
-    public static let loneLeadingSurrogateInUnicodeEscape: Code = .loneLeadingSurrogateInUnicodeEscape
+    /// A unicode string escape representing a leading surrogate that wasn't followed
+    /// by a trailing surrogate, or a trailing surrogate that wasn't preceeded
+    /// by a leading surrogate.
+    public static let invalidSurrogateEscape: Code = .invalidSurrogateEscape
     /// A control character in a string.
     public static let controlCharacterInString: Code = .controlCharacterInString
     /// A comma was found where a colon was expected in an object.
@@ -575,6 +579,9 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     public static let trailingCharacters: Code = .trailingCharacters
     /// EOF was found before the root value finished parsing.
     public static let unexpectedEOF: Code = .unexpectedEOF
+    
+    @available(*, unavailable, renamed: "invalidSurrogateEscape")
+    public static let loneLeadingSurrogateInUnicodeEscape: Code = .invalidSurrogateEscape
     
     public let code: Code
     public let line: UInt
@@ -597,9 +604,10 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         case invalidEscape
         /// A unicode string escape with an invalid code point.
         case invalidUnicodeScalar
-        /// A unicode string escape representing a leading surrogate without
-        /// a corresponding trailing surrogate.
-        case loneLeadingSurrogateInUnicodeEscape
+        /// A unicode string escape representing a leading surrogate that wasn't followed
+        /// by a trailing surrogate, or a trailing surrogate that wasn't preceeded
+        /// by a leading surrogate.
+        case invalidSurrogateEscape
         /// A control character in a string.
         case controlCharacterInString
         /// A comma was found where a colon was expected in an object.
@@ -618,6 +626,9 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         case trailingCharacters
         /// EOF was found before the root value finished parsing.
         case unexpectedEOF
+        
+        @available(*, unavailable, renamed: "invalidSurrogateEscape")
+        static let loneLeadingSurrogateInUnicodeEscape: Code = .invalidSurrogateEscape
         
         public static func ~=(lhs: Code, rhs: Error) -> Bool {
             if let error = rhs as? JSONParserError {
