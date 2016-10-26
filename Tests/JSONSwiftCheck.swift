@@ -16,150 +16,150 @@ import XCTest
 import PMJSON
 import SwiftCheck
 
-class JSONSwiftCheck: XCTestCase {
-    func testProperties() {
-        property("JSON can round-trip through Foundation and still remain equal", arguments: CheckerArguments(replay: (StdGen(1737952920,8460), 1))) <- forAll { (json: JSON) in
-            do {
-                let object = json.ns
-                let json2 = try JSON(ns: object)
-                return json.approximatelyEqual(json2)
-            } catch {
-                return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-            }
-        }
-        
-        property("JSON can always decode the compact JSON output of JSONSerialization") <- {
-            let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
-            return forAll(g) { json in
-                do {
-                    let object = json.ns
-                    let data = try JSONSerialization.data(withJSONObject: object)
-                    let decoded = try JSON.decode(data)
-                    return decoded.approximatelyEqual(json)
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSON can always decode the pretty-printed JSON output of JSONSerialization") <- {
-            let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
-            return forAll(g) { json in
-                do {
-                    let object = json.ns
-                    guard JSONSerialization.isValidJSONObject(object) else {
-                        return TestResult.failed("JSON object is not valid for JSONSerialization").counterexample(String(describing: json))
-                    }
-                    let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
-                    do {
-                        let decoded = try JSON.decode(data)
-                        return decoded.approximatelyEqual(json)
-                    } catch {
-                        return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(data: data, encoding: String.Encoding.utf8) ?? "(decode failure)").counterexample(String(describing: json))
-                    }
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSON can always decode the output of JSON.encodeAsString(pretty: false)") <- {
-            let g = JSON.arbitrary
-            return forAll(g) { json in
-                do {
-                    let s = JSON.encodeAsString(json, pretty: false)
-                    let json2 = try JSON.decode(s)
-                    return json2.approximatelyEqual(json)
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSON can always decode the output of JSON.encodeAsString(pretty: true)") <- {
-            let g = JSON.arbitrary
-            return forAll(g) { json in
-                do {
-                    let s = JSON.encodeAsString(json, pretty: true)
-                    let json2 = try JSON.decode(s)
-                    return json2.approximatelyEqual(json)
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSONSerialization can always decode the output of JSON.encodeAsData(pretty: false)") <- {
-            let g = JSON.arbitrary
-            return forAll(g) { json in
-                do {
-                    let data = JSON.encodeAsData(json, pretty: false)
-                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
-                    let json2 = try JSON(ns: cocoa)
-                    return json2.approximatelyEqual(json)
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSONSerialization can always decode the output of JSON.encodeAsData(pretty: true)") <- {
-            let g = JSON.arbitrary
-            return forAll(g) { json in
-                do {
-                    let data = JSON.encodeAsData(json, pretty: true)
-                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
-                    let json2 = try JSON(ns: cocoa)
-                    return json2.approximatelyEqual(json)
-                } catch {
-                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
-                }
-            }
-        }
-        
-        property("JSON's Streamable, description, and debugDescription should be based on the JSON-encoded string") <- {
-            let g = JSON.arbitrary
-            return forAll(g) { json in
-                // Streamable and description are the JSON-encoded string directly.
-                // debugDescription is the JSON-encoded string wrapped in "JSON()".
-                let encoded = JSON.encodeAsString(json, pretty: false)
-                var streamOutput = ""
-                json.write(to: &streamOutput)
-                guard streamOutput == encoded else {
-                    return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(describing: json))
-                }
-                guard json.description == encoded else {
-                    return TestResult.failed("description does not match encoded JSON string").counterexample(String(describing: json))
-                }
-                guard json.debugDescription == "JSON(\(encoded))" else {
-                    return TestResult.failed("debugDescription does not match expected output").counterexample(String(describing: json))
-                }
-                return TestResult.succeeded
-            }
-        }
-        
-        property("JSONObject's Streamable, description, and debugDescription should be based on the JSON-encoded string") <- {
-            let g = JSONObject.arbitrary
-            return forAll(g) { jsonObj in
-                // Streamable and description are the JSON-encoded string directly.
-                // debugDescription is the JSON-encoded string wrapped in "JSONObject()".
-                let encoded = JSON.encodeAsString(JSON(jsonObj), pretty: false)
-                var streamOutput = ""
-                jsonObj.write(to: &streamOutput)
-                guard streamOutput == encoded else {
-                    return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(describing: jsonObj))
-                }
-                guard jsonObj.description == encoded else {
-                    return TestResult.failed("description does not match encoded JSON string").counterexample(String(describing: jsonObj))
-                }
-                guard jsonObj.debugDescription == "JSONObject(\(encoded))" else {
-                    return TestResult.failed("debugDescription does not match expected output").counterexample(String(describing: jsonObj))
-                }
-                return TestResult.succeeded
-            }
-        }
-    }
-}
+//class JSONSwiftCheck: XCTestCase {
+//    func testProperties() {
+//        property("JSON can round-trip through Foundation and still remain equal", arguments: CheckerArguments(replay: (StdGen(1737952920,8460), 1))) <- forAll { (json: JSON) in
+//            do {
+//                let object = json.ns
+//                let json2 = try JSON(ns: object)
+//                return json.approximatelyEqual(json2)
+//            } catch {
+//                return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//            }
+//        }
+//        
+//        property("JSON can always decode the compact JSON output of JSONSerialization") <- {
+//            let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
+//            return forAll(g) { json in
+//                do {
+//                    let object = json.ns
+//                    let data = try JSONSerialization.data(withJSONObject: object)
+//                    let decoded = try JSON.decode(data)
+//                    return decoded.approximatelyEqual(json)
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSON can always decode the pretty-printed JSON output of JSONSerialization") <- {
+//            let g = JSON.arbitrary.suchThat({ $0.isObject || $0.isArray })
+//            return forAll(g) { json in
+//                do {
+//                    let object = json.ns
+//                    guard JSONSerialization.isValidJSONObject(object) else {
+//                        return TestResult.failed("JSON object is not valid for JSONSerialization").counterexample(String(describing: json))
+//                    }
+//                    let data = try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)
+//                    do {
+//                        let decoded = try JSON.decode(data)
+//                        return decoded.approximatelyEqual(json)
+//                    } catch {
+//                        return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(data: data, encoding: String.Encoding.utf8) ?? "(decode failure)").counterexample(String(describing: json))
+//                    }
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSON can always decode the output of JSON.encodeAsString(pretty: false)") <- {
+//            let g = JSON.arbitrary
+//            return forAll(g) { json in
+//                do {
+//                    let s = JSON.encodeAsString(json, pretty: false)
+//                    let json2 = try JSON.decode(s)
+//                    return json2.approximatelyEqual(json)
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSON can always decode the output of JSON.encodeAsString(pretty: true)") <- {
+//            let g = JSON.arbitrary
+//            return forAll(g) { json in
+//                do {
+//                    let s = JSON.encodeAsString(json, pretty: true)
+//                    let json2 = try JSON.decode(s)
+//                    return json2.approximatelyEqual(json)
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSONSerialization can always decode the output of JSON.encodeAsData(pretty: false)") <- {
+//            let g = JSON.arbitrary
+//            return forAll(g) { json in
+//                do {
+//                    let data = JSON.encodeAsData(json, pretty: false)
+//                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
+//                    let json2 = try JSON(ns: cocoa)
+//                    return json2.approximatelyEqual(json)
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSONSerialization can always decode the output of JSON.encodeAsData(pretty: true)") <- {
+//            let g = JSON.arbitrary
+//            return forAll(g) { json in
+//                do {
+//                    let data = JSON.encodeAsData(json, pretty: true)
+//                    let cocoa = try JSONSerialization.jsonObject(with: data, options: [.allowFragments])
+//                    let json2 = try JSON(ns: cocoa)
+//                    return json2.approximatelyEqual(json)
+//                } catch {
+//                    return TestResult.failed("Test case threw an exception: \(error)").counterexample(String(describing: json))
+//                }
+//            }
+//        }
+//        
+//        property("JSON's Streamable, description, and debugDescription should be based on the JSON-encoded string") <- {
+//            let g = JSON.arbitrary
+//            return forAll(g) { json in
+//                // Streamable and description are the JSON-encoded string directly.
+//                // debugDescription is the JSON-encoded string wrapped in "JSON()".
+//                let encoded = JSON.encodeAsString(json, pretty: false)
+//                var streamOutput = ""
+//                json.write(to: &streamOutput)
+//                guard streamOutput == encoded else {
+//                    return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(describing: json))
+//                }
+//                guard json.description == encoded else {
+//                    return TestResult.failed("description does not match encoded JSON string").counterexample(String(describing: json))
+//                }
+//                guard json.debugDescription == "JSON(\(encoded))" else {
+//                    return TestResult.failed("debugDescription does not match expected output").counterexample(String(describing: json))
+//                }
+//                return TestResult.succeeded
+//            }
+//        }
+//        
+//        property("JSONObject's Streamable, description, and debugDescription should be based on the JSON-encoded string") <- {
+//            let g = JSONObject.arbitrary
+//            return forAll(g) { jsonObj in
+//                // Streamable and description are the JSON-encoded string directly.
+//                // debugDescription is the JSON-encoded string wrapped in "JSONObject()".
+//                let encoded = JSON.encodeAsString(JSON(jsonObj), pretty: false)
+//                var streamOutput = ""
+//                jsonObj.write(to: &streamOutput)
+//                guard streamOutput == encoded else {
+//                    return TestResult.failed("Streamable output does not match encoded JSON string").counterexample(String(describing: jsonObj))
+//                }
+//                guard jsonObj.description == encoded else {
+//                    return TestResult.failed("description does not match encoded JSON string").counterexample(String(describing: jsonObj))
+//                }
+//                guard jsonObj.debugDescription == "JSONObject(\(encoded))" else {
+//                    return TestResult.failed("debugDescription does not match expected output").counterexample(String(describing: jsonObj))
+//                }
+//                return TestResult.succeeded
+//            }
+//        }
+//    }
+//}
 
 extension JSON {
     /// Performs an equality test, but accepts nearly-equal `Double` values.

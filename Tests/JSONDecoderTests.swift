@@ -24,8 +24,8 @@ let bigJson: Data = {
     return s.data(using: String.Encoding.utf8)!
 }()
 
-struct NoSuchFixture: Error {}
-func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
+private func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
+    struct NoSuchFixture: Error {}
     guard let url = Bundle(for: JSONDecoderTests.self).url(forResource: name, withExtension: ext) else {
         throw NoSuchFixture()
     }
