@@ -11,9 +11,10 @@ import PMJSON
 
 /// Tests for [JSONTestSuite](https://github.com/nst/JSONTestSuite).
 final class JSONTestSuite: XCTestCase {
-    /// Whether or not we should expect to parse indeterminate cases.
-    /// Some cases test things we explicitly want to support, others don't.
-    private static let indeterminateParsing: [String: ShouldParse] = [
+    /// How we should expect to parse various test cases.
+    /// This is mainly intended for defining indeterminate cases, but may also
+    /// be used to override other cases when the case is believed to be incorrect.
+    private static let expectedParsing: [String: ShouldParse] = [
         "i_object_key_lone_2nd_surrogate": .no,
         "i_string_1st_surrogate_but_2nd_missing": .no,
         "i_string_1st_valid_surrogate_2nd_invalid": .no,
@@ -22,8 +23,8 @@ final class JSONTestSuite: XCTestCase {
         "i_string_incomplete_surrogates_escape_valid": .no,
         "i_string_inverted_surrogates_U+1D11E": .no,
         "i_string_lone_second_surrogate": .no,
-        "i_string_not_in_unicode_range": .no,
-        "i_string_truncated-utf-8": .no,
+        "i_string_not_in_unicode_range": .yes,
+        "i_string_truncated-utf-8": .yes,
         
         // The following tests are for noncharacters that are still valid codepoints
         "i_string_unicode_U+10FFFE_nonchar": .yes,
@@ -33,16 +34,20 @@ final class JSONTestSuite: XCTestCase {
         
         "i_string_UTF-16_invalid_lonely_surrogate": .no,
         "i_string_UTF-16_invalid_surrogate": .no,
-        // JSON.decode(data) will handle invalid UTF-8, but we're parsing strictly as a String first
-        "i_string_UTF-8_invalid_sequence": .no,
+        "i_string_UTF-8_invalid_sequence": .yes,
         "i_structure_500_nested_arrays": .yes,
         "i_structure_UTF-8_BOM_empty_object": .yes,
-        "i_string_UTF-16LE_with_BOM": .yes]
-    
-    private static let skipTests: Set<String> = [
-        // Don't try the UTF-16 no-BOM cases, we shouldn't even try to detect this case
-        "y_string_utf16BE_no_BOM",
-        "y_string_utf16LE_no_BOM"]
+        "i_string_UTF-16LE_with_BOM": .yes,
+        
+        "n_number_then_00": .yes, // Indistinguishable from UTF-161LE
+        // The following test handling of invalid UTF-8 byte sequences, which we support
+        "n_string_invalid_utf-8": .yes,
+        "n_string_iso_latin_1": .yes,
+        "n_string_lone_utf8_continuation_byte": .yes,
+        "n_string_overlong_sequence_2_bytes": .yes,
+        "n_string_overlong_sequence_6_bytes": .yes,
+        "n_string_overlong_sequence_6_bytes_null": .yes,
+        "n_string_UTF8_surrogate_U+D800": .yes]
     
     private static var testCases: [String: (url: URL, shouldParse: ShouldParse)] = [:]
     
@@ -54,16 +59,17 @@ final class JSONTestSuite: XCTestCase {
             let imp = unsafeBitCast(executeIMP, to: IMP.self)
             for case let url as URL in parsingEnum where url.pathExtension == "json" {
                 let name = url.deletingPathExtension().lastPathComponent
-                guard !skipTests.contains(name) else { continue }
                 guard let identifier = name.sanitized else {
                     print("*** Skipping test \(url.lastPathComponent) due to invalid name")
                     continue
                 }
                 let shouldParse: ShouldParse
-                if name.hasPrefix("y_") {
+                if let expected = expectedParsing[name] {
+                    shouldParse = expected
+                } else if name.hasPrefix("y_") {
                     shouldParse = .yes
                 } else if name.hasPrefix("i_") {
-                    shouldParse = indeterminateParsing[name] ?? .maybe
+                    shouldParse = .maybe
                 } else if name.hasPrefix("n_") {
                     shouldParse = .no
                 } else {
@@ -106,33 +112,7 @@ final class JSONTestSuite: XCTestCase {
         
         let data = try Data(contentsOf: url)
         do {
-            // Convert it to a String first, as there are tests that expect invalid UTF-8 to error out, or valid UTF-16 to work.
-            // JSON.decode(data) will be liberal in how it accepts UTF-8
-            let encoding: String.Encoding, skipBOM: Bool
-            if data.count >= 2 {
-                switch (data[0], data[1]) {
-                case (0xFE, 0xFF):
-                    encoding = .utf16BigEndian
-                    skipBOM = true
-                case (0xFF, 0xFE):
-                    encoding = .utf16LittleEndian
-                    skipBOM = true
-                default:
-                    encoding = .utf8
-                    skipBOM = false
-                }
-            } else {
-                encoding = .utf8
-                skipBOM = false
-            }
-            guard var input = String(data: data, encoding: encoding) else {
-                struct DecodeError: Error {}
-                throw DecodeError()
-            }
-            if skipBOM {
-                input = String(input.unicodeScalars.dropFirst())
-            }
-            _ = try JSON.decode(input, options: [.strict])
+            _ = try JSON.decode(data, options: [.strict])
             switch shouldParse {
             case .yes:
                 break
