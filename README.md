@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v1.2.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v1.2.1-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -83,7 +83,7 @@ let json = try JSON.decode(jsonString)
 
 Any errors in the JSON parser are represented as `JSONParserError` values and are thrown from the `decode()` method. The error contains the precise line and column of the error, and a code that describes the problem.
 
-A convenience method is also provided for decoding from an `NSData` containing UTF8-encoded data:
+A convenience method is also provided for decoding from an `NSData` containing data encoded as UTF-8, UTF-16, or UTF-32:
 
 ```swift
 let json = try JSON.decode(data)
@@ -247,6 +247,12 @@ Licensed under either of
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 ## Version History
+
+#### v1.2.1 (2016-10-27)
+
+* Handle UTF-32 input.
+* Detect UTF-16 and UTF-32 input without a BOM.
+* Fix bug where we weren't passing decoder options through for UTF-16 input.
 
 #### v1.2.0 (2016-10-27)
 
