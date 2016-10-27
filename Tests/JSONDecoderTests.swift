@@ -24,8 +24,8 @@ let bigJson: Data = {
     return s.data(using: String.Encoding.utf8)!
 }()
 
-struct NoSuchFixture: Error {}
-func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
+private func readFixture(_ name: String, withExtension ext: String?) throws -> Data {
+    struct NoSuchFixture: Error {}
     guard let url = Bundle(for: JSONDecoderTests.self).url(forResource: name, withExtension: ext) else {
         throw NoSuchFixture()
     }
@@ -290,14 +290,75 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(String(describing: error), error.localizedDescription)
     }
     #endif
+    
+    func testDepthLimit() {
+        func assertThrowsDepthError(_ string: String, limit: Int, file: StaticString = #file, line: UInt = #line) {
+            XCTAssertThrowsError(try JSON.decode(string, options: [.depthLimit(limit)]), file: file, line: line) { (error) in
+                switch error {
+                case JSONDecoderError.exceededDepthLimit: break
+                default: XCTFail("Expected JSONDecoderError.exceededDepthLimit, got \(error)", file: file, line: line)
+                }
+            }
+        }
+        
+        assertThrowsDepthError("[[[[[1]]]]]", limit: 3)
+        assertMatchesJSON(try JSON.decode("[[[[[1]]]]]", options: [.depthLimit(10)]), [[[[[1]]]]])
+        assertThrowsDepthError("{\"a\":{\"a\":{\"a\":{\"a\":{\"a\":1}}}}}", limit: 3)
+        assertMatchesJSON(try JSON.decode("{\"a\":{\"a\":{\"a\":{\"a\":{\"a\":1}}}}}", options: [.depthLimit(10)]), ["a":["a":["a":["a":["a":1]]]]])
+        
+        // Depth limit of 0 means just values, no arrays/dictionaries at all
+        assertMatchesJSON(try JSON.decode("null", options: [.depthLimit(0)]), nil)
+        assertMatchesJSON(try JSON.decode("3", options: [.depthLimit(0)]), 3)
+        assertThrowsDepthError("[]", limit: 0)
+        assertThrowsDepthError("{}", limit: 0)
+        
+        // Depth limit of 1 means one level of array/dictionary
+        assertMatchesJSON(try JSON.decode("[1]", options: [.depthLimit(1)]), [1])
+        assertMatchesJSON(try JSON.decode("{\"a\":1}", options: [.depthLimit(1)]), ["a":1])
+        assertThrowsDepthError("[[1]]", limit: 1)
+        assertThrowsDepthError("{\"a\":{}}", limit: 1)
+        assertThrowsDepthError("[{}]", limit: 1)
+        assertThrowsDepthError("{\"a\":[]}", limit: 1)
+    }
+    
+    func testBOMDetection() {
+        func asUTF16(_ input: String, bigEndian: Bool) -> Data {
+            var data = Data(capacity: input.utf16.count * 2 + 2)
+            if bigEndian {
+                data.append(0xFE)
+                data.append(0xFF)
+            } else {
+                data.append(0xFF)
+                data.append(0xFE)
+            }
+            for x in input.utf16 {
+                let high = UInt8(truncatingBitPattern: x >> 8)
+                let low = UInt8(truncatingBitPattern: x)
+                if bigEndian {
+                    data.append(high)
+                    data.append(low)
+                } else {
+                    data.append(low)
+                    data.append(high)
+                }
+            }
+            return data
+        }
+        
+        // UTF-16BE with BOM
+        assertMatchesJSON(try JSON.decode(asUTF16("42", bigEndian: true)), 42)
+        // UTF-16LE with BOM
+        assertMatchesJSON(try JSON.decode(asUTF16("42", bigEndian: false)), 42)
+        // UTF8 with BOM
+        assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf8)!), 42)
+    }
 }
 
 /// Tests both `JSONDecoder`'s streaming mode and `JSONStreamDecoder`.
 class JSONStreamDecoderTests: XCTestCase {
     func testDecoderStreamingMode() {
         func decodeStream(_ input: String) throws -> [JSON] {
-            var parser = JSONParser(input.unicodeScalars)
-            parser.streaming = true
+            let parser = JSONParser(input.unicodeScalars, options: [.streaming])
             var decoder = JSONDecoder(parser)
             return try decoder.decodeStream()
         }
@@ -436,7 +497,7 @@ class JSONBenchmarks: XCTestCase {
             let json = try JSON.decode(bigJson)
             measure {
                 for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json, pretty: false)
+                    _ = JSON.encodeAsData(json)
                 }
             }
         } catch {
@@ -466,7 +527,7 @@ class JSONBenchmarks: XCTestCase {
             let json = try JSON.decode(bigJson)
             measure {
                 for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json, pretty: true)
+                    _ = JSON.encodeAsData(json, options: [.pretty])
                 }
             }
         } catch {

@@ -22,6 +22,8 @@
 		9E87937C1BC8341500BC6A15 /* ObjectiveC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E87937B1BC8341500BC6A15 /* ObjectiveC.swift */; };
 		9E87937E1BC835F500BC6A15 /* Accessors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E87937D1BC835F500BC6A15 /* Accessors.swift */; };
 		9EC4CD961DB83DE8003A4268 /* JSONParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */; };
+		9ECD04F51DC15C9800DBE7CA /* JSONTestSuite in Resources */ = {isa = PBXBuildFile; fileRef = 9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */; };
+		9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 		9E87937B1BC8341500BC6A15 /* ObjectiveC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectiveC.swift; sourceTree = "<group>"; };
 		9E87937D1BC835F500BC6A15 /* Accessors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Accessors.swift; sourceTree = "<group>"; };
 		9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONParserTests.swift; sourceTree = "<group>"; };
+		9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */ = {isa = PBXFileReference; lastKnownFileType = folder; path = JSONTestSuite; sourceTree = "<group>"; };
+		9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONTestSuite.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,8 +128,10 @@
 				9E1B244F1BC73D7600E5BC19 /* JSONDecoderTests.swift */,
 				9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */,
 				0A0F2BB91BF32C1D0095D290 /* JSONSwiftCheck.swift */,
+				9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */,
 				9E0317C61D664D7D00096D9E /* README.txt */,
 				9E0317C41D664B9000096D9E /* sample.json */,
+				9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */,
 				9E1B24511BC73D7600E5BC19 /* Info.plist */,
 			);
 			name = JSONTests;
@@ -234,6 +240,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9E0317C51D664B9000096D9E /* sample.json in Resources */,
+				9ECD04F51DC15C9800DBE7CA /* JSONTestSuite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +288,7 @@
 			files = (
 				9EC4CD961DB83DE8003A4268 /* JSONParserTests.swift in Sources */,
 				0A0F2BBA1BF32C1D0095D290 /* JSONSwiftCheck.swift in Sources */,
+				9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */,
 				9E1B24501BC73D7600E5BC19 /* JSONDecoderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

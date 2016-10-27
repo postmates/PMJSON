@@ -248,6 +248,17 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Change how options are provided to the encoder/decoder/parser. All options are now provided in the form of a struct that uses array literal syntax (similar to `OptionSet`s). The old methods that take strict/pretty flags are now marked as deprecated.
+* Add a new depth limit option to the decoder.
+* Implement a new test suite based on [JSONTestSuite](https://github.com/nst/JSONTestSuite).
+* Fix a crash if the input stream contained a lone trail surrogate without a lead surrogate.
+* Fix incorrect parsing of numbers of the form `1e-1` or `1e+1`.
+* When the `strict` option is specified, stop accepting numbers of the form `01` or `-01`.
+* Add support for UTF-16 when decoding a `Data` that has a UTF-16 BOM.
+* Skip a UTF-8 BOM if present when decoding a `Data`.
+
 #### v1.1.0 (2016-10-20)
 
 * Add `Hashable` to `JSONEvent` and `JSONParserError`.

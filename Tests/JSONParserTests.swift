@@ -30,9 +30,7 @@ class JSONParserTests: XCTestCase {
     
     func testStreaming() {
         func makeStreamingParser(_ input: String) -> JSONParser<String.UnicodeScalarView> {
-            var parser = JSONParser(input.unicodeScalars)
-            parser.streaming = true
-            return parser
+            return JSONParser(input.unicodeScalars, options: [.streaming])
         }
         assertParserEvents("", streaming: true, [])
         assertParserEvents("  ", streaming: true, [])
@@ -59,8 +57,7 @@ class JSONParserTests: XCTestCase {
 }
 
 private func assertParserEvents(_ input: String, streaming: Bool = false, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) {
-    var parser = JSONParser(input.unicodeScalars)
-    parser.streaming = streaming
+    let parser = JSONParser(input.unicodeScalars, options: JSONParserOptions(streaming: streaming))
     var iter = parser.makeIterator()
     for (i, expected) in events.enumerated() {
         guard let event = iter.next() else {
