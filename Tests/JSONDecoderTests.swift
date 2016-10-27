@@ -290,6 +290,36 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(String(describing: error), error.localizedDescription)
     }
     #endif
+    
+    func testDepthLimit() {
+        func assertThrowsDepthError(_ string: String, limit: Int, file: StaticString = #file, line: UInt = #line) {
+            XCTAssertThrowsError(try JSON.decode(string, options: [.depthLimit(limit)]), file: file, line: line) { (error) in
+                switch error {
+                case JSONDecoderError.exceededDepthLimit: break
+                default: XCTFail("Expected JSONDecoderError.exceededDepthLimit, got \(error)", file: file, line: line)
+                }
+            }
+        }
+        
+        assertThrowsDepthError("[[[[[1]]]]]", limit: 3)
+        assertMatchesJSON(try JSON.decode("[[[[[1]]]]]", options: [.depthLimit(10)]), [[[[[1]]]]])
+        assertThrowsDepthError("{\"a\":{\"a\":{\"a\":{\"a\":{\"a\":1}}}}}", limit: 3)
+        assertMatchesJSON(try JSON.decode("{\"a\":{\"a\":{\"a\":{\"a\":{\"a\":1}}}}}", options: [.depthLimit(10)]), ["a":["a":["a":["a":["a":1]]]]])
+        
+        // Depth limit of 0 means just values, no arrays/dictionaries at all
+        assertMatchesJSON(try JSON.decode("null", options: [.depthLimit(0)]), nil)
+        assertMatchesJSON(try JSON.decode("3", options: [.depthLimit(0)]), 3)
+        assertThrowsDepthError("[]", limit: 0)
+        assertThrowsDepthError("{}", limit: 0)
+        
+        // Depth limit of 1 means one level of array/dictionary
+        assertMatchesJSON(try JSON.decode("[1]", options: [.depthLimit(1)]), [1])
+        assertMatchesJSON(try JSON.decode("{\"a\":1}", options: [.depthLimit(1)]), ["a":1])
+        assertThrowsDepthError("[[1]]", limit: 1)
+        assertThrowsDepthError("{\"a\":{}}", limit: 1)
+        assertThrowsDepthError("[{}]", limit: 1)
+        assertThrowsDepthError("{\"a\":[]}", limit: 1)
+    }
 }
 
 /// Tests both `JSONDecoder`'s streaming mode and `JSONStreamDecoder`.

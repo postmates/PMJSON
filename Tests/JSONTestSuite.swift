@@ -11,11 +11,6 @@ import PMJSON
 
 /// Tests for [JSONTestSuite](https://github.com/nst/JSONTestSuite).
 final class JSONTestSuite: XCTestCase {
-    private static let skipTests: [String] = [
-        "n_structure_100000_opening_arrays",
-        "n_structure_open_array_object"
-    ]
-    
     /// Whether or not we should expect to parse indeterminate cases.
     /// Some cases test things we explicitly want to support, others don't.
     private static let indeterminateParsing: [String: ShouldParse] = [
@@ -57,7 +52,6 @@ final class JSONTestSuite: XCTestCase {
                     print("*** Skipping test \(url.lastPathComponent) due to invalid name")
                     continue
                 }
-                guard !skipTests.contains(identifier) else { continue }
                 var selName = "test_\(identifier)"
                 var attempt = 1
                 while testCases[selName] != nil {
@@ -114,7 +108,7 @@ final class JSONTestSuite: XCTestCase {
                 struct DecodeError: Error {}
                 throw DecodeError()
             }
-            _ = try JSON.decode(input, options: [.strict])
+            _ = try JSON.decode(input, options: [.strict, .depthLimit(10_000)])
             switch shouldParse {
             case .yes:
                 break

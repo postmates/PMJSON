@@ -187,7 +187,7 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
         if options.streaming && token == nil {
             throw JSONDecoderError.streamEnded
         }
-        let result = try buildValue()
+        let result = try buildValue(depth: 0)
         if !options.streaming {
             bump()
             switch token {
@@ -223,11 +223,21 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
         token = iter.next()
     }
     
-    private mutating func buildValue() throws -> JSON {
+    private mutating func buildValue(depth: Int) throws -> JSON {
         switch token {
-        case .objectStart?: return try buildObject()
+        case .objectStart?:
+            let newDepth = depth + 1
+            if let limit = options.depthLimit, newDepth > limit {
+                throw JSONDecoderError.exceededDepthLimit
+            }
+            return try buildObject(depth: newDepth)
         case .objectEnd?: throw error(.invalidSyntax)
-        case .arrayStart?: return try buildArray()
+        case .arrayStart?:
+            let newDepth = depth + 1
+            if let limit = options.depthLimit, newDepth > limit {
+                throw JSONDecoderError.exceededDepthLimit
+            }
+            return try buildArray(depth: newDepth)
         case .arrayEnd?: throw error(.invalidSyntax)
         case .booleanValue(let b)?: return .bool(b)
         case .int64Value(let i)?: return .int64(i)
@@ -239,7 +249,7 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
         }
     }
     
-    private mutating func buildObject() throws -> JSON {
+    private mutating func buildObject(depth: Int) throws -> JSON {
         bump()
         var dict: [String: JSON] = Dictionary(minimumCapacity: objectHighWaterMark)
         defer { objectHighWaterMark = max(objectHighWaterMark, dict.count) }
@@ -252,20 +262,20 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
             default: throw error(.nonStringKey)
             }
             bump()
-            dict[key] = try buildValue()
+            dict[key] = try buildValue(depth: depth)
             bump()
         }
         throw error(.unexpectedEOF)
     }
     
-    private mutating func buildArray() throws -> JSON {
+    private mutating func buildArray(depth: Int) throws -> JSON {
         bump()
         var ary: JSONArray = []
         while let token = self.token {
             if case .arrayEnd = token {
                 return .array(ary)
             }
-            ary.append(try buildValue())
+            ary.append(try buildValue(depth: depth))
             bump()
         }
         throw error(.unexpectedEOF)
@@ -342,6 +352,8 @@ public enum JSONDecoderError: Error {
     case streamEnded
     /// Thrown when a `JSONDecoder` operating in one-shot mode finds extra tokens after the first top-level JSON value.
     case unexpectedToken
+    /// Thrown when a `JSONDecoder` exceeds the specified depth limit.
+    case exceededDepthLimit
 }
 
 /// A JSON decoder that decodes a stream of JSON events into a lazy sequence of top-level JSON values.

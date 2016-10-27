@@ -200,6 +200,7 @@
             switch self {
             case .streamEnded: return "The JSON event stream ended."
             case .unexpectedToken: return "The JSON event stream contained more than one top-level value."
+            case .exceededDepthLimit: return "The JSON event stream exceeded the nesting depth limit."
             }
         }
     }
