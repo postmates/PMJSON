@@ -251,7 +251,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 #### Development
 
 * Change how options are provided to the encoder/decoder/parser. All options are now provided in the form of a struct that uses array literal syntax (similar to `OptionSet`s). The old methods that take strict/pretty flags are now marked as deprecated.
-* Add a new depth limit option to the decoder.
+* Add a new depth limit option to the decoder, with a default of 10,000.
 * Implement a new test suite based on [JSONTestSuite](https://github.com/nst/JSONTestSuite).
 * Fix a crash if the input stream contained a lone trail surrogate without a lead surrogate.
 * Fix incorrect parsing of numbers of the form `1e-1` or `1e+1`.

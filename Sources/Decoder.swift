@@ -92,16 +92,16 @@ public struct JSONOptions {
     /// A maximum depth limit to apply to nested arrays/dictionaries.
     /// If `nil`, there is no depth limit.
     ///
-    /// The default value is `nil`.
-    public var depthLimit: Int? = nil
+    /// The default value is `10_000`.
+    public var depthLimit: Int? = 10_000
     
     /// Returns a new `JSONOptions` with default values.
     public init() {}
     
     /// Returns a new `JSONOptions`.
     /// - Parameter strict: Whether the parser should be strict. Defaults to `false`.
-    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
-    public init(strict: Bool = false, depthLimit: Int? = nil) {
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `10_000`.
+    public init(strict: Bool = false, depthLimit: Int? = 10_000) {
         self.strict = strict
         self.depthLimit = depthLimit
     }
@@ -125,9 +125,10 @@ extension JSONOptions: ExpressibleByArrayLiteral {
         /// - SeeAlso: `JSONOptions.strict`.
         case strict
         /// Sets a maximum depth limit for nested arrays/dictionaries.
-        /// If specified multiple times, the lowest limit is used.
+        /// If specified multiple times, the last specified limit is used.
+        /// Specifying `nil` removes the default depth limit of `10_000`.
         /// - SeeAlso: `JSONOptions.depthLimit`.
-        case depthLimit(Int)
+        case depthLimit(Int?)
     }
     
     public init(arrayLiteral elements: Element...) {
@@ -135,7 +136,7 @@ extension JSONOptions: ExpressibleByArrayLiteral {
             switch elt {
             case .strict: strict = true
             case .depthLimit(let limit):
-                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+                depthLimit = limit
             }
         }
     }
@@ -295,8 +296,8 @@ public struct JSONDecoderOptions {
     /// A maximum depth limit to apply to nested arrays/dictionaries.
     /// If `nil`, there is no depth limit.
     ///
-    /// The default value is `nil`.
-    public var depthLimit: Int? = nil
+    /// The default value is `10_000`.
+    public var depthLimit: Int? = 10_000
     
     /// If `true`, the decoder will operate in streaming mode, allowing for multiple
     /// top-level json values, with each call to `decode()` returning a successive value.
@@ -315,9 +316,9 @@ public struct JSONDecoderOptions {
     public init() {}
     
     /// Returns a new `JSONDecoderOptions`.
-    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `10_000`.
     /// - Parameter streaming: Whether the decode should operate in streaming mode. Default is `false`.
-    public init(depthLimit: Int? = nil, streaming: Bool = false) {
+    public init(depthLimit: Int? = 10_000, streaming: Bool = false) {
         self.depthLimit = depthLimit
         self.streaming = streaming
     }
@@ -326,9 +327,10 @@ public struct JSONDecoderOptions {
 extension JSONDecoderOptions: ExpressibleByArrayLiteral {
     public enum Element {
         /// Sets a maximum depth limit for nested arrays/dictionaries.
-        /// If specified multiple times, the lowest limit is used.
+        /// If specified multiple times, the last specified limit is used.
+        /// Specifying `nil` removes the default depth limit of `10_000`.
         /// - SeeAlso: `JSONDecoderOptions.depthLimit`.
-        case depthLimit(Int)
+        case depthLimit(Int?)
         /// Puts the decoder into streaming mode.
         /// - SeeAlso: `JSONDecoderOptions.streaming`.
         case streaming
@@ -338,7 +340,7 @@ extension JSONDecoderOptions: ExpressibleByArrayLiteral {
         for elt in elements {
             switch elt {
             case .depthLimit(let limit):
-                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+                depthLimit = limit
             case .streaming:
                 streaming = true
             }
@@ -414,15 +416,15 @@ public struct JSONStreamDecoderOptions {
     /// A maximum depth limit to apply to nested arrays/dictionaries.
     /// If `nil`, there is no depth limit.
     ///
-    /// The default value is `nil`.
-    public var depthLimit: Int? = nil
+    /// The default value is `10_000`.
+    public var depthLimit: Int? = 10_000
     
     /// Returns a new `JSONStreamDecoderOptions` with default values.
     public init() {}
     
     /// Returns a new `JSONStreamDecoderOptions`.
-    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
-    public init(depthLimit: Int? = nil) {
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `10_000`.
+    public init(depthLimit: Int? = 10_000) {
         self.depthLimit = depthLimit
     }
     
@@ -444,16 +446,17 @@ private extension JSONDecoderOptions {
 extension JSONStreamDecoderOptions: ExpressibleByArrayLiteral {
     public enum Element {
         /// Sets a maximum depth limit for nested arrays/dictionaries.
-        /// If specified multiple times, the lowest limit is used.
+        /// If specified multiple times, the last specified limit is used.
+        /// Specifying `nil` removes the default depth limit of `10_000`.
         /// - SeeAlso: `JSONStreamDecoderOptions.depthLimit`.
-        case depthLimit(Int)
+        case depthLimit(Int?)
     }
     
     public init(arrayLiteral elements: Element...) {
         for elt in elements {
             switch elt {
             case .depthLimit(let limit):
-                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+                depthLimit = limit
             }
         }
     }

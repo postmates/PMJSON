@@ -132,7 +132,7 @@ final class JSONTestSuite: XCTestCase {
             if skipBOM {
                 input = String(input.unicodeScalars.dropFirst())
             }
-            _ = try JSON.decode(input, options: [.strict, .depthLimit(10_000)])
+            _ = try JSON.decode(input, options: [.strict])
             switch shouldParse {
             case .yes:
                 break
