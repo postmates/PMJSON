@@ -322,35 +322,29 @@ class JSONDecoderTests: XCTestCase {
     }
     
     func testBOMDetection() {
-        func asUTF16(_ input: String, bigEndian: Bool) -> Data {
-            var data = Data(capacity: input.utf16.count * 2 + 2)
-            if bigEndian {
-                data.append(0xFE)
-                data.append(0xFF)
-            } else {
-                data.append(0xFF)
-                data.append(0xFE)
-            }
-            for x in input.utf16 {
-                let high = UInt8(truncatingBitPattern: x >> 8)
-                let low = UInt8(truncatingBitPattern: x)
-                if bigEndian {
-                    data.append(high)
-                    data.append(low)
-                } else {
-                    data.append(low)
-                    data.append(high)
-                }
-            }
-            return data
-        }
-        
+        // UTF-32BE with BOM
+        assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf32BigEndian)!), 42)
+        // UTF-32LE with BOM
+        assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf32LittleEndian)!), 42)
         // UTF-16BE with BOM
-        assertMatchesJSON(try JSON.decode(asUTF16("42", bigEndian: true)), 42)
+        assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf16BigEndian)!), 42)
         // UTF-16LE with BOM
-        assertMatchesJSON(try JSON.decode(asUTF16("42", bigEndian: false)), 42)
+        assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf16LittleEndian)!), 42)
         // UTF8 with BOM
         assertMatchesJSON(try JSON.decode("\u{FEFF}42".data(using: .utf8)!), 42)
+    }
+    
+    func testUnicodeHeuristicDetection() {
+        // UTF-32BE
+        assertMatchesJSON(try JSON.decode("42".data(using: .utf32BigEndian)!), 42)
+        // UTF-32LE
+        assertMatchesJSON(try JSON.decode("42".data(using: .utf32LittleEndian)!), 42)
+        // UTF-16BE
+        assertMatchesJSON(try JSON.decode("42".data(using: .utf16BigEndian)!), 42)
+        // UTF-16LE
+        assertMatchesJSON(try JSON.decode("42".data(using: .utf16LittleEndian)!), 42)
+        // UTF8
+        assertMatchesJSON(try JSON.decode("42".data(using: .utf8)!), 42)
     }
 }
 
