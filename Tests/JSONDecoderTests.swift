@@ -617,3 +617,22 @@ private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
         return false
     }
 }
+
+extension JSON {
+    /// Performs an equality test, but accepts nearly-equal `Double` values.
+    func approximatelyEqual(_ other: JSON) -> Bool {
+        switch (self, other) {
+        case (.double(let a), .double(let b)):
+            // we're going to cheat and just convert them to Floats and compare that way.
+            // We just care about equal up to a given precision, and so dropping down to Float precision should give us that.
+            return Float(a) == Float(b)
+        case (.array(let a), .array(let b)):
+            return a.count == b.count && !zip(a, b).lazy.contains(where: { !$0.approximatelyEqual($1) })
+        case (.object(let a), .object(let b)):
+            return a.count == b.count && !a.contains(where: { (k,v) in b[k].map(
+                { !$0.approximatelyEqual(v) }) ?? true })
+        default:
+            return self == other
+        }
+    }
+}
