@@ -15,23 +15,38 @@
 extension JSON {
     /// Encodes a `JSON` to a `String`.
     /// - Parameter json: The `JSON` to encode.
-    /// - Parameter pretty: If `true`, include extra whitespace for formatting. Default is `false`.
+    /// - Parameters options: Options that controls JSON encoding. Defaults to no options. See `JSONEncoderOptions` for details.
     /// - Returns: A `String` with the JSON representation of *json*.
-    public static func encodeAsString(_ json: JSON, pretty: Bool = false) -> String {
+    public static func encodeAsString(_ json: JSON, options: JSONEncoderOptions = []) -> String {
         var s = ""
-        encode(json, toStream: &s, pretty: pretty)
+        encode(json, to: &s, options: options)
         return s
+    }
+    
+    @available(*, deprecated, message: "Use JSON.encodeAsString(_:options:) instead")
+    public static func encodeAsString(_ json: JSON, pretty: Bool) -> String {
+        return encodeAsString(json, options: JSONEncoderOptions(pretty: pretty))
     }
     
     /// Encodes a `JSON` to an output stream.
     /// - Parameter json: The `JSON` to encode.
     /// - Parameter stream: The output stream to write the encoded JSON to.
-    /// - Parameter pretty: If `true`, include extra whitespace for formatting. Default is `false`.
-    public static func encode<Target: TextOutputStream>(_ json: JSON, toStream stream: inout Target, pretty: Bool = false) {
-        encode(json, toStream: &stream, indent: pretty ? 0 : nil)
+    /// - Parameters options: Options that controls JSON encoding. Defaults to no options. See `JSONEncoderOptions` for details.
+    public static func encode<Target: TextOutputStream>(_ json: JSON, to stream: inout Target, options: JSONEncoderOptions = []) {
+        encode(json, to: &stream, indent: options.pretty ? 0 : nil)
     }
     
-    private static func encode<Target: TextOutputStream>(_ json: JSON, toStream stream: inout Target, indent: Int?) {
+    @available(*, deprecated, message: "Use JSON.encode(_:to:options:) instead")
+    public static func encode<Target: TextOutputStream>(_ json: JSON, to stream: inout Target, pretty: Bool) {
+        encode(json, to: &stream, options: JSONEncoderOptions(pretty: pretty))
+    }
+    
+    @available(*, deprecated, renamed: "encode(_:to:pretty:)")
+    public static func encode<Target: TextOutputStream>(_ json: JSON, toStream stream: inout Target, pretty: Bool) {
+        encode(json, to: &stream, options: JSONEncoderOptions(pretty: pretty))
+    }
+    
+    private static func encode<Target: TextOutputStream>(_ json: JSON, to stream: inout Target, indent: Int?) {
         switch json {
         case .null: encodeNull(&stream)
         case .bool(let b): encodeBool(b, toStream: &stream)
@@ -117,7 +132,7 @@ extension JSON {
             }
             encodeString(key, toStream: &stream)
             stream.write(indented != nil ? ": " : ":")
-            encode(value, toStream: &stream, indent: indented)
+            encode(value, to: &stream, indent: indented)
         }
         if let indent = indent {
             stream.write("\n")
@@ -144,7 +159,7 @@ extension JSON {
             } else {
                 stream.write(",")
             }
-            encode(elt, toStream: &stream, indent: indented)
+            encode(elt, to: &stream, indent: indented)
         }
         if let indent = indent {
             stream.write("\n")
@@ -162,6 +177,39 @@ extension JSON {
         case 2: stream.write("    ")
         case 3: stream.write("      ")
         default: break
+        }
+    }
+}
+
+public struct JSONEncoderOptions {
+    /// If `true`, the output is formatted with whitespace to be easier to read.
+    /// If `false`, the output omits any unnecessary whitespace.
+    ///
+    /// The default value is `false`.
+    public var pretty: Bool = false
+    
+    /// Returns a new `JSONEncoderOptions` with default values.
+    public init() {}
+    
+    /// Returns a new `JSONEncoderOptions`.
+    /// - Parameter pretty: Whether the output should be formatted nicely. Defaults to `false`.
+    public init(pretty: Bool = false) {
+        self.pretty = pretty
+    }
+}
+
+extension JSONEncoderOptions: ExpressibleByArrayLiteral {
+    public enum Element {
+        /// Formats the output with whitespace to be easier to read.
+        /// - SeeAlso: `JSONEncoderOptions.pretty`.
+        case pretty
+    }
+    
+    public init(arrayLiteral elements: Element...) {
+        for elt in elements {
+            switch elt {
+            case .pretty: pretty = true
+            }
         }
     }
 }

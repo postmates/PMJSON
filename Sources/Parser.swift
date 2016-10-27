@@ -20,48 +20,48 @@
 
 /// A streaming JSON parser that consumes a sequence of unicode scalars.
 public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == UnicodeScalar {
-    public init(_ seq: Seq) {
+    public init(_ seq: Seq, options: JSONParserOptions = []) {
         base = seq
+        self.options = options
     }
     
-    /// If `true`, trailing commas in dictionaries and arrays are treated as an error.
-    /// Defaults to `false`.
-    public var strict: Bool = false
+    /// Options to apply to the parser.
+    /// See `JSONParserOptions` for details.
+    var options: JSONParserOptions
     
-    /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
-    /// The default value of `false` makes the parser emit an error if there's any non-whitespace
-    /// characters after the first JSON value.
-    ///
-    /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
-    /// events for the second JSON array after the first one, but if `streaming` is `false` it will
-    /// emit an error upon encountering the second `[`.
-    ///
-    /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
-    ///   parser will return `nil` instead of emitting an `.unexpectedEOF` error.
-    public var streaming: Bool = false
+    @available(*, deprecated, renamed: "options.strict")
+    public var strict: Bool {
+        get { return options.strict }
+        set { options.strict = newValue }
+    }
+    
+    @available(*, deprecated, renamed: "options.streaming")
+    public var streaming: Bool {
+        get { return options.streaming }
+        set { options.streaming = newValue }
+    }
     
     public func makeIterator() -> JSONParserIterator<Seq.Iterator> {
-        var iter = JSONParserIterator(base.makeIterator())
-        iter.strict = strict
-        iter.streaming = streaming
-        return iter
+        return JSONParserIterator(base.makeIterator(), options: options)
     }
     
     private let base: Seq
 }
 
-/// The iterator for `JSONParser`.
-public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator where Iter.Element == UnicodeScalar {
-    public init(_ iter: Iter) {
-        base = PeekIterator(iter)
-    }
-    
-    /// If `true`, trailing commas in dictionaries and arrays are treated as an error.
-    /// Defaults to `false`.
+
+
+/// Options that can be used to configure a `JSONParser`.
+public struct JSONParserOptions {
+    /// If `true`, the parser strictly conforms to RFC 7159.
+    /// If `false`, the parser accepts the following extensions:
+    /// - Trailing commas.
+    /// - Less restrictive about numbers, such as `-01` or `-.123`.
+    ///
+    /// The default value is `false`.
     public var strict: Bool = false
     
     /// If `true`, the parser will parse a stream of json values with optional whitespace delimiters.
-    /// The default value of `false` makes the parser emit an error if there's any non-whitespace
+    /// The default value of `false` makes the parser emit an error if there are any non-whitespace
     /// characters after the first JSON value.
     ///
     /// For example, with the input `"[1] [2,3]"`, if `streaming` is `true` the parser will emit
@@ -70,7 +70,60 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
     ///
     /// - Note: If `streaming` is `true` and the input is empty (or contains only whitespace), the
     ///   parser will return `nil` instead of emitting an `.unexpectedEOF` error.
+    ///
+    /// The default value is `false`.
     public var streaming: Bool = false
+    
+    /// Returns a new `JSONParserOptions` with default values.
+    public init() {}
+    
+    /// Returns a new `JSONParserOptions`.
+    /// - Parameter strict: Whether the parser should be strict. Defaults to `false`.
+    /// - Parameter streaming: Whether the parser should operate in streaming mode. Defaults to `false`.
+    public init(strict: Bool = false, streaming: Bool = false) {
+        self.strict = strict
+        self.streaming = streaming
+    }
+}
+
+extension JSONParserOptions: ExpressibleByArrayLiteral {
+    public enum Element {
+        case strict
+        case streaming
+    }
+    
+    public init(arrayLiteral elements: Element...) {
+        for elt in elements {
+            switch elt {
+            case .strict: strict = true
+            case .streaming: streaming = true
+            }
+        }
+    }
+}
+
+/// The iterator for `JSONParser`.
+public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator where Iter.Element == UnicodeScalar {
+    public init(_ iter: Iter, options: JSONParserOptions = []) {
+        base = PeekIterator(iter)
+        self.options = options
+    }
+    
+    /// Options to apply to the parser.
+    /// See `JSONParserOptions` for details.
+    public var options: JSONParserOptions
+    
+    @available(*, deprecated, renamed: "options.strict")
+    public var strict: Bool {
+        get { return options.strict }
+        set { options.strict = newValue }
+    }
+    
+    @available(*, deprecated, renamed: "options.strict")
+    public var streaming: Bool {
+        get { return options.streaming }
+        set { options.streaming = newValue }
+    }
     
     public mutating func next() -> JSONEvent? {
         do {
@@ -106,7 +159,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     }
                 case .initial:
                     guard let c = skipWhitespace() else {
-                        if streaming {
+                        if options.streaming {
                             state = .finished
                             return nil
                         } else {
@@ -125,7 +178,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     switch c {
                     case "]":
-                        if !first && strict {
+                        if !first && options.strict {
                             throw error(.trailingComma)
                         }
                         try popStack()
@@ -146,7 +199,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     guard let c = skipWhitespace() else { throw error(.unexpectedEOF) }
                     switch c {
                     case "}":
-                        if !first && strict {
+                        if !first && options.strict {
                             throw error(.trailingComma)
                         }
                         try popStack()
@@ -180,7 +233,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         return evt
                     }
                 case .parseEnd:
-                    if streaming {
+                    if options.streaming {
                         state = .initial
                     } else if skipWhitespace() != nil {
                         throw error(.trailingCharacters)
@@ -571,7 +624,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     public static let nonStringKey: Code = .nonStringKey
     /// A comma or object end was encountered where a value was expected.
     public static let missingValue: Code = .missingValue
-    /// A trailing comma was found in an array or object. Only emitted when `strict` mode is enabled.
+    /// A trailing comma was found in an array or object. Only emitted when the parser is in strict mode.
     public static let trailingComma: Code = .trailingComma
     /// Trailing (non-whitespace) characters found after the close
     /// of the root value.
@@ -618,7 +671,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         case nonStringKey
         /// A comma or object end was encountered where a value was expected.
         case missingValue
-        /// A trailing comma was found in an array or object. Only emitted when `strict` mode is enabled.
+        /// A trailing comma was found in an array or object. Only emitted when the parser is in strict mode.
         case trailingComma
         /// Trailing (non-whitespace) characters found after the close
         /// of the root value.

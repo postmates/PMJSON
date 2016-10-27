@@ -15,23 +15,32 @@
 extension JSON {
     /// Decodes a string as JSON.
     /// - Parameter string: A string to parse as JSON.
-    /// - Parameter strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
     /// - Returns: A `JSON` value.
     /// - Throws: `JSONParserError`
-    public static func decode(_ string: String, strict: Bool = false) throws -> JSON {
-        return try decode(string.unicodeScalars, strict: strict)
+    public static func decode(_ string: String, options: JSONOptions = []) throws -> JSON {
+        return try decode(string.unicodeScalars, options: options)
+    }
+    
+    @available(*, deprecated, message: "Use JSON.decode(_:options:) instead")
+    public static func decode(_ string: String, strict: Bool) throws -> JSON {
+        return try decode(string, options: JSONOptions(strict: strict))
     }
     
     /// Decodes a sequence of `UnicodeScalar`s as JSON.
     /// - Parameter scalars: A sequence of `UnicodeScalar`s to parse as JSON.
-    /// - Parameters strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
     /// - Returns: A `JSON` value.
     /// - Throws: `JSONParserError`
-    public static func decode<Seq: Sequence>(_ scalars: Seq, strict: Bool = false) throws -> JSON where Seq.Iterator.Element == UnicodeScalar {
-        var parser = JSONParser(scalars)
-        parser.strict = strict
-        var decoder = JSONDecoder(parser)
+    public static func decode<Seq: Sequence>(_ scalars: Seq, options: JSONOptions = []) throws -> JSON where Seq.Iterator.Element == UnicodeScalar {
+        let parser = JSONParser(scalars, options: options.parserOptions)
+        var decoder = JSONDecoder(parser, options: options.decoderOptions)
         return try decoder.decode()
+    }
+    
+    @available(*, deprecated, message: "Use JSON.decode(_:options:) instead")
+    public static func decode<Seq: Sequence>(_ scalars: Seq, strict: Bool) throws -> JSON where Seq.Iterator.Element == UnicodeScalar {
+        return try decode(scalars, options: JSONOptions(strict: strict))
     }
     
     /// Lazily decodes a string as a JSON stream.
@@ -39,10 +48,15 @@ extension JSON {
     /// A JSON stream is a series of top-level JSON values. See `JSONStreamDecoder` for details.
     ///
     /// - Parameter string: A string to parse as a JSON stream.
-    /// - Parameter strict: IF `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
     /// - Returns: A `JSONStreamDecoder`.
-    public static func decodeStream(_ string: String, strict: Bool = false) -> JSONStreamDecoder<JSONParser<String.UnicodeScalarView>> {
-        return decodeStream(string.unicodeScalars, strict: strict)
+    public static func decodeStream(_ string: String, options: JSONOptions = []) -> JSONStreamDecoder<JSONParser<String.UnicodeScalarView>> {
+        return decodeStream(string.unicodeScalars, options: options)
+    }
+    
+    @available(*, deprecated, message: "Use JSON.decodeStream(_:options:) instead")
+    public static func decodeStream(_ string: String, strict: Bool) -> JSONStreamDecoder<JSONParser<String.UnicodeScalarView>> {
+        return decodeStream(string, options: JSONOptions(strict: strict))
     }
     
     /// Lazily decodes a sequence of `UnicodeScalar`s as a JSON stream.
@@ -50,13 +64,80 @@ extension JSON {
     /// A JSON stream is a series of top-level JSON values. See `JSONStreamDecoder` for details.
     ///
     /// - Parameter scalars: A sequence of `UnicodeScalar`s to parse as a JSON stream.
-    /// - Parameter strict: If `true`, trailing commas in arrays/objects are treated as an error. Defaults to `false`.
+    /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
     /// - Returns: A `JSONStreamDecoder`.
-    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, strict: Bool = false) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
-        var parser = JSONParser(scalars)
-        parser.strict = strict
-        parser.streaming = true
+    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, options: JSONOptions = []) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
+        var parserOptions = options.parserOptions
+        parserOptions.streaming = true
+        let parser = JSONParser(scalars, options: parserOptions)
         return JSONStreamDecoder(parser)
+    }
+    
+    @available(*, deprecated, message: "Use JSON.decodeStream(_:options:) instead")
+    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, strict: Bool) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
+        return decodeStream(scalars, options: JSONOptions(strict: strict))
+    }
+}
+
+/// Options that can be used with `JSON.decode(…)`.
+public struct JSONOptions {
+    /// If `true`, the parser strictly conforms to RFC 7159.
+    /// If `false`, the parser accepts the following extensions:
+    /// - Trailing commas.
+    /// - Less restrictive about numbers, such as `-01` or `-.123`.
+    ///
+    /// The default value is `false`.
+    public var strict: Bool = false
+    
+    /// A maximum depth limit to apply to nested arrays/dictionaries.
+    /// If `nil`, there is no depth limit.
+    ///
+    /// The default value is `nil`.
+    public var depthLimit: Int? = nil
+    
+    /// Returns a new `JSONOptions` with default values.
+    public init() {}
+    
+    /// Returns a new `JSONOptions`.
+    /// - Parameter strict: Whether the parser should be strict. Defaults to `false`.
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
+    public init(strict: Bool = false, depthLimit: Int? = nil) {
+        self.strict = strict
+        self.depthLimit = depthLimit
+    }
+    
+    public var decoderOptions: JSONDecoderOptions {
+        return JSONDecoderOptions(depthLimit: depthLimit)
+    }
+    
+    public var streamDecoderOptions: JSONStreamDecoderOptions {
+        return JSONStreamDecoderOptions(depthLimit: depthLimit)
+    }
+    
+    public var parserOptions: JSONParserOptions {
+        return JSONParserOptions(strict: strict)
+    }
+}
+
+extension JSONOptions: ExpressibleByArrayLiteral {
+    public enum Element {
+        /// Makes the parser strictly conform to RFC 7159.
+        /// - SeeAlso: `JSONOptions.strict`.
+        case strict
+        /// Sets a maximum depth limit for nested arrays/dictionaries.
+        /// If specified multiple times, the lowest limit is used.
+        /// - SeeAlso: `JSONOptions.depthLimit`.
+        case depthLimit(Int)
+    }
+    
+    public init(arrayLiteral elements: Element...) {
+        for elt in elements {
+            switch elt {
+            case .strict: strict = true
+            case .depthLimit(let limit):
+                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+            }
+        }
     }
 }
 
@@ -67,20 +148,20 @@ extension JSON {
 ///
 /// - SeeAlso: `JSONParser`.
 public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, Seq.Iterator.Element == JSONEvent {
-    public init(_ parser: Seq) {
+    public init(_ parser: Seq, options: JSONDecoderOptions = []) {
         iter = parser.makeIterator()
+        self.options = options
     }
     
-    /// If `true`, the decoder will operate in streaming mode, allowing for multiple
-    /// top-level json values, with each call to `decode()` returning a successive value.
-    /// The default value of `false` means that `decode()` can only be called once, and
-    /// any JSON events past the first top-level value are considered an error.
-    ///
-    /// See `decode()` for more details on the streaming operation.
-    ///
-    /// - Important: When wrapping a `JSONParser`, the parser must separately be put into
-    ///   streaming mode, as `JSONDecoder` operates generically over a sequence of `JSONEvent`s.
-    public var streaming: Bool = false
+    /// Options to apply to the decoder.
+    /// See `JSONDecoderOptions` for details.
+    var options: JSONDecoderOptions
+    
+    @available(*, deprecated, renamed: "options.streaming")
+    public var streaming: Bool {
+        get { return options.streaming }
+        set { options.streaming = newValue }
+    }
     
     /// Decodes and returns a top-level JSON value from the event stream.
     ///
@@ -103,11 +184,11 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
     /// - Throws: `JSONParserError`, `JSONDecoderError`.
     public mutating func decode() throws -> JSON {
         bump()
-        if streaming && token == nil {
+        if options.streaming && token == nil {
             throw JSONDecoderError.streamEnded
         }
         let result = try buildValue()
-        if !streaming {
+        if !options.streaming {
             bump()
             switch token {
             case .none: break
@@ -127,7 +208,7 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
     ///
     /// - SeeAlso: `JSONStreamDecoder`.
     public mutating func decodeStream() throws -> [JSON] {
-        streaming = true
+        options.streaming = true
         var results: [JSON] = []
         repeat {
             do {
@@ -199,6 +280,62 @@ public struct JSONDecoder<Seq: Sequence> where Seq.Iterator: JSONEventIterator, 
     private var objectHighWaterMark: Int = 0
 }
 
+/// Options that can be used with `JSONDecoder`.
+public struct JSONDecoderOptions {
+    /// A maximum depth limit to apply to nested arrays/dictionaries.
+    /// If `nil`, there is no depth limit.
+    ///
+    /// The default value is `nil`.
+    public var depthLimit: Int? = nil
+    
+    /// If `true`, the decoder will operate in streaming mode, allowing for multiple
+    /// top-level json values, with each call to `decode()` returning a successive value.
+    /// The default value of `false` means that `decode()` can only be called once, and
+    /// any JSON events past the first top-level value are considered an error.
+    ///
+    /// See `JSONDecoder.decode()` for more details on the streaming operation.
+    ///
+    /// The default value is `false`.
+    ///
+    /// - Important: When wrapping a `JSONParser`, the parser must separately be put into
+    ///   streaming mode, as `JSONDecoder` operates generically over a sequence of `JSONEvent`s.
+    public var streaming: Bool = false
+    
+    /// Returns a new `JSONDecoderOptions` with default values.
+    public init() {}
+    
+    /// Returns a new `JSONDecoderOptions`.
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
+    /// - Parameter streaming: Whether the decode should operate in streaming mode. Default is `false`.
+    public init(depthLimit: Int? = nil, streaming: Bool = false) {
+        self.depthLimit = depthLimit
+        self.streaming = streaming
+    }
+}
+
+extension JSONDecoderOptions: ExpressibleByArrayLiteral {
+    public enum Element {
+        /// Sets a maximum depth limit for nested arrays/dictionaries.
+        /// If specified multiple times, the lowest limit is used.
+        /// - SeeAlso: `JSONDecoderOptions.depthLimit`.
+        case depthLimit(Int)
+        /// Puts the decoder into streaming mode.
+        /// - SeeAlso: `JSONDecoderOptions.streaming`.
+        case streaming
+    }
+    
+    public init(arrayLiteral elements: Element...) {
+        for elt in elements {
+            switch elt {
+            case .depthLimit(let limit):
+                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+            case .streaming:
+                streaming = true
+            }
+        }
+    }
+}
+
 /// Errors that may be thrown by the `JSONDecoder` during the decode stage.
 public enum JSONDecoderError: Error {
     /// Signals that a `JSONDecoder` operating in streaming mode has reached the end of the stream.
@@ -217,9 +354,15 @@ public enum JSONDecoderError: Error {
 ///
 /// - SeeAlso: `JSON.decodeStream(_:)`.
 public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where Seq.Iterator: JSONEventIterator, Seq.Iterator.Element == JSONEvent {
-    public init(_ parser: Seq) {
-        decoder = JSONDecoder(parser)
-        decoder.streaming = true
+    public init(_ parser: Seq, options: JSONStreamDecoderOptions = []) {
+        decoder = JSONDecoder(parser, options: options.decoderOptions)
+    }
+    
+    /// Options to apply to the decoder.
+    /// See `JSONStreamDecoderOptions` for details.
+    public var options: JSONStreamDecoderOptions {
+        get { return decoder.options.streamDecoderOptions }
+        set { decoder.options.update(with: newValue) }
     }
     
     /// Returns an array of all decoded values, or throws an error if one occurs.
@@ -252,6 +395,56 @@ public struct JSONStreamDecoder<Seq: Sequence>: Sequence, IteratorProtocol where
     }
     
     private var decoder: JSONDecoder<Seq>
+}
+
+/// Options that can be used with `JSONStreamDecoder`.
+public struct JSONStreamDecoderOptions {
+    /// A maximum depth limit to apply to nested arrays/dictionaries.
+    /// If `nil`, there is no depth limit.
+    ///
+    /// The default value is `nil`.
+    public var depthLimit: Int? = nil
+    
+    /// Returns a new `JSONStreamDecoderOptions` with default values.
+    public init() {}
+    
+    /// Returns a new `JSONStreamDecoderOptions`.
+    /// - Parameter depthLimit: A maximum depth limit to use. Default is `nil`.
+    public init(depthLimit: Int? = nil) {
+        self.depthLimit = depthLimit
+    }
+    
+    fileprivate var decoderOptions: JSONDecoderOptions {
+        return JSONDecoderOptions(depthLimit: depthLimit, streaming: true)
+    }
+}
+
+private extension JSONDecoderOptions {
+    var streamDecoderOptions: JSONStreamDecoderOptions {
+        return JSONStreamDecoderOptions(depthLimit: depthLimit)
+    }
+    
+    mutating func update(with options: JSONStreamDecoderOptions) {
+        depthLimit = options.depthLimit
+    }
+}
+
+extension JSONStreamDecoderOptions: ExpressibleByArrayLiteral {
+    public enum Element {
+        /// Sets a maximum depth limit for nested arrays/dictionaries.
+        /// If specified multiple times, the lowest limit is used.
+        /// - SeeAlso: `JSONStreamDecoderOptions.depthLimit`.
+        case depthLimit(Int)
+    }
+    
+    public init(arrayLiteral elements: Element...) {
+        for elt in elements {
+            switch elt {
+            case .depthLimit(let limit):
+                depthLimit = depthLimit.map({ min($0, limit) }) ?? limit
+            }
+        }
+    }
 }
 
 public enum JSONStreamValue: Equatable {

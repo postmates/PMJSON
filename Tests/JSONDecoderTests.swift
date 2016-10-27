@@ -296,8 +296,7 @@ class JSONDecoderTests: XCTestCase {
 class JSONStreamDecoderTests: XCTestCase {
     func testDecoderStreamingMode() {
         func decodeStream(_ input: String) throws -> [JSON] {
-            var parser = JSONParser(input.unicodeScalars)
-            parser.streaming = true
+            let parser = JSONParser(input.unicodeScalars, options: [.streaming])
             var decoder = JSONDecoder(parser)
             return try decoder.decodeStream()
         }
@@ -436,7 +435,7 @@ class JSONBenchmarks: XCTestCase {
             let json = try JSON.decode(bigJson)
             measure {
                 for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json, pretty: false)
+                    _ = JSON.encodeAsData(json)
                 }
             }
         } catch {
@@ -466,7 +465,7 @@ class JSONBenchmarks: XCTestCase {
             let json = try JSON.decode(bigJson)
             measure {
                 for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json, pretty: true)
+                    _ = JSON.encodeAsData(json, options: [.pretty])
                 }
             }
         } catch {

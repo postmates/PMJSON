@@ -101,15 +101,15 @@ extension JSON: Equatable {
 
 extension JSON: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
     public func write<Target : TextOutputStream>(to target: inout Target) {
-        JSON.encode(self, toStream: &target, pretty: false)
+        JSON.encode(self, to: &target)
     }
     
     public var description: String {
-        return JSON.encodeAsString(self, pretty: false)
+        return JSON.encodeAsString(self)
     }
     
     public var debugDescription: String {
-        let desc = JSON.encodeAsString(self, pretty: false)
+        let desc = JSON.encodeAsString(self)
         return "JSON(\(desc))"
     }
 }

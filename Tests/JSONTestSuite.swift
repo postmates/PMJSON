@@ -114,7 +114,7 @@ final class JSONTestSuite: XCTestCase {
                 struct DecodeError: Error {}
                 throw DecodeError()
             }
-            _ = try JSON.decode(input, strict: true)
+            _ = try JSON.decode(input, options: [.strict])
             switch shouldParse {
             case .yes:
                 break

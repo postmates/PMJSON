@@ -188,15 +188,15 @@ extension JSONObject: ExpressibleByDictionaryLiteral {
 
 extension JSONObject: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
     public func write<Target : TextOutputStream>(to target: inout Target) {
-        JSON.encode(JSON(self), toStream: &target, pretty: false)
+        JSON.encode(JSON(self), to: &target)
     }
     
     public var description: String {
-        return JSON.encodeAsString(JSON(self), pretty: false)
+        return JSON.encodeAsString(JSON(self))
     }
     
     public var debugDescription: String {
-        let desc = JSON.encodeAsString(JSON(self), pretty: false)
+        let desc = JSON.encodeAsString(JSON(self))
         return "JSONObject(\(desc))"
     }
 }
