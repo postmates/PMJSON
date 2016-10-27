@@ -36,7 +36,8 @@ final class JSONTestSuite: XCTestCase {
         // JSON.decode(data) will handle invalid UTF-8, but we're parsing strictly as a String first
         "i_string_UTF-8_invalid_sequence": .no,
         "i_structure_500_nested_arrays": .yes,
-        "i_structure_UTF-8_BOM_empty_object": .yes]
+        "i_structure_UTF-8_BOM_empty_object": .yes,
+        "i_string_UTF-16LE_with_BOM": .yes]
     
     private static var testCases: [String: (url: URL, shouldParse: ShouldParse)] = [:]
     
@@ -52,19 +53,22 @@ final class JSONTestSuite: XCTestCase {
                     print("*** Skipping test \(url.lastPathComponent) due to invalid name")
                     continue
                 }
-                var selName = "test_\(identifier)"
-                var attempt = 1
-                while testCases[selName] != nil {
-                    attempt += 1
-                    selName = "test_\(identifier)_\(attempt)"
-                }
                 let shouldParse: ShouldParse
                 if name.hasPrefix("y_") {
                     shouldParse = .yes
                 } else if name.hasPrefix("i_") {
                     shouldParse = indeterminateParsing[name] ?? .maybe
-                } else {
+                } else if name.hasPrefix("n_") {
                     shouldParse = .no
+                } else {
+                    print("*** Skipping test \(url.lastPathComponent) due to unknown parse expectation")
+                    continue
+                }
+                var selName = "test_\(identifier)"
+                var attempt = 1
+                while testCases[selName] != nil {
+                    attempt += 1
+                    selName = "test_\(identifier)_\(attempt)"
                 }
                 testCases[selName] = (url, shouldParse)
                 class_addMethod(self, Selector(selName), imp, "c@:^@")
