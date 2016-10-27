@@ -18,12 +18,17 @@
     
     extension JSON {
         /// Decodes a `Data` as JSON.
-        /// - Note: Invalid UTF8 sequences in the data are replaced with U+FFFD.
+        /// - Note: Invalid unicode sequences in the data are replaced with U+FFFD.
+        /// - Parameter data: The data to decode. Must be either UTF-8, or UTF-16 with a BOM.
         /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
         /// - Returns: A `JSON` value.
         /// - Throws: `JSONParserError` if the data does not contain valid JSON.
         public static func decode(_ data: Data, options: JSONOptions = []) throws -> JSON {
-            return try JSON.decode(UTF8Decoder(data: data), options: options)
+            if let endian = UTF16Decoder.checkBOM(for: data) {
+                return try JSON.decode(UTF16Decoder(data: data, endian: endian))
+            } else {
+                return try JSON.decode(UTF8Decoder(data: data), options: options)
+            }
         }
         
         @available(*, deprecated, message: "Use JSON.decode(_:options:) instead")
@@ -224,6 +229,10 @@
                 self.data = data
                 let ptr = UnsafeBufferPointer(start: data.bytes.assumingMemoryBound(to: UInt8.self), count: data.length)
                 iter = ptr.makeIterator()
+                if ptr.count >= 3 && ptr[0] == 0xEF && ptr[1] == 0xBB && ptr[2] == 0xBF {
+                    // UTF-8 BOM detected. Skip it.
+                    _ = iter.next(); _ = iter.next(); _ = iter.next()
+                }
                 utf8 = UTF8()
             }
             
@@ -238,6 +247,84 @@
             private let data: NSData
             private var iter: UnsafeBufferPointerIterator<UInt8>
             private var utf8: UTF8
+        }
+    }
+    
+    private struct UTF16Decoder: Sequence {
+        /// Checks if the data has a UTF-16 BOM, and if so, returns the endianness.
+        static func checkBOM(for data: Data) -> Endian? {
+            guard data.count >= 2 else { return nil }
+            switch (data[0], data[1]) {
+            case (0xFE, 0xFF): return .big
+            case (0xFF, 0xFE): return .little
+            default: return nil
+            }
+        }
+        
+        enum Endian {
+            case big
+            case little
+        }
+        
+        init(data: Data, endian: Endian) {
+            self.data = data as NSData
+            self.endian = endian
+        }
+        
+        func makeIterator() -> Iterator {
+            return Iterator(data: data, endian: endian)
+        }
+        
+        private let data: NSData
+        private let endian: Endian
+        
+        fileprivate struct Iterator: IteratorProtocol {
+            init(data: NSData, endian: Endian) {
+                iter = DataIterator(data: data, endian: endian)
+                utf16 = UTF16()
+            }
+            
+            mutating func next() -> UnicodeScalar? {
+                switch utf16.decode(&iter) {
+                case .scalarValue(let scalar): return scalar
+                case .error: return "\u{FFFD}"
+                case .emptyInput: return nil
+                }
+            }
+            
+            private var iter: DataIterator
+            private var utf16: UTF16
+        }
+        
+        private struct DataIterator: IteratorProtocol {
+            init(data: NSData, endian: Endian) {
+                // NB: We use NSData instead of using Data's iterator because it's significantly faster as of Xcode 8b3
+                self.data = data
+                self.endian = endian
+                let ptr = UnsafeBufferPointer(start: data.bytes.assumingMemoryBound(to: UInt16.self), count: data.length / 2)
+                iter = ptr.makeIterator()
+                if !ptr.isEmpty && (ptr[0] == 0xFEFF || ptr[0] == 0xFFFE) {
+                    // Skip the BOM
+                    _ = iter.next()
+                }
+                trailingFFFD = data.length % 2 == 1
+            }
+            
+            mutating func next() -> UInt16? {
+                switch (iter.next(), endian) {
+                case (let x?, .big): return UInt16(bigEndian: x)
+                case (let x?, .little): return UInt16(littleEndian: x)
+                case (nil, _) where trailingFFFD:
+                    trailingFFFD = false
+                    return 0xFFFD
+                default: return nil
+                }
+            }
+            
+            private let data: NSData
+            private let endian: Endian
+            private var iter: UnsafeBufferPointerIterator<UInt16>
+            private var trailingFFFD: Bool
         }
     }
     

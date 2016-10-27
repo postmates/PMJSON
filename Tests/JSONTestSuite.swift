@@ -102,15 +102,29 @@ final class JSONTestSuite: XCTestCase {
         do {
             // Convert it to a String first, as there are tests that expect invalid UTF-8 to error out, or valid UTF-16 to work.
             // JSON.decode(data) will be liberal in how it accepts UTF-8
-            let encoding: String.Encoding
-            if data.count >= 2 && (data[0] == 0 || data[1] == 0) {
-                encoding = .utf16
+            let encoding: String.Encoding, skipBOM: Bool
+            if data.count >= 2 {
+                switch (data[0], data[1]) {
+                case (0xFE, 0xFF):
+                    encoding = .utf16BigEndian
+                    skipBOM = true
+                case (0xFF, 0xFE):
+                    encoding = .utf16LittleEndian
+                    skipBOM = true
+                default:
+                    encoding = .utf8
+                    skipBOM = false
+                }
             } else {
                 encoding = .utf8
+                skipBOM = false
             }
-            guard let input = String(data: data, encoding: encoding) else {
+            guard var input = String(data: data, encoding: encoding) else {
                 struct DecodeError: Error {}
                 throw DecodeError()
+            }
+            if skipBOM {
+                input = String(input.unicodeScalars.dropFirst())
             }
             _ = try JSON.decode(input, options: [.strict, .depthLimit(10_000)])
             switch shouldParse {
