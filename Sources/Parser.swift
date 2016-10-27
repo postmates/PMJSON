@@ -337,6 +337,20 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
             }
             defer { self.tempBuffer = tempBuffer }
             tempBuffer.append(Int8(truncatingBitPattern: c.value))
+            if options.strict {
+                let digit: UnicodeScalar
+                if c == "-" {
+                    guard let c2 = bump(), case "0"..."9" = c2 else { throw error(.invalidNumber) }
+                    digit = c2
+                    tempBuffer.append(Int8(truncatingBitPattern: digit.value))
+                } else {
+                    digit = c
+                }
+                if digit == "0", case ("0"..."9")? = base.peek() {
+                    // In strict mode, you can't have numbers like 01
+                    throw error(.invalidNumber)
+                }
+            }
             outerLoop: while let c = base.peek() {
                 switch c {
                 case "0"..."9":
