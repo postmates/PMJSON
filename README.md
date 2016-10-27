@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v1.1.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v1.2.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -209,7 +209,7 @@ let package = Package(
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
-github "postmates/PMJSON" ~> 1.1
+github "postmates/PMJSON" ~> 1.2
 ```
 
 This release supports Swift 3. If you want Swift 2.3 support, you can use
@@ -223,7 +223,7 @@ github "postmates/PMJSON" ~> 0.9.4
 To install using [CocoaPods][], add the following to your Podfile:
 
 ```
-pod 'PMJSON', '~> 1.1'
+pod 'PMJSON', '~> 1.2'
 ```
 
 This release supports Swift 3. If you want Swift 2.3 support, you can use
@@ -248,7 +248,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### Development
+#### v1.2.0 (2016-10-27)
 
 * Change how options are provided to the encoder/decoder/parser. All options are now provided in the form of a struct that uses array literal syntax (similar to `OptionSet`s). The old methods that take strict/pretty flags are now marked as deprecated.
 * Add a new depth limit option to the decoder, with a default of 10,000.
