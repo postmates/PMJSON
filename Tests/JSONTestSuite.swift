@@ -39,6 +39,11 @@ final class JSONTestSuite: XCTestCase {
         "i_structure_UTF-8_BOM_empty_object": .yes,
         "i_string_UTF-16LE_with_BOM": .yes]
     
+    private static let skipTests: Set<String> = [
+        // Don't try the UTF-16 no-BOM cases, we shouldn't even try to detect this case
+        "y_string_utf16BE_no_BOM",
+        "y_string_utf16LE_no_BOM"]
+    
     private static var testCases: [String: (url: URL, shouldParse: ShouldParse)] = [:]
     
     override class func defaultTestSuite() -> XCTestSuite {
@@ -49,6 +54,7 @@ final class JSONTestSuite: XCTestCase {
             let imp = unsafeBitCast(executeIMP, to: IMP.self)
             for case let url as URL in parsingEnum where url.pathExtension == "json" {
                 let name = url.deletingPathExtension().lastPathComponent
+                guard !skipTests.contains(name) else { continue }
                 guard let identifier = name.sanitized else {
                     print("*** Skipping test \(url.lastPathComponent) due to invalid name")
                     continue
