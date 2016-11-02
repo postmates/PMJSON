@@ -44,11 +44,18 @@ class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("[true, false]"), [true, false])
         assertMatchesJSON(try JSON.decode("[1, 2, 3]"), [1, 2, 3])
         assertMatchesJSON(try JSON.decode("{\"one\": 1, \"two\": 2, \"three\": 3}"), ["one": 1, "two": 2, "three": 3])
+        assertMatchesJSON(try JSON.decode("[1.23, 4e7]"), [1.23, 4e7])
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimalNumbers]), [JSON(1.23 as NSDecimalNumber), JSON(4e7 as NSDecimalNumber)])
+        #endif
     }
     
     func testDouble() {
         XCTAssertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
         XCTAssertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimalNumbers]), JSON(NSDecimalNumber(string: "-5.4272823085455e+05")))
+        #endif
     }
     
     func testStringEscapes() {
@@ -60,16 +67,42 @@ class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
     }
     
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    func testDecimalParsing() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        // Decode the data and make sure it contains no .double values
+        let json = try JSON.decode(data, options: [.useDecimalNumbers])
+        let value = json.walk { value in
+            return value.isDouble ? value : .none
+        }
+        XCTAssertNil(value)
+    }
+    #endif
+    
     func testReencode() throws {
         // sample.json contains a lot of edge cases, so we'll make sure we can re-encode it and re-decode it and get the same thing
         let data = try readFixture("sample", withExtension: "json")
-        let json = try JSON.decode(data)
-        let encoded = JSON.encodeAsData(json)
-        let json2 = try JSON.decode(encoded)
-        if !json.approximatelyEqual(json2) { // encoding/decoding again doesn't necessarily match the exact numeric precision of the original
-            // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
-            XCTFail("Re-encoded JSON doesn't match original")
+        do {
+            let json = try JSON.decode(data)
+            let encoded = JSON.encodeAsString(json)
+            let json2 = try JSON.decode(encoded)
+            if !json.approximatelyEqual(json2) { // encoding/decoding again doesn't necessarily match the exact numeric precision of the original
+                // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+                XCTFail("Re-encoded JSON doesn't match original")
+            }
         }
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            do {
+                // test again with decimals
+                let json = try JSON.decode(data, options: [.useDecimalNumbers])
+                let encoded = JSON.encodeAsString(json)
+                let json2 = try JSON.decode(encoded, options: [.useDecimalNumbers])
+                if json != json2 { // This preserves all precision, but may still convert between int64 and decimal so we can't use matchesJSON
+                    // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+                    XCTFail("Re-encoded JSON doesn't match original")
+                }
+            }
+        #endif
     }
     
     func testConversions() {
@@ -489,6 +522,18 @@ class JSONBenchmarks: XCTestCase {
         }
     }
     
+    func testDecodeDecimalPerformance() {
+        measure { [bigJson] in
+            for _ in 0..<10 {
+                do {
+                    _ = try JSON.decode(bigJson, options: [.useDecimalNumbers])
+                } catch {
+                    XCTFail("error parsing json: \(error)")
+                }
+            }
+        }
+    }
+    
     func testDecodePerformanceCocoa() {
         measure { [bigJson] in
             for _ in 0..<10 {
@@ -574,6 +619,19 @@ class JSONBenchmarks: XCTestCase {
         }
     }
     
+    func testDecodeSampleJSONDecimalPerformance() throws {
+        let data = try readFixture("sample", withExtension: "json")
+        measure {
+            for _ in 0..<10 {
+                do {
+                    _ = try JSON.decode(data, options: [.useDecimalNumbers])
+                } catch {
+                    return XCTFail("error parsing json: \(error)")
+                }
+            }
+        }
+    }
+    
     func testDecodeSampleJSONCocoaPerformance() throws {
         let data = try readFixture("sample", withExtension: "json")
         measure {
@@ -599,7 +657,7 @@ func assertMatchesJSON(_ a: @autoclosure () throws -> JSON, _ b: @autoclosure ()
     }
 }
 
-/// Similar to JSON's equality test but does not convert between integral and double values.
+/// Similar to JSON's equality test but does not convert between numeric values.
 private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     switch (a, b) {
     case (.array(let a), .array(let b)):
@@ -617,6 +675,8 @@ private func matchesJSON(_ a: JSON, _ b: JSON) -> Bool {
     case (.int64(let a), .int64(let b)):
         return a == b
     case (.double(let a), .double(let b)):
+        return a == b
+    case (.decimal(let a), .decimal(let b)):
         return a == b
     case (.null, .null):
         return true
@@ -643,5 +703,31 @@ extension JSON {
         default:
             return self == other
         }
+    }
+    
+    /// Invokes the given block on every JSON value within `self`.
+    /// For objects and arrays, the block is run with the object/array first, and then
+    /// with its contents afterward.
+    func walk<T>(using f: (JSON) throws -> T?) rethrows -> T? {
+        if let result = try f(self) {
+            return result
+        }
+        switch self {
+        case .object(let obj):
+            for value in obj.values {
+                if let result = try value.walk(using: f) {
+                    return result
+                }
+            }
+        case .array(let ary):
+            for elt in ary {
+                if let result = try elt.walk(using: f) {
+                    return result
+                }
+            }
+        default:
+            break
+        }
+        return nil
     }
 }
