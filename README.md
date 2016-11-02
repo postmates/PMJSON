@@ -11,7 +11,7 @@
 
 PMJSON provides a pure-Swift strongly-typed JSON encoder/decoder as well as a set of convenience methods for converting to/from Foundation objects and for decoding JSON structures.
 
-The entire JSON encoder/decoder can be used without Foundation, by removing the files `ObjectiveC.swift` and `DecimalNumber.swift` from the project. The only dependency the rest of the project has is on `Darwin`, for `strtod()` and `strtoll()`. The file `ObjectiveC.swift` adds convenience methods for translating between `JSON` values and Foundation objects as well as decoding from an `NSData`, and `DecimalNumber.swift` adds convenience accessors for converting values into `NSDecimalNumber`.
+The entire JSON encoder/decoder can be used without Foundation, by removing the files `ObjectiveC.swift` and `DecimalNumber.swift` from the project. The only dependency the rest of the project has is on `Darwin`, for `strtod()` and `strtoll()`. The file `ObjectiveC.swift` adds convenience methods for translating between `JSON` values and Foundation objects as well as decoding from a `Data`, and `DecimalNumber.swift` adds convenience accessors for converting values into `NSDecimalNumber`.
 
 ## Usage
 
@@ -73,7 +73,7 @@ struct Config {
 
 ### Parsing
 
-The JSON decoder is split into separate parser and decoder stages. The parser consums any sequence of unicode scalars, and produces a sequence of JSON "events" (similar to a SAX XML parser). The decoder accepts a sequence of JSON events and produces a `JSON` value. This architecture is designed such that you can use just the parser alone in order to decode directly to your own data structures and bypass the `JSON` representation entirely if desired. However, most clients are expected to use both components, and this is exposed via a simple method `JSON.decode(_:strict:)`.
+The JSON decoder is split into separate parser and decoder stages. The parser consums any sequence of unicode scalars, and produces a sequence of JSON "events" (similar to a SAX XML parser). The decoder accepts a sequence of JSON events and produces a `JSON` value. This architecture is designed such that you can use just the parser alone in order to decode directly to your own data structures and bypass the `JSON` representation entirely if desired. However, most clients are expected to use both components, and this is exposed via a simple method `JSON.decode(_:options:)`.
 
 Parsing a JSON string into a `JSON` value is as simple as:
 
@@ -83,7 +83,7 @@ let json = try JSON.decode(jsonString)
 
 Any errors in the JSON parser are represented as `JSONParserError` values and are thrown from the `decode()` method. The error contains the precise line and column of the error, and a code that describes the problem.
 
-A convenience method is also provided for decoding from an `NSData` containing data encoded as UTF-8, UTF-16, or UTF-32:
+A convenience method is also provided for decoding from a `Data` containing data encoded as UTF-8, UTF-16, or UTF-32:
 
 ```swift
 let json = try JSON.decode(data)
@@ -95,13 +95,13 @@ Encoding a `JSON` value is also simple:
 let jsonString = JSON.encodeAsString(json)
 ```
 
-You can also encode directly to any `OutputStreamType`:
+You can also encode directly to any `TextOutputStream`:
 
 ```swift
 JSON.encode(json, toStream: &output)
 ```
 
-And, again, a convenience method is provided for working with `NSData`:
+And, again, a convenience method is provided for working with `Data`:
 
 ```swift
 let data = JSON.encodeAsData(json)
@@ -179,7 +179,7 @@ There are also helpers for converting to/from Foundation objects. `JSON` offers 
 
 ### Performance
 
-The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to an `NSData` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does.
+The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to a `Data` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does.
 
 ## Requirements
 
@@ -247,6 +247,10 @@ Licensed under either of
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 ## Version History
+
+#### Development
+
+* Add full support for decimal numbers (on supported platforms). This takes the form of a new `JSON` variant `.decimal`, any relevant accessors, and full parsing/decoding support with the new option `.useDecimalNumbers`. With this option, any number that would have been decoded as a `Double` will be decoded as an `NSDecimalNumber` instead.
 
 #### v1.2.1 (2016-10-27)
 
