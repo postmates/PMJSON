@@ -12,6 +12,10 @@
 //  except according to those terms.
 //
 
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    import class Foundation.NSDecimalNumber
+#endif
+
 extension JSON {
     /// Encodes a `JSON` to a `String`.
     /// - Parameter json: The `JSON` to encode.
@@ -52,6 +56,7 @@ extension JSON {
         case .bool(let b): encodeBool(b, toStream: &stream)
         case .int64(let i): encodeInt64(i, toStream: &stream)
         case .double(let d): encodeDouble(d, toStream: &stream)
+        case .decimal(let d): encodeDecimal(d, toStream: &stream)
         case .string(let s): encodeString(s, toStream: &stream)
         case .object(let obj): encodeObject(obj, toStream: &stream, indent: indent)
         case .array(let ary): encodeArray(ary, toStream: &stream, indent: indent)
@@ -73,6 +78,17 @@ extension JSON {
     private static func encodeDouble<Target: TextOutputStream>(_ value: Double, toStream stream: inout Target) {
         stream.write(String(value))
     }
+    
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    private static func encodeDecimal<Target: TextOutputStream>(_ value: NSDecimalNumber, toStream stream: inout Target) {
+        stream.write(value.stringValue)
+    }
+    #else
+    private static func encodeDecimal<Target: TextOutputStream>(_ value: DecimalNumberPlaceholder, toStream stream: inout Target) {
+        // This is a dummy value. Lets just encode it as null for the time being.
+        stream.write("null")
+    }
+    #endif
     
     private static func encodeString<Target: TextOutputStream>(_ value: String, toStream stream: inout Target) {
         stream.write("\"")

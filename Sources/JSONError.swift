@@ -12,6 +12,11 @@
 //  except according to those terms.
 //
 
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    import class Foundation.NSDecimalNumber
+    import class Foundation.NSNumber
+#endif
+
 // MARK: JSONError
 
 /// Errors thrown by the JSON `get*` or `to*` accessor families.
@@ -33,12 +38,29 @@ public enum JSONError: Error, CustomStringConvertible {
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case outOfRangeDouble(path: String?, value: Double, expected: Any.Type)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    /// Thrown when a decimal value is coerced to a smaller type (e.g. `NSDecimalNumber` to `Int`)
+    /// and the value doesn't fit in the smaller type.
+    /// - Parameter path: The path of the value that cuased the error.
+    /// - Parameter value: The actual value at that path.
+    /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
+    case outOfRangeDecimal(path: String?, value: NSDecimalNumber, expected: Any.Type)
+    #else
+    /// Thrown when a decimal value is coerced to a smaller type (e.g. `NSDecimalNumber` to `Int`)
+    /// and the value doesn't fit in the smaller type.
+    /// - Note: This error is never actually thrown for platforms that do not support `NSDecimalNumber`.
+    /// - Parameter path: The path of the value that cuased the error.
+    /// - Parameter value: The actual value at that path.
+    /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
+    case outOfRangeDecimal(path: String?, value: DecimalNumberPlaceholder, expected: Any.Type)
+    #endif
     
     public var description: String {
         switch self {
         case let .missingOrInvalidType(path, expected, actual): return "\(path.map({"\($0): "}) ?? "")expected \(expected), found \(actual?.description ?? "missing value")"
         case let .outOfRangeInt64(path, value, expected): return "\(path.map({"\($0): "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         case let .outOfRangeDouble(path, value, expected): return "\(path.map({"\($0): "}) ?? "")value \(value) cannot be coerced to type \(expected)"
+        case let .outOfRangeDecimal(path, value, expected): return "\(path.map({"\($0): "}) ?? "")value \(value) cannot be coerced to type \(expected)"
         }
     }
     
@@ -58,6 +80,8 @@ public enum JSONError: Error, CustomStringConvertible {
             return .outOfRangeInt64(path: prefixPath(path, with: prefix), value: value, expected: expected)
         case let .outOfRangeDouble(path, value, expected):
             return .outOfRangeDouble(path: prefixPath(path, with: prefix), value: value, expected: expected)
+        case let .outOfRangeDecimal(path, value, expected):
+            return .outOfRangeDecimal(path: prefixPath(path, with: prefix), value: value, expected: expected)
         }
     }
     
@@ -80,6 +104,9 @@ public enum JSONError: Error, CustomStringConvertible {
         case number = "number"
         case object = "object"
         case array = "array"
+        #if !os(iOS) && !os(OSX) && !os(watchOS) && !os(tvOS)
+        case decimalPlaceholder = "decimalPlaceholder"
+        #endif
         
         internal static func forValue(_ value: JSON) -> JSONType {
             switch value {
@@ -87,6 +114,12 @@ public enum JSONError: Error, CustomStringConvertible {
             case .bool: return .bool
             case .string: return .string
             case .int64, .double: return .number
+            case .decimal:
+                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                    return .number
+                #else
+                    return .decimalPlaceholder
+                #endif
             case .object: return .object
             case .array: return .array
             }
@@ -249,8 +282,15 @@ public extension JSON {
         case .bool(let b): return String(b)
         case .int64(let i): return String(i)
         case .double(let d): return String(d)
-        default: throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        case .decimal(let d):
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                return d.stringValue
+            #else
+                break
+            #endif
+        default: break
         }
+        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
     }
     
     /// Returns the receiver coerced to a 64-bit integral value.
@@ -285,6 +325,11 @@ public extension JSON {
         case .double(let d):
             guard let val = convertDoubleToInt64(d) else {
                 throw JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self)
+            }
+            return val
+        case .decimal(let d):
+            guard let val = convertDecimalToInt64(d) else {
+                throw JSONError.outOfRangeDecimal(path: nil, value: d, expected: Int64.self)
             }
             return val
         case .string(let s):
@@ -355,10 +400,17 @@ public extension JSON {
         switch self {
         case .int64(let i): return Double(i)
         case .double(let d): return d
+        case .decimal(let d):
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                return d.doubleValue
+            #else
+                break
+            #endif
         case .string(let s): return Double(s)
         case .null: return nil
-        default: throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        default: break
         }
+        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
     }
 }
 

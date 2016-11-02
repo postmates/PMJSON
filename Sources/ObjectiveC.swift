@@ -81,6 +81,8 @@
             switch object {
             case is NSNull:
                 self = .null
+            case let d as NSDecimalNumber:
+                self = .decimal(d)
             case let n as NSNumber:
                 let typeChar: UnicodeScalar
                 let objCType = n.objCType
@@ -130,6 +132,7 @@
             case .string(let s): return s
             case .int64(let i): return NSNumber(value: i)
             case .double(let d): return d
+            case .decimal(let d): return d
             case .object(let obj): return obj.ns
             case .array(let ary):
                 return ary.map({$0.ns})
@@ -144,6 +147,7 @@
             case .string(let s): return s
             case .int64(let i): return NSNumber(value: i)
             case .double(let d): return d
+            case .decimal(let d): return d
             case .object(let obj): return obj.nsNoNull
             case .array(let ary):
                 return ary.flatMap({$0.nsNoNull})

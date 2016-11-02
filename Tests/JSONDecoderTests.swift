@@ -15,6 +15,10 @@
 import XCTest
 import PMJSON
 
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    import Foundation.NSDecimalNumber
+#endif
+
 let bigJson: Data = {
     var s = "[\n"
     for _ in 0..<1000 {
@@ -73,6 +77,9 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON(42 as Int64), JSON.int64(42))
         XCTAssertEqual(JSON(42 as Double), JSON.double(42))
         XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            XCTAssertEqual(JSON(42 as NSDecimalNumber), JSON.decimal(42))
+        #endif
         XCTAssertEqual(JSON("foo"), JSON.string("foo"))
         XCTAssertEqual(JSON(["foo": true]), ["foo": true])
         XCTAssertEqual(JSON([JSON.bool(true)] as JSONArray), [true]) // JSONArray
@@ -251,6 +258,14 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(json, 42)
         json.double = nil
         XCTAssertEqual(json, JSON.null)
+        
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            XCTAssertNil(json.decimalNumber)
+            json.decimalNumber = 42
+            XCTAssertEqual(json, 42)
+            json.decimalNumber = nil
+            XCTAssertEqual(json, JSON.null)
+        #endif
         
         XCTAssertNil(json.object)
         json.object = ["foo": "bar"]

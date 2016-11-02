@@ -19,14 +19,33 @@
     // MARK: Basic accessors
     
     public extension JSON {
+        /// Returns the numeric value as an `NSDecimalNumber` if the receiver is `.int64`, `.double`, or `.decimal`, otherwise `nil`.
+        ///
+        /// When setting, replaces the receiver with the given decimal value, or with
+        /// null if the value is `nil`.
+        var decimalNumber: NSDecimalNumber? {
+            get {
+                switch self {
+                case .int64(let i): return NSDecimalNumber(value: i)
+                case .double(let d): return NSDecimalNumber(value: d)
+                case .decimal(let d): return d
+                default: return nil
+                }
+            }
+            set {
+                self = newValue.map(JSON.decimal) ?? nil
+            }
+        }
+        
         /// Returns the receiver as an `NSDecimalNumber` if possible.
-        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64` or `.double`, or is a `.string`
+        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64`, `.double`, or `.decimal`, or is a `.string`
         ///   that contains a valid decimal number representation, otherwise `nil`.
         /// - Note: Whitespace is not allowed in the string representation.
         var asDecimalNumber: NSDecimalNumber? {
             switch self {
             case .int64(let i): return NSDecimalNumber(value: i)
             case .double(let d): return NSDecimalNumber(value: d)
+            case .decimal(let d): return d
             case .string(let s) where !s.isEmpty:
                 // NSDecimalNumber(string:) doesn't tell us if the number was valid.
                 // We could check for NaN, but that still doesn't tell us if there's anything left in the string.
@@ -42,31 +61,33 @@
             }
         }
         
-        /// Returns the receiver as an `NSDecimalNumber` if it is `.int64` or `.double`.
+        /// Returns the receiver as an `NSDecimalNumber` if it is `.int64`, `.double`, or `.decimal`.
         /// - Returns: An `NSDecimalNumber`.
-        /// - Throws: `JSONError` if the receiver is not an `.int64` or a `.double`.
+        /// - Throws: `JSONError` if the receiver is not `.int64`, `.double`, or `.decimal`.
         func getDecimalNumber() throws -> NSDecimalNumber {
             switch self {
             case .int64(let i): return NSDecimalNumber(value: i)
             case .double(let d): return NSDecimalNumber(value: d)
+            case .decimal(let d): return d
             default: throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))
             }
         }
         
-        /// Returns the receiver as an `NSDecimalNumber` if it is `.int64` or `.double`.
+        /// Returns the receiver as an `NSDecimalNumber` if it is `.int64`, `.double`, or `.decimal`.
         /// - Returns: An `NSDecimalNumber`, or `nil` if the receivre is `null`.
-        /// - Throws: `JSONError` if the receiver is not an `.int64` or a `.double`.
+        /// - Throws: `JSONError` if the receiver is not `.int64`, `.double`, or `.decimal`.
         func getDecimalNumberOrNil() throws -> NSDecimalNumber? {
             switch self {
             case .int64(let i): return NSDecimalNumber(value: i)
             case .double(let d): return NSDecimalNumber(value: d)
+            case .decimal(let d): return d
             case .null: return nil
             default: throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))
             }
         }
         
         /// Returns the receiver as an `NSDecimalNumber` if possible.
-        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64` or `.double`, or is a `.string`
+        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64`, `.double`, or `.decimal`, or is a `.string`
         ///   that contains a valid decimal number representation.
         /// - Throws: `JSONError` if the receiver is the wrong type, or is a `.string` that does not contain
         ///   a valid decimal number representation.
@@ -79,7 +100,7 @@
         }
         
         /// Returns the receiver as an `NSDecimalNumber` if possible.
-        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64` or `.double`, or is a `.string`
+        /// - Returns: An `NSDecimalNumber` if the receiver is `.int64`, `.double`, or `.decimal`, or is a `.string`
         ///   that contains a valid decimal number representation, or `nil` if the receiver is `null`.
         /// - Throws: `JSONError` if the receiver is the wrong type, or is a `.string` that does not contain
         ///   a valid decimal number representation.
@@ -231,6 +252,28 @@
             guard let value = self[key] else { return nil }
             return try scoped(key) { try value.toDecimalNumberOrNil() }
         }
+    }
+    
+    // MARK: - Internal Helpers
+    
+    internal extension NSDecimalNumber {
+        static func <(lhs: NSDecimalNumber, rhs: NSNumber) -> Bool {
+            return lhs.compare(rhs) == .orderedAscending
+        }
+        static func <=(lhs: NSDecimalNumber, rhs: NSNumber) -> Bool {
+            return lhs.compare(rhs) != .orderedDescending
+        }
+        static func >(lhs: NSDecimalNumber, rhs: NSNumber) -> Bool {
+            return lhs.compare(rhs) == .orderedDescending
+        }
+        static func >=(lhs: NSDecimalNumber, rhs: NSNumber) -> Bool {
+            return lhs.compare(rhs) != .orderedAscending
+        }
+    }
+    
+    internal extension Int64 {
+        static let maxDecimalNumber: NSDecimalNumber = NSDecimalNumber(value: Int64.max)
+        static let minDecimalNumber: NSDecimalNumber = NSDecimalNumber(value: Int64.min)
     }
     
 #endif // os(iOS) || os(OSX) || os(tvOS) || os(watchOS)
