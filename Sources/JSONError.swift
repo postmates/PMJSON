@@ -1330,6 +1330,21 @@ public extension JSON {
             return try scoped(i, { try transform(elt) })
         })
     }
+    
+    /// Calls `body` on each element of `array` in order.
+    ///
+    /// If `body` throws a `JSONError`, the error will be modified to include the index
+    /// of the element that caused the error.
+    ///
+    /// - Parameter array: The `JSONArray` to map over.
+    /// - Parameter body: A block that is called once for each element of `array`, along with the element's index.
+    /// - Throws: Rethrows any error thrown by `body`.
+    /// - Complexity: O(*N*).
+    static func forEach(_ array: JSONArray, _ body: (_ element: JSON, _ index: Int) throws -> Void) rethrows {
+        for (i, elt) in array.enumerated() {
+            try scoped(i, { try body(elt, i) })
+        }
+    }
 }
 
 public extension JSON {
@@ -1530,6 +1545,74 @@ public extension JSON {
     func flatMapArrayOrNil<S: Sequence>(_ index: Int, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
     }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.forEach($0, body) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
+    ///   is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func forEachArray(_ key: String, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws {
+        try getArray(key, { try JSON.forEach($0, body) })
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// - Note: This method is equivalent to `getArray(index, { try JSON.forEach($0, body) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
+    ///   value is not an array. Also rethrows any error thrown by `body`.
+    /// - Complexity: O(*N*).
+    func forEachArray(_ index: Int, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws {
+        try getArray(index, { try JSON.forEach($0, body) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// Returns `false` if the `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.forEach($0, body) }) != nil`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Returns: `true` if the `key` exists and the value was an array, or `false` if the key
+    ///   doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `body`.
+    /// - Complexity: O(*N*).
+    @discardableResult
+    func forEachArrayOrNil(_ key: String, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws -> Bool {
+        return try getArrayOrNil(key, { try JSON.forEach($0, body) }) != nil
+    }
+    
+    /// Subscripts the receiver with `index`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.forEach($0, body) }) != nil`.
+    ///
+    /// - Parameter index: The index to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Returns: `true` if the `key` exists and the value was an array, or `false` if the key
+    ///   doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `body`.
+    /// - Complexity: O(*N*).
+    @discardableResult
+    func forEachArrayOrNil(_ index: Int, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws -> Bool {
+        return try getArrayOrNil(index, { try JSON.forEach($0, body) }) != nil
+    }
 }
 
 public extension JSONObject {
@@ -1630,6 +1713,41 @@ public extension JSONObject {
     /// - Complexity: O(*M* + *N*) where *M* is the length of `array` and *N* is the length of the result.
     func flatMapArrayOrNil<S: Sequence>(_ key: String, _ transform: (JSON) throws -> S) throws -> [S.Iterator.Element]? {
         return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.forEach($0, body) })`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
+    ///   is not an array. Also rethrows any error thrown by `transform`.
+    /// - Complexity: O(*N*).
+    func forEachArray(_ key: String, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws {
+        try getArray(key, { try JSON.forEach($0, body) })
+    }
+    
+    /// Subscripts the receiver with `key`, converts the value to an array, and calls `body` on
+    /// each element of the array in order.
+    ///
+    /// Returns `false` if the `key` doesn't exist or the value is `null`.
+    ///
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.forEach($0, body) }) != nil`.
+    ///
+    /// - Parameter key: The key to subscript the receiver with.
+    /// - Parameter body: A block that is called once for each element of the resulting array,
+    ///   along with the element's index.
+    /// - Returns: `true` if the `key` exists and the value was an array, or `false` if the key
+    ///   doesn't exist or the value is `null`.
+    /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
+    ///   `null`. Also rethrows any error thrown by `body`.
+    /// - Complexity: O(*N*).
+    @discardableResult
+    func forEachArrayOrNil(_ key: String, _ body: (_ element: JSON, _ index: Int) throws -> Void) throws -> Bool {
+        return try getArrayOrNil(key, { try JSON.forEach($0, body) }) != nil
     }
 }
 

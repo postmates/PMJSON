@@ -22,6 +22,7 @@
 		9E87937C1BC8341500BC6A15 /* ObjectiveC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E87937B1BC8341500BC6A15 /* ObjectiveC.swift */; };
 		9E87937E1BC835F500BC6A15 /* Accessors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E87937D1BC835F500BC6A15 /* Accessors.swift */; };
 		9EC4CD961DB83DE8003A4268 /* JSONParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */; };
+		9EC52A6A1DCBC2E900658723 /* JSONAccessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC52A691DCBC2E800658723 /* JSONAccessorTests.swift */; };
 		9ECD04F51DC15C9800DBE7CA /* JSONTestSuite in Resources */ = {isa = PBXBuildFile; fileRef = 9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */; };
 		9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */; };
 /* End PBXBuildFile section */
@@ -59,6 +60,7 @@
 		9E87937B1BC8341500BC6A15 /* ObjectiveC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjectiveC.swift; sourceTree = "<group>"; };
 		9E87937D1BC835F500BC6A15 /* Accessors.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Accessors.swift; sourceTree = "<group>"; };
 		9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONParserTests.swift; sourceTree = "<group>"; };
+		9EC52A691DCBC2E800658723 /* JSONAccessorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONAccessorTests.swift; sourceTree = "<group>"; };
 		9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */ = {isa = PBXFileReference; lastKnownFileType = folder; path = JSONTestSuite; sourceTree = "<group>"; };
 		9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONTestSuite.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -126,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				9E1B244F1BC73D7600E5BC19 /* JSONDecoderTests.swift */,
+				9EC52A691DCBC2E800658723 /* JSONAccessorTests.swift */,
 				9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */,
 				9E4997EF1DC96E110049EECD /* JSONEncoderTests.swift */,
 				9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */,
@@ -269,6 +272,7 @@
 				9EC4CD961DB83DE8003A4268 /* JSONParserTests.swift in Sources */,
 				9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */,
 				9E4997F01DC96E110049EECD /* JSONEncoderTests.swift in Sources */,
+				9EC52A6A1DCBC2E900658723 /* JSONAccessorTests.swift in Sources */,
 				9E1B24501BC73D7600E5BC19 /* JSONDecoderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
