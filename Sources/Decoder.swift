@@ -95,13 +95,13 @@ public struct JSONOptions {
     /// The default value is `10_000`.
     public var depthLimit: Int? = 10_000
     
-    /// If `true`, the parser will parse floating-point values as `NSDecimalNumber`
+    /// If `true`, the parser will parse floating-point values as `Decimal`
     /// instead of as `Double` values.
     ///
     /// The default value is `false`.
     ///
-    /// - Note: This option is ignored on platforms without `NSDecimalNumber`.
-    public var useDecimalNumbers: Bool = false
+    /// - Note: This option is ignored on platforms without `Decimal`.
+    public var useDecimals: Bool = false
     
     /// Returns a new `JSONOptions` with default values.
     public init() {}
@@ -109,13 +109,12 @@ public struct JSONOptions {
     /// Returns a new `JSONOptions`.
     /// - Parameter strict: Whether the parser should be strict. Defaults to `false`.
     /// - Parameter depthLimit: A maximum depth limit to use. Default is `10_000`.
-    /// - Parameter useDecimalNumbers: Whether the parser should parse floating-point values as
-    ///   `NSDecimalNumber`.
-    /// - Note: The `useDecimalNumbers` option is ignored on platform without `NSDecimalNumber`.
-    public init(strict: Bool = false, depthLimit: Int? = 10_000, useDecimalNumbers: Bool = false) {
+    /// - Parameter useDecimals: Whether the parser should parse floating-point values as `Decimal`.
+    /// - Note: The `useDecimals` option is ignored on platform without `Decimal`.
+    public init(strict: Bool = false, depthLimit: Int? = 10_000, useDecimals: Bool = false) {
         self.strict = strict
         self.depthLimit = depthLimit
-        self.useDecimalNumbers = useDecimalNumbers
+        self.useDecimals = useDecimals
     }
     
     public var decoderOptions: JSONDecoderOptions {
@@ -127,7 +126,7 @@ public struct JSONOptions {
     }
     
     public var parserOptions: JSONParserOptions {
-        return JSONParserOptions(strict: strict, useDecimalNumbers: useDecimalNumbers)
+        return JSONParserOptions(strict: strict, useDecimals: useDecimals)
     }
 }
 
@@ -141,11 +140,11 @@ extension JSONOptions: ExpressibleByArrayLiteral {
         /// Specifying `nil` removes the default depth limit of `10_000`.
         /// - SeeAlso: `JSONOptions.depthLimit`.
         case depthLimit(Int?)
-        /// Causes the parser to parse floating-point values as `NSDecimalNumber`
+        /// Causes the parser to parse floating-point values as `Decimal`
         /// instead of as `Double` values.
-        /// - Note: This option is ignored on platforms without `NSDecimalNumber`.
-        /// - SeeAlso: `JSONOptions.useDecimalNumbers`.
-        case useDecimalNumbers
+        /// - Note: This option is ignored on platforms without `Decimal`.
+        /// - SeeAlso: `JSONOptions.useDecimals`.
+        case useDecimals
     }
     
     public init(arrayLiteral elements: Element...) {
@@ -154,8 +153,8 @@ extension JSONOptions: ExpressibleByArrayLiteral {
             case .strict: strict = true
             case .depthLimit(let limit):
                 depthLimit = limit
-            case .useDecimalNumbers:
-                useDecimalNumbers = true
+            case .useDecimals:
+                useDecimals = true
             }
         }
     }
@@ -338,7 +337,7 @@ public struct JSONDecoderOptions {
     /// Returns a new `JSONDecoderOptions`.
     /// - Parameter depthLimit: A maximum depth limit to use. Default is `10_000`.
     /// - Parameter streaming: Whether the decode should operate in streaming mode. Default is `false`.
-    public init(depthLimit: Int? = 10_000, useDecimalNumbers: Bool = false, streaming: Bool = false) {
+    public init(depthLimit: Int? = 10_000, streaming: Bool = false) {
         self.depthLimit = depthLimit
         self.streaming = streaming
     }

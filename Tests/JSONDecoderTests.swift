@@ -16,7 +16,7 @@ import XCTest
 import PMJSON
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    import Foundation.NSDecimalNumber
+    import struct Foundation.Decimal
 #endif
 
 let bigJson: Data = {
@@ -46,7 +46,7 @@ class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("{\"one\": 1, \"two\": 2, \"three\": 3}"), ["one": 1, "two": 2, "three": 3])
         assertMatchesJSON(try JSON.decode("[1.23, 4e7]"), [1.23, 4e7])
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-            assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimalNumbers]), [JSON(1.23 as NSDecimalNumber), JSON(4e7 as NSDecimalNumber)])
+            assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimals]), [JSON(1.23 as Decimal), JSON(4e7 as Decimal)])
         #endif
     }
     
@@ -54,7 +54,7 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
         XCTAssertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-            XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimalNumbers]), JSON(NSDecimalNumber(string: "-5.4272823085455e+05")))
+            XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimals]), JSON(Decimal(string: "-5.4272823085455e+05")!))
         #endif
     }
     
@@ -71,7 +71,7 @@ class JSONDecoderTests: XCTestCase {
     func testDecimalParsing() throws {
         let data = try readFixture("sample", withExtension: "json")
         // Decode the data and make sure it contains no .double values
-        let json = try JSON.decode(data, options: [.useDecimalNumbers])
+        let json = try JSON.decode(data, options: [.useDecimals])
         let value = json.walk { value in
             return value.isDouble ? value : .none
         }
@@ -94,11 +94,12 @@ class JSONDecoderTests: XCTestCase {
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
             do {
                 // test again with decimals
-                let json = try JSON.decode(data, options: [.useDecimalNumbers])
+                let json = try JSON.decode(data, options: [.useDecimals])
                 let encoded = JSON.encodeAsString(json)
-                let json2 = try JSON.decode(encoded, options: [.useDecimalNumbers])
+                let json2 = try JSON.decode(encoded, options: [.useDecimals])
                 if json != json2 { // This preserves all precision, but may still convert between int64 and decimal so we can't use matchesJSON
                     // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+                    try json.debugMatches(json2, ==)
                     XCTFail("Re-encoded JSON doesn't match original")
                 }
             }
@@ -111,7 +112,7 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON(42 as Double), JSON.double(42))
         XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-            XCTAssertEqual(JSON(42 as NSDecimalNumber), JSON.decimal(42))
+            XCTAssertEqual(JSON(42 as Decimal), JSON.decimal(42))
         #endif
         XCTAssertEqual(JSON("foo"), JSON.string("foo"))
         XCTAssertEqual(JSON(["foo": true]), ["foo": true])
@@ -326,7 +327,7 @@ class JSONBenchmarks: XCTestCase {
         measure { [bigJson] in
             for _ in 0..<10 {
                 do {
-                    _ = try JSON.decode(bigJson, options: [.useDecimalNumbers])
+                    _ = try JSON.decode(bigJson, options: [.useDecimals])
                 } catch {
                     XCTFail("error parsing json: \(error)")
                 }
@@ -424,7 +425,7 @@ class JSONBenchmarks: XCTestCase {
         measure {
             for _ in 0..<10 {
                 do {
-                    _ = try JSON.decode(data, options: [.useDecimalNumbers])
+                    _ = try JSON.decode(data, options: [.useDecimals])
                 } catch {
                     return XCTFail("error parsing json: \(error)")
                 }
@@ -529,5 +530,49 @@ extension JSON {
             break
         }
         return nil
+    }
+    
+    /// Walks two JSON values in sync, performing the given equality test on
+    /// all leaf values and throwing an error when a mismatch is found.
+    /// The equality test is not performed on objects or arrays.
+    func debugMatches(_ other: JSON, _ compare: (JSON, JSON) -> Bool) throws {
+        enum Error: LocalizedError {
+            case objectCountMismatch
+            case objectKeyMismatch
+            case arrayCountMismatch
+            case typeMismatch
+            case equalityFailure(JSON, JSON)
+            
+            var errorDescription: String? {
+                switch self {
+                case .objectCountMismatch: return "object count mismatch"
+                case .objectKeyMismatch: return "object key mismatch"
+                case .arrayCountMismatch: return "array count mismatch"
+                case .typeMismatch: return "value type mismatch"
+                case let .equalityFailure(a, b): return "\(String(reflecting: a)) is not equal to \(String(reflecting: b))"
+                }
+            }
+        }
+        switch (self, other) {
+        case (.object(let a), .object(let b)):
+            guard a.count == b.count else { throw Error.objectCountMismatch }
+            for (k, v) in a {
+                guard let v2 = b[k] else { throw Error.objectKeyMismatch }
+                try v.debugMatches(v2, compare)
+            }
+        case (.object, _), (_, .object):
+            throw Error.typeMismatch
+        case (.array(let a), .array(let b)):
+            guard a.count == b.count else { throw Error.arrayCountMismatch }
+            for (v, v2) in zip(a,b) {
+                try v.debugMatches(v2, compare)
+            }
+        case (.array, _), (_, .array):
+            throw Error.typeMismatch
+        default:
+            if !compare(self, other) {
+                throw Error.equalityFailure(self, other)
+            }
+        }
     }
 }

@@ -250,7 +250,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 #### Development
 
-* Add full support for decimal numbers (on supported platforms). This takes the form of a new `JSON` variant `.decimal`, any relevant accessors, and full parsing/decoding support with the new option `.useDecimalNumbers`. With this option, any number that would have been decoded as a `Double` will be decoded as an `NSDecimalNumber` instead.
+* Add full support for decimal numbers (on supported platforms). This takes the form of a new `JSON` variant `.decimal`, any relevant accessors, and full parsing/decoding support with the new option `.useDecimals`. With this option, any number that would have been decoded as a `Double` will be decoded as a `Decimal` instead.
 * Add a set of `forEach` accessors for working with arrays, similar to the existing `map` and `flatMap` accessors.
 
 #### v1.2.1 (2016-10-27)

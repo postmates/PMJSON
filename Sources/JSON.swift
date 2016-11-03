@@ -13,11 +13,10 @@
 //
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    import class Foundation.NSDecimalNumber
-    import class Foundation.NSNumber
+    import struct Foundation.Decimal
 #else
-    /// A placeholder used for platforms that don't support `NSDecimalNumber`.
-    public typealias DecimalNumberPlaceholder = ()
+    /// A placeholder used for platforms that don't support `Decimal`.
+    public typealias DecimalPlaceholder = ()
 #endif
 
 /// A single JSON-compatible value.
@@ -37,14 +36,14 @@ public enum JSON {
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
     /// A decimal number.
     /// When the decoding option `.useDecimals` is used, any value that would otherwise be
-    /// decoded as a `Double` is decoded as an `NSDecimalNumber` instead.
-    case decimal(NSDecimalNumber)
+    /// decoded as a `Double` is decoded as a `Decimal` instead.
+    case decimal(Decimal)
     #else
     /// A placeholder for decimal number support.
     /// This exists purely to work around Swift's poor support for conditionally-compiled
-    /// enum variants. At such time as Linux gains `NSDecimalNumber` support, this will turn
+    /// enum variants. At such time as Linux gains `Decimal` support, this will turn
     /// into a real case. In the meantime, this case should be ignored.
-    case decimal(DecimalNumberPlaceholder)
+    case decimal(DecimalPlaceholder)
     #endif
     /// An object.
     case object(JSONObject)
@@ -68,7 +67,7 @@ public enum JSON {
         self = .double(d)
     }
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    public init(_ d: NSDecimalNumber) {
+    public init(_ d: Decimal) {
         self = .decimal(d)
     }
     #endif
@@ -119,15 +118,13 @@ extension JSON: Equatable {
         case (.int64(let a), .double(let b)): return Double(a) == b
         case (.int64(let a), .decimal(let b)):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-                // NB: We can't convert `a` to NSNumber and use isEqual(to:) as that will actually compare the double values.
-                // And converting `a` into an NSDecimalNumber is expensive.
-                return b >= Int64.minDecimalNumber && b <= Int64.maxDecimalNumber && b.int64Value == a
+                return Decimal(workaround: a) == b
             #else
                 return false
             #endif
         case (.double(let a), .decimal(let b)):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-                return a == b.doubleValue
+                return Decimal(workaround: a) == b
             #else
                 return false
             #endif

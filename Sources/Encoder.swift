@@ -13,7 +13,7 @@
 //
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    import class Foundation.NSDecimalNumber
+    import struct Foundation.Decimal
 #endif
 
 extension JSON {
@@ -80,11 +80,11 @@ extension JSON {
     }
     
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    private static func encodeDecimal<Target: TextOutputStream>(_ value: NSDecimalNumber, toStream stream: inout Target) {
-        stream.write(value.stringValue)
+    private static func encodeDecimal<Target: TextOutputStream>(_ value: Decimal, toStream stream: inout Target) {
+        stream.write(String(describing: value))
     }
     #else
-    private static func encodeDecimal<Target: TextOutputStream>(_ value: DecimalNumberPlaceholder, toStream stream: inout Target) {
+    private static func encodeDecimal<Target: TextOutputStream>(_ value: DecimalPlaceholder, toStream stream: inout Target) {
         // This is a dummy value. Lets just encode it as null for the time being.
         stream.write("null")
     }

@@ -270,10 +270,10 @@ class JSONAccessorTests: XCTestCase {
         XCTAssertEqual(json, JSON.null)
         
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-            XCTAssertNil(json.decimalNumber)
-            json.decimalNumber = 42
+            XCTAssertNil(json.decimal)
+            json.decimal = 42
             XCTAssertEqual(json, 42)
-            json.decimalNumber = nil
+            json.decimal = nil
             XCTAssertEqual(json, JSON.null)
         #endif
         
@@ -296,5 +296,17 @@ class JSONAccessorTests: XCTestCase {
         json = ["value": ["array": [1,2]]]
         json.object?["value"]?.object?["array"]?.array?.append(3)
         XCTAssertEqual(json, ["value": ["array": [1,2,3]]])
+    }
+    
+    func testMixedTypeEquality() {
+        XCTAssertEqual(JSON.int64(42), JSON.double(42))
+        XCTAssertNotEqual(JSON.int64(42), JSON.double(42.1))
+        XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
+        XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
+        XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
     }
 }

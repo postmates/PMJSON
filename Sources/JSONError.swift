@@ -13,8 +13,8 @@
 //
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    import struct Foundation.Decimal
     import class Foundation.NSDecimalNumber
-    import class Foundation.NSNumber
 #endif
 
 // MARK: JSONError
@@ -39,20 +39,20 @@ public enum JSONError: Error, CustomStringConvertible {
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case outOfRangeDouble(path: String?, value: Double, expected: Any.Type)
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    /// Thrown when a decimal value is coerced to a smaller type (e.g. `NSDecimalNumber` to `Int`)
+    /// Thrown when a decimal value is coerced to a smaller type (e.g. `Decimal` to `Int`)
     /// and the value doesn't fit in the smaller type.
     /// - Parameter path: The path of the value that cuased the error.
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
-    case outOfRangeDecimal(path: String?, value: NSDecimalNumber, expected: Any.Type)
+    case outOfRangeDecimal(path: String?, value: Decimal, expected: Any.Type)
     #else
-    /// Thrown when a decimal value is coerced to a smaller type (e.g. `NSDecimalNumber` to `Int`)
+    /// Thrown when a decimal value is coerced to a smaller type (e.g. `Decimal` to `Int`)
     /// and the value doesn't fit in the smaller type.
-    /// - Note: This error is never actually thrown for platforms that do not support `NSDecimalNumber`.
+    /// - Note: This error is never actually thrown for platforms that do not support `Decimal`.
     /// - Parameter path: The path of the value that cuased the error.
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
-    case outOfRangeDecimal(path: String?, value: DecimalNumberPlaceholder, expected: Any.Type)
+    case outOfRangeDecimal(path: String?, value: DecimalPlaceholder, expected: Any.Type)
     #endif
     
     public var description: String {
@@ -284,7 +284,7 @@ public extension JSON {
         case .double(let d): return String(d)
         case .decimal(let d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-                return d.stringValue
+                return String(describing: d)
             #else
                 break
             #endif
@@ -402,7 +402,8 @@ public extension JSON {
         case .double(let d): return d
         case .decimal(let d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-                return d.doubleValue
+                // NB: Decimal does not have any appropriate accessor
+                return NSDecimalNumber(decimal: d).doubleValue
             #else
                 break
             #endif

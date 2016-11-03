@@ -14,7 +14,7 @@
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
     import class Foundation.NSDecimalNumber
-    import class Foundation.NSNumber
+    import struct Foundation.Decimal
 #endif
 
 public extension JSON {
@@ -59,7 +59,7 @@ public extension JSON {
     }
     
     /// Returns `true` iff the receiver is a `.decimal`.
-    var isDecimalNumber: Bool {
+    var isDecimal: Bool {
         switch self {
         case .decimal: return true
         default: return false
@@ -67,7 +67,7 @@ public extension JSON {
     }
     
     /// Returns `true` iff the receiver is `.int64`, `.double`, or `.decimal`.
-    /// - Note: `.decimal` is only considered a number on platforms that have `NSDecimalNumber`.
+    /// - Note: `.decimal` is only considered a number on platforms that have `Decimal`.
     ///   On platforms where `.decimal` is a dummy value, it's not a treated as a number.
     var isNumber: Bool {
         switch self {
@@ -140,7 +140,7 @@ public extension JSON {
     /// When setting, replaces the receiver with the given integral value, or with
     /// null if the value is `nil`.
     ///
-    /// - Note: `.decimal` is only supported on platforms with `NSDecimalNumber`. On platforms without it,
+    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
     ///   the `.decimal` dummy value is not treated as a number.
     var int64: Int64? {
         get {
@@ -158,12 +158,13 @@ public extension JSON {
     /// Returns the integral value if the receiver is `.int64`, `.double`, or `.decimal`, otherwise `nil`.
     /// If the receiver is `.double`, the value is truncated. If it does not fit in an `Int`, `nil` is returned.
     /// If the receiver is `.int64` and the value does not fit in an `Int`, `nil` is returned.
-    /// If the receiver is `.decimal`, and the value does not fit in an `Int`, `nil` is returned.
+    /// If the receiver is `.decimal`, the value is returned using `NSDecimalNumber.int64Value`. If it does not
+    /// fit in an `Int`, `nil` is returned.
     ///
     /// When setting, replaces the receiver with the given integral value, or with
     /// null if the value is `nil`.
     ///
-    /// - Note: `.decimal` is only supported on platforms with `NSDecimalNumber`. On platforms without it,
+    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
     ///   the `.decimal` dummy value is not treated as a number.
     var int: Int? {
         get {
@@ -183,7 +184,7 @@ public extension JSON {
     /// When setting, replaces the receiver with the given double value, or with
     /// null if the value is `nil`.
     ///
-    /// - Note: `.decimal` is only supported on platforms with `NSDecimalNumber`. On platforms without it,
+    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
     ///   the `.decimal` dummy value is not treated as a number.
     var double: Double? {
         get {
@@ -192,7 +193,8 @@ public extension JSON {
             case .double(let d): return d
             case .decimal(let d):
                 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-                    return d.doubleValue
+                    // NB: Decimal does not have any accessor to produce a Double
+                    return NSDecimalNumber(decimal: d).doubleValue
                 #else
                     return nil
                 #endif
@@ -241,7 +243,7 @@ public extension JSON {
     /// Returns the string value if the receiver is `.string`, coerces the value to a string if
     /// the receiver is `.bool`, `.null`, `.int64`, `.double`, or `.decimal, or otherwise returns `nil`.
     ///
-    /// - Note: `.decimal` is only supported on platforms with `NSDecimalNumber`. On platforms without it,
+    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
     ///   the `.decimal` dummy value returns `nil`.
     var asString: String? {
         return try? toString()
@@ -303,11 +305,12 @@ internal func convertDoubleToInt64(_ d: Double) -> Int64? {
 }
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    internal func convertDecimalToInt64(_ d: NSDecimalNumber) -> Int64? {
-        if d > Int64.maxDecimalNumber || d < Int64.minDecimalNumber {
+    internal func convertDecimalToInt64(_ d: Decimal) -> Int64? {
+        if d > Int64.maxDecimal || d < Int64.minDecimal {
             return nil
         }
-        return d.int64Value
+        // NB: Decimal does not have any appropriate accessor
+        return NSDecimalNumber(decimal: d).int64Value
     }
 #else
     internal func convertDecimalToInt64(_ d: ()) -> Int64? {
