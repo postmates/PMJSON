@@ -20,7 +20,7 @@
         /// Decodes a `Data` as JSON.
         /// - Note: Invalid unicode sequences in the data are replaced with U+FFFD.
         /// - Parameter data: The data to decode. Must be UTF-8, UTF-16, or UTF-32, and may start with a BOM.
-        /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
+        /// - Parameter options: Options that control JSON parsing. Defaults to no options. See `JSONOptions` for details.
         /// - Returns: A `JSON` value.
         /// - Throws: `JSONParserError` if the data does not contain valid JSON.
         public static func decode(_ data: Data, options: JSONOptions = []) throws -> JSON {
@@ -63,6 +63,23 @@
         @available(*, deprecated, message: "Use JSON.encodeAsData(_:options:) instead")
         public static func encodeAsData(_ json: JSON, pretty: Bool) -> Data {
             return encodeAsData(json, options: JSONEncoderOptions(pretty: pretty))
+        }
+    }
+    
+    extension JSON {
+        /// Returns a `JSONParser` that parses the given `Data` as JSON.
+        /// - Note: Invalid unicode sequences in the data are replaced with U+FFFD.
+        /// - Parameter data: The data to parse. Must be UTF-8, UTF-16, or UTF-32, and may start with a BOM.
+        /// - Parameter options: Options that control JSON parsing. Defaults to no options. See `JSONParserOptions` for details.
+        /// - Returns: A `JSONParser` value.
+        public static func parser(for data: Data, options: JSONParserOptions = []) -> JSONParser<AnySequence<UnicodeScalar>> {
+            if let endian = UTF32Decoder.encodes(data) {
+                return JSONParser(AnySequence(UTF32Decoder(data: data, endian: endian)), options: options)
+            } else if let endian = UTF16Decoder.encodes(data) {
+                return JSONParser(AnySequence(UTF16Decoder(data: data, endian: endian)), options: options)
+            } else {
+                return JSONParser(AnySequence(UTF8Decoder(data: data)), options: options)
+            }
         }
     }
     

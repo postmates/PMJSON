@@ -248,6 +248,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add method `JSON.parser(for:options:)` that returns a `JSONParser<AnySequence<UnicodeScalar>>` from a `Data`. Like `JSON.decode(_:options:)`, this method automatically detects UTF-8, UTF-16, or UTF-32 input.
+
 #### v2.0.0 (2017-01-02)
 
 * Add full support for decimal numbers (on supported platforms). This takes the form of a new `JSON` variant `.decimal`, any relevant accessors, and full parsing/decoding support with the new option `.useDecimals`. With this option, any number that would have been decoded as a `Double` will be decoded as a `Decimal` instead.

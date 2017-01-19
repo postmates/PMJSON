@@ -54,10 +54,52 @@ class JSONParserTests: XCTestCase {
             XCTFail()
         }
     }
+    
+    func testUTF32Parse() {
+        let input = "{ \"msg\": \"안녕하세요\" }"
+        block: do {
+            guard let data = input.data(using: .utf32) else { XCTFail("Could not get UTF-32 data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+        block: do {
+            guard let data = input.data(using: .utf32BigEndian) else { XCTFail("Could not get UTF-32BE data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+        block: do {
+            guard let data = input.data(using: .utf32LittleEndian) else { XCTFail("Could not get UTF-32LE data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+    }
+    
+    func testUTF16Parse() {
+        let input = "{ \"msg\": \"안녕하세요\" }"
+        block: do {
+            guard let data = input.data(using: .utf16) else { XCTFail("Could not get UTF-16 data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+        block: do {
+            guard let data = input.data(using: .utf16BigEndian) else { XCTFail("Could not get UTF-16BE data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+        block: do {
+            guard let data = input.data(using: .utf16LittleEndian) else { XCTFail("Could not get UTF-16LE data"); break block }
+            assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+        }
+    }
+    
+    func testUTF8Parse() {
+        let input = "{ \"msg\": \"안녕하세요\" }"
+        guard let data = input.data(using: .utf8) else { return XCTFail("Could not get UTF-8 data") }
+        assertParserEvents(JSON.parser(for: data), [.objectStart, .stringValue("msg"), .stringValue("안녕하세요"), .objectEnd])
+    }
 }
 
 private func assertParserEvents(_ input: String, streaming: Bool = false, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) {
     let parser = JSONParser(input.unicodeScalars, options: JSONParserOptions(streaming: streaming))
+    assertParserEvents(parser, events, file: file, line: line)
+}
+
+private func assertParserEvents<Seq: Sequence>(_ parser: JSONParser<Seq>, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) where Seq.Iterator.Element == UnicodeScalar {
     var iter = parser.makeIterator()
     for (i, expected) in events.enumerated() {
         guard let event = iter.next() else {
