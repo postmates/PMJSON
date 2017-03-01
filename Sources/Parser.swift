@@ -784,7 +784,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     }
 }
 
-private struct PeekIterator<Base: IteratorProtocol> {
+struct PeekIterator<Base: IteratorProtocol> {
     init(_ base: Base) {
         self.base = base
     }
