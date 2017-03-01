@@ -451,7 +451,10 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         }
                     #endif
                     tempBuffer.append(0)
-                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                        return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    #else
+                        return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
                 case "e", "E":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
