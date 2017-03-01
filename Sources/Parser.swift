@@ -536,7 +536,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
         return UInt16(truncatingBitPattern: codepoint)
     }
     
-    @inline(__always) @discardableResult private mutating func bump() -> UnicodeScalar? {
+    @inline(__always) @discardableResult mutating func bump() -> UnicodeScalar? {
         let c = base.next()
         if c == "\n" {
             line += 1
@@ -561,7 +561,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
     /// The column of the last emitted token.
     public private(set) var column: UInt = 0
     
-    private var base: PeekIterator<Iter>
+    var base: PeekIterator<Iter>
     private var state: State = .initial
     private var stack: [Stack] = []
     private var tempBuffer: ContiguousArray<Int8>?
@@ -784,7 +784,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     }
 }
 
-fileprivate struct PeekIterator<Base: IteratorProtocol> {
+struct PeekIterator<Base: IteratorProtocol> {
     init(_ base: Base) {
         self.base = base
     }
