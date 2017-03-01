@@ -455,6 +455,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
                     #else
                         return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
+                    #endif
                 case "e", "E":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
