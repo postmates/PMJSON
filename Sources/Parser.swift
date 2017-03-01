@@ -547,12 +547,12 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
         return c
     }
     
-    @inline(__always) fileprivate mutating func bumpRequired() throws -> UnicodeScalar {
+    @inline(__always) mutating func bumpRequired() throws -> UnicodeScalar {
         guard let c = bump() else { throw error(.unexpectedEOF) }
         return c
     }
     
-    fileprivate func error(_ code: JSONParserError.Code) -> JSONParserError {
+    func error(_ code: JSONParserError.Code) -> JSONParserError {
         return JSONParserError(code: code, line: line, column: column)
     }
     
