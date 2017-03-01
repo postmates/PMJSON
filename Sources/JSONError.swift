@@ -64,7 +64,7 @@ public enum JSONError: Error, CustomStringConvertible {
         }
     }
     
-    fileprivate func withPrefix(_ prefix: String) -> JSONError {
+    func withPrefix(_ prefix: String) -> JSONError {
         func prefixPath(_ path: String?, with prefix: String) -> String {
             guard let path = path, !path.isEmpty else { return prefix }
             if path.unicodeScalars.first == "[" {
