@@ -420,7 +420,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     }
                 #endif
                 tempBuffer.append(0)
-                return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
             }
             outerLoop: while let c = base.peek() {
                 switch c {
@@ -451,7 +451,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         }
                     #endif
                     tempBuffer.append(0)
-                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
                 case "e", "E":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
@@ -466,7 +466,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
             tempBuffer.append(0)
             let num = tempBuffer.withUnsafeBufferPointer({ ptr -> Int64? in
                 errno = 0
-                let n = strtoll(ptr.baseAddress, nil, 10)
+                let n = strtoll(ptr.baseAddress!, nil, 10)
                 if n == 0 && errno != 0 {
                     return nil
                 } else {
@@ -483,7 +483,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
                 }
             #endif
-            return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+            return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
         case "t":
             let line = self.line, column = self.column
             guard case "r"? = bump(), case "u"? = bump(), case "e"? = bump() else {
@@ -536,7 +536,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
         return UInt16(truncatingBitPattern: codepoint)
     }
     
-    @inline(__always) @discardableResult private mutating func bump() -> UnicodeScalar? {
+    @inline(__always) @discardableResult mutating func bump() -> UnicodeScalar? {
         let c = base.next()
         if c == "\n" {
             line += 1
@@ -547,12 +547,12 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
         return c
     }
     
-    @inline(__always) private mutating func bumpRequired() throws -> UnicodeScalar {
+    @inline(__always) mutating func bumpRequired() throws -> UnicodeScalar {
         guard let c = bump() else { throw error(.unexpectedEOF) }
         return c
     }
     
-    private func error(_ code: JSONParserError.Code) -> JSONParserError {
+    func error(_ code: JSONParserError.Code) -> JSONParserError {
         return JSONParserError(code: code, line: line, column: column)
     }
     
@@ -561,7 +561,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
     /// The column of the last emitted token.
     public private(set) var column: UInt = 0
     
-    private var base: PeekIterator<Iter>
+    var base: PeekIterator<Iter>
     private var state: State = .initial
     private var stack: [Stack] = []
     private var tempBuffer: ContiguousArray<Int8>?
@@ -784,7 +784,7 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
     }
 }
 
-private struct PeekIterator<Base: IteratorProtocol> {
+struct PeekIterator<Base: IteratorProtocol> {
     init(_ base: Base) {
         self.base = base
     }

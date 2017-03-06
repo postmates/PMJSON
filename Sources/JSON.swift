@@ -17,6 +17,10 @@
 #else
     /// A placeholder used for platforms that don't support `Decimal`.
     public typealias DecimalPlaceholder = ()
+    func ==(left:DecimalPlaceholder, right:DecimalPlaceholder) -> Bool {
+        return true
+    }
+    
 #endif
 
 /// A single JSON-compatible value.
