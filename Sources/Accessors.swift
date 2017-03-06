@@ -313,7 +313,7 @@ internal func convertDoubleToInt64(_ d: Double) -> Int64? {
         return NSDecimalNumber(decimal: d).int64Value
     }
 #else
-    internal func convertDecimalToInt64(_ d: ()) -> Int64? {
+    internal func convertDecimalToInt64(_ d: DecimalPlaceholder) -> Int64? {
         return nil
     }
 #endif

@@ -1764,7 +1764,6 @@ internal func getRequired(_ ary: JSONArray, index: Int, type: JSONError.JSONType
     return value
 }
 
-@inline(__always)
 internal func scoped<T>(_ key: String, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
@@ -1773,7 +1772,6 @@ internal func scoped<T>(_ key: String, _ f: () throws -> T) rethrows -> T {
     }
 }
 
-@inline(__always)
 internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()

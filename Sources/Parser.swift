@@ -395,7 +395,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 }
             #endif
             /// Invoke this after parsing the "e" character.
-            @inline(__always) func parseExponent() throws -> JSONEvent {
+            func parseExponent() throws -> JSONEvent {
                 let c = try bumpRequired()
                 tempBuffer.append(Int8(truncatingBitPattern: c.value))
                 switch c {
@@ -420,7 +420,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     }
                 #endif
                 tempBuffer.append(0)
-                return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
             }
             outerLoop: while let c = base.peek() {
                 switch c {
@@ -451,7 +451,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         }
                     #endif
                     tempBuffer.append(0)
-                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+                    return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
                 case "e", "E":
                     bump()
                     tempBuffer.append(Int8(truncatingBitPattern: c.value))
@@ -466,7 +466,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
             tempBuffer.append(0)
             let num = tempBuffer.withUnsafeBufferPointer({ ptr -> Int64? in
                 errno = 0
-                let n = strtoll(ptr.baseAddress, nil, 10)
+                let n = strtoll(ptr.baseAddress!, nil, 10)
                 if n == 0 && errno != 0 {
                     return nil
                 } else {
@@ -483,7 +483,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
                 }
             #endif
-            return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress, nil)}))
+            return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
         case "t":
             let line = self.line, column = self.column
             guard case "r"? = bump(), case "u"? = bump(), case "e"? = bump() else {

@@ -16,7 +16,11 @@
     import struct Foundation.Decimal
 #else
     /// A placeholder used for platforms that don't support `Decimal`.
-    public typealias DecimalPlaceholder = ()
+    public struct DecimalPlaceholder: Equatable {
+        public static func ==(lhs: DecimalPlaceholder, rhs: DecimalPlaceholder) -> Bool {
+            return true
+        }
+    }
 #endif
 
 /// A single JSON-compatible value.
