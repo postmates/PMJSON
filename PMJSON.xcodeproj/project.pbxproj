@@ -40,6 +40,8 @@
 /* Begin PBXFileReference section */
 		0A0F2BA91BF1BBE50095D290 /* JSONError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONError.swift; sourceTree = "<group>"; };
 		0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONObject.swift; sourceTree = "<group>"; };
+		0A79B5071E8AFE6700A8C727 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+		0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
 		9E0317C41D664B9000096D9E /* sample.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = sample.json; sourceTree = "<group>"; };
 		9E0317C61D664D7D00096D9E /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DecimalNumber.swift; sourceTree = "<group>"; };
@@ -84,14 +86,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A79B5081E8B0BDE00A8C727 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				9E1B244E1BC73D7600E5BC19 /* PMJSONTests */,
+				0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		9E1B24271BC73D1900E5BC19 = {
 			isa = PBXGroup;
 			children = (
+				0A79B5071E8AFE6700A8C727 /* Package.swift */,
 				9E49DEF31C1F9E2F004FDCAD /* README.md */,
 				9E69BE0B1C6E843D00D92762 /* LICENSE-APACHE */,
 				9E49DEF21C1F9E2F004FDCAD /* LICENSE-MIT */,
 				9E1B24421BC73D7600E5BC19 /* JSON */,
-				9E1B244E1BC73D7600E5BC19 /* JSONTests */,
+				0A79B5081E8B0BDE00A8C727 /* Tests */,
 				9E1B24341BC73D3600E5BC19 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -124,7 +136,7 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		9E1B244E1BC73D7600E5BC19 /* JSONTests */ = {
+		9E1B244E1BC73D7600E5BC19 /* PMJSONTests */ = {
 			isa = PBXGroup;
 			children = (
 				9E1B244F1BC73D7600E5BC19 /* JSONDecoderTests.swift */,
@@ -137,8 +149,7 @@
 				9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */,
 				9E1B24511BC73D7600E5BC19 /* Info.plist */,
 			);
-			name = JSONTests;
-			path = Tests;
+			path = PMJSONTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -497,7 +508,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = Tests/PMJSONTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -541,7 +552,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = Tests/Info.plist;
+				INFOPLIST_FILE = Tests/PMJSONTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MTL_ENABLE_DEBUG_INFO = NO;

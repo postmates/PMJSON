@@ -10,6 +10,17 @@ import XCTest
 import PMJSON
 
 class JSONParserTests: XCTestCase {
+    static let allLinuxTests = [
+        ("testParserErrorDescription", testParserErrorDescription),
+        ("testTrailingCharacters", testTrailingCharacters),
+        ("testEmptyInput", testEmptyInput),
+        ("testStreaming", testStreaming),
+        ("testErrorPatternMatching", testErrorPatternMatching),
+        ("testUTF32Parse", testUTF32Parse),
+        ("testUTF16Parse", testUTF16Parse),
+        ("testUTF8Parse", testUTF8Parse)
+    ]
+    
     func testParserErrorDescription() {
         XCTAssertEqual(String(describing: JSONParserError(code: .unexpectedEOF, line: 5, column: 12)), "JSONParserError(unexpectedEOF, line: 5, column: 12)")
     }

@@ -10,6 +10,12 @@ import XCTest
 import PMJSON
 
 class JSONAccessorTests: XCTestCase {
+    static let allLinuxTests = [
+        ("testConvenienceAccessors", testConvenienceAccessors),
+        ("testConvenienceAccessorAssignments", testConvenienceAccessorAssignments),
+        ("testMixedTypeEquality", testMixedTypeEquality)
+    ]
+    
     func testConvenienceAccessors() {
         let dict: JSON = [
             "xs": [["x": 1], ["x": 2], ["x": 3]],
@@ -301,12 +307,14 @@ class JSONAccessorTests: XCTestCase {
     func testMixedTypeEquality() {
         XCTAssertEqual(JSON.int64(42), JSON.double(42))
         XCTAssertNotEqual(JSON.int64(42), JSON.double(42.1))
-        XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
-        XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
-        XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
-        XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
-        XCTAssertEqual(JSON.double(42), JSON.decimal(42))
-        XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
-        XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
+            XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
+            XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
+            XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
+            XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
+            XCTAssertEqual(JSON.double(42), JSON.decimal(42))
+            XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
+            XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
+        #endif
     }
 }
