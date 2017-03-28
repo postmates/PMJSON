@@ -269,7 +269,7 @@ class JSONAccessorTests: XCTestCase {
         json.double = nil
         XCTAssertEqual(json, JSON.null)
         
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
             XCTAssertNil(json.decimal)
             json.decimal = 42
             XCTAssertEqual(json, 42)

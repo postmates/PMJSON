@@ -12,7 +12,7 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import struct Foundation.Decimal
 #else
     /// A placeholder used for platforms that don't support `Decimal`.
@@ -37,7 +37,7 @@ public enum JSON {
     /// When decoding, any integer that doesn't fit in 64 bits and any floating-point number
     /// is decoded as a `Double`.
     case double(Double)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     /// A decimal number.
     /// When the decoding option `.useDecimals` is used, any value that would otherwise be
     /// decoded as a `Double` is decoded as a `Decimal` instead.
@@ -70,7 +70,7 @@ public enum JSON {
     public init(_ d: Double) {
         self = .double(d)
     }
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     public init(_ d: Decimal) {
         self = .decimal(d)
     }
@@ -121,13 +121,13 @@ extension JSON: Equatable {
         case (.decimal(let a), .decimal(let b)): return a == b
         case (.int64(let a), .double(let b)): return Double(a) == b
         case (.int64(let a), .decimal(let b)):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return Decimal(workaround: a) == b
             #else
                 return false
             #endif
         case (.double(let a), .decimal(let b)):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return Decimal(workaround: a) == b
             #else
                 return false

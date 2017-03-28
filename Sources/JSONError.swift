@@ -12,7 +12,7 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import struct Foundation.Decimal
     import class Foundation.NSDecimalNumber
 #endif
@@ -38,7 +38,7 @@ public enum JSONError: Error, CustomStringConvertible {
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case outOfRangeDouble(path: String?, value: Double, expected: Any.Type)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     /// Thrown when a decimal value is coerced to a smaller type (e.g. `Decimal` to `Int`)
     /// and the value doesn't fit in the smaller type.
     /// - Parameter path: The path of the value that cuased the error.
@@ -104,7 +104,7 @@ public enum JSONError: Error, CustomStringConvertible {
         case number = "number"
         case object = "object"
         case array = "array"
-        #if !os(iOS) && !os(OSX) && !os(watchOS) && !os(tvOS)
+        #if !os(iOS) && !os(OSX) && !os(watchOS) && !os(tvOS) && !swift(>=3.1)
         case decimalPlaceholder = "decimalPlaceholder"
         #endif
         
@@ -115,7 +115,7 @@ public enum JSONError: Error, CustomStringConvertible {
             case .string: return .string
             case .int64, .double: return .number
             case .decimal:
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                     return .number
                 #else
                     return .decimalPlaceholder
@@ -283,7 +283,7 @@ public extension JSON {
         case .int64(let i): return String(i)
         case .double(let d): return String(d)
         case .decimal(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return String(describing: d)
             #else
                 break
@@ -401,7 +401,7 @@ public extension JSON {
         case .int64(let i): return Double(i)
         case .double(let d): return d
         case .decimal(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 // NB: Decimal does not have any appropriate accessor
                 return NSDecimalNumber(decimal: d).doubleValue
             #else

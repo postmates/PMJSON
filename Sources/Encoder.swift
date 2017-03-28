@@ -12,7 +12,7 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import struct Foundation.Decimal
 #endif
 
@@ -79,7 +79,7 @@ extension JSON {
         stream.write(String(value))
     }
     
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     private static func encodeDecimal<Target: TextOutputStream>(_ value: Decimal, toStream stream: inout Target) {
         stream.write(String(describing: value))
     }

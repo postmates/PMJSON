@@ -15,7 +15,7 @@
 import XCTest
 import PMJSON
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import struct Foundation.Decimal
 #endif
 
@@ -45,7 +45,7 @@ class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("[1, 2, 3]"), [1, 2, 3])
         assertMatchesJSON(try JSON.decode("{\"one\": 1, \"two\": 2, \"three\": 3}"), ["one": 1, "two": 2, "three": 3])
         assertMatchesJSON(try JSON.decode("[1.23, 4e7]"), [1.23, 4e7])
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
             assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimals]), [JSON(1.23 as Decimal), JSON(4e7 as Decimal)])
         #endif
     }
@@ -53,7 +53,7 @@ class JSONDecoderTests: XCTestCase {
     func testDouble() {
         XCTAssertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
         XCTAssertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
             XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimals]), JSON(Decimal(string: "-5.4272823085455e+05")!))
         #endif
     }
@@ -67,7 +67,7 @@ class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
     }
     
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     func testDecimalParsing() throws {
         let data = try readFixture("sample", withExtension: "json")
         // Decode the data and make sure it contains no .double values
@@ -91,7 +91,7 @@ class JSONDecoderTests: XCTestCase {
                 XCTFail("Re-encoded JSON doesn't match original")
             }
         }
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
             do {
                 // test again with decimals
                 let json = try JSON.decode(data, options: [.useDecimals])
@@ -111,7 +111,7 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON(42 as Int64), JSON.int64(42))
         XCTAssertEqual(JSON(42 as Double), JSON.double(42))
         XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
             XCTAssertEqual(JSON(42 as Decimal), JSON.decimal(42))
         #endif
         XCTAssertEqual(JSON("foo"), JSON.string("foo"))
@@ -122,7 +122,7 @@ class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
     }
     
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     func testJSONErrorNSErrorDescription() throws {
         let jserror: JSONError?
         do {

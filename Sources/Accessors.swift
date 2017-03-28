@@ -12,7 +12,7 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import class Foundation.NSDecimalNumber
     import struct Foundation.Decimal
 #endif
@@ -73,7 +73,7 @@ public extension JSON {
         switch self {
         case .int64, .double: return true
         case .decimal:
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return true
             #else
                 return false
@@ -192,7 +192,7 @@ public extension JSON {
             case .int64(let i): return Double(i)
             case .double(let d): return d
             case .decimal(let d):
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                     // NB: Decimal does not have any accessor to produce a Double
                     return NSDecimalNumber(decimal: d).doubleValue
                 #else
@@ -304,7 +304,7 @@ internal func convertDoubleToInt64(_ d: Double) -> Int64? {
     return Int64(d)
 }
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     internal func convertDecimalToInt64(_ d: Decimal) -> Int64? {
         if d > Int64.maxDecimal || d < Int64.minDecimal {
             return nil

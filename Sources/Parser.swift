@@ -19,7 +19,7 @@
     import Darwin
 #endif
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     import struct Foundation.Decimal
 #endif
 
@@ -377,7 +377,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     throw error(.invalidNumber)
                 }
             }
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 @inline(__always) func parseDecimal(from buffer: UnsafeBufferPointer<CChar>) throws -> Decimal {
                     guard let baseAddress = buffer.baseAddress,
                         // NB: For some reason String(bytesNoCopy:length:encoding:freeWhenDone:) takes a mutable pointer,
@@ -414,7 +414,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         break loop
                     }
                 }
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                     if options.useDecimals {
                         return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
                     }
@@ -445,7 +445,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                             break loop
                         }
                     }
-                    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+                    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                         if options.useDecimals {
                             return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
                         }
@@ -477,7 +477,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 return .int64Value(num)
             }
             // out of range, fall back to double/decimal
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 if options.useDecimals {
                     tempBuffer.removeLast() // drop the NUL
                     return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
@@ -613,7 +613,7 @@ public enum JSONEvent: Hashable {
     case int64Value(Int64)
     /// A double value.
     case doubleValue(Double)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     case decimalValue(Decimal)
     #else
     case decimalValue(DecimalPlaceholder)
@@ -635,7 +635,7 @@ public enum JSONEvent: Hashable {
         case .int64Value(let i): return i.hashValue << 4 + 6
         case .doubleValue(let d): return d.hashValue << 4 + 7
         case .decimalValue(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return d.hashValue << 4 + 8
             #else
                 return 8

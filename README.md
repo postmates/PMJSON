@@ -248,6 +248,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add Linux support for `Decimal` (on Swift 3.1 and later). NOTE: Decimal support is still buggy in Swift 3.1, and the workarounds we employ to get the correct values on Apple platforms don't work on Linux. You probably shouldn't rely on this working correctly on Linux until Swift fixes its Decimal implementation.
+
 #### v2.0.2 (2017-03-06)
 
 * Fix Linux compatibility.
