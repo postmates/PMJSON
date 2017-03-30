@@ -253,6 +253,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Add Linux support for `Decimal` (on Swift 3.1 and later). NOTE: Decimal support is still buggy in Swift 3.1, and the workarounds we employ to get the correct values on Apple platforms don't work on Linux. You probably shouldn't rely on this working correctly on Linux until Swift fixes its Decimal implementation.
 * Add Linux support for decoding from/encoding to `Data`.
 * Add Linux support for `LocalizedError` on the Error types (only really applies to Swift 3.1 and later).
+* Fix compilation on Linux using the release configuration.
+* Support running the test suite with `swift test`.
 
 #### v2.0.2 (2017-03-06)
 
