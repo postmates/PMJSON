@@ -137,7 +137,7 @@ public extension JSON {
     /// - Returns: A `Bool` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getBool() throws -> Bool {
-        guard let b = self.bool else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.bool), actual: .forValue(self)) }
+        guard let b = self.bool else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.bool), actual: .forValue(self))) }
         return b
     }
     
@@ -147,14 +147,14 @@ public extension JSON {
     func getBoolOrNil() throws -> Bool? {
         if let b = self.bool { return b }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.bool), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.bool), actual: .forValue(self))) }
     }
     
     /// Returns the string value if the receiver is a string.
     /// - Returns: A `String` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getString() throws -> String {
-        guard let str = self.string else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.string), actual: .forValue(self)) }
+        guard let str = self.string else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.string), actual: .forValue(self))) }
         return str
     }
     
@@ -164,14 +164,14 @@ public extension JSON {
     func getStringOrNil() throws -> String? {
         if let str = self.string { return str }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.string), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.string), actual: .forValue(self))) }
     }
     
     /// Returns the 64-bit integral value if the receiver is a number.
     /// - Returns: An `Int64` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getInt64() throws -> Int64 {
-        guard let val = self.int64 else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
+        guard let val = self.int64 else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))) }
         return val
     }
     
@@ -181,7 +181,7 @@ public extension JSON {
     func getInt64OrNil() throws -> Int64? {
         if let val = self.int64 { return val }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self))) }
     }
     
     /// Returns the integral value if the receiver is a number.
@@ -189,9 +189,9 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is the wrong type, or if the 64-bit integral value
     ///   is too large to fit in an `Int`.
     func getInt() throws -> Int {
-        guard let val = self.int64 else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
+        guard let val = self.int64 else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))) }
         let truncated = Int(truncatingBitPattern: val)
-        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
     
@@ -202,17 +202,17 @@ public extension JSON {
     func getIntOrNil() throws -> Int? {
         if let val = self.int64 {
             let truncated = Int(truncatingBitPattern: val)
-            guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
+            guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
             return truncated
         } else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self))) }
     }
     
     /// Returns the double value if the receiver is a number.
     /// - Returns: A `Double` value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getDouble() throws -> Double {
-        guard let val = self.double else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)) }
+        guard let val = self.double else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))) }
         return val
     }
     
@@ -222,14 +222,14 @@ public extension JSON {
     func getDoubleOrNil() throws -> Double? {
         if let val = self.double { return val }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.number), actual: .forValue(self))) }
     }
     
     /// Returns the object value if the receiver is an object.
     /// - Returns: An object value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getObject() throws -> JSONObject {
-        guard let dict = self.object else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.object), actual: .forValue(self)) }
+        guard let dict = self.object else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.object), actual: .forValue(self))) }
         return dict
     }
     
@@ -239,14 +239,14 @@ public extension JSON {
     func getObjectOrNil() throws -> JSONObject? {
         if let dict = self.object { return dict }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.object), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.object), actual: .forValue(self))) }
     }
     
     /// Returns the array value if the receiver is an array.
     /// - Returns: An array value.
     /// - Throws: `JSONError` if the receiver is the wrong type.
     func getArray() throws -> JSONArray {
-        guard let ary = self.array else { throw JSONError.missingOrInvalidType(path: nil, expected: .required(.array), actual: .forValue(self)) }
+        guard let ary = self.array else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.array), actual: .forValue(self))) }
         return ary
     }
     
@@ -256,7 +256,7 @@ public extension JSON {
     func getArrayOrNil() throws -> JSONArray? {
         if let ary = self.array { return ary }
         else if isNull { return nil }
-        else { throw JSONError.missingOrInvalidType(path: nil, expected: .optional(.array), actual: .forValue(self)) }
+        else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .optional(.array), actual: .forValue(self))) }
     }
 }
 
@@ -290,7 +290,7 @@ public extension JSON {
             #endif
         default: break
         }
-        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self)))
     }
     
     /// Returns the receiver coerced to a 64-bit integral value.
@@ -302,7 +302,7 @@ public extension JSON {
     ///   or a floating-point value that does not fit in 64 bits.
     func toInt64() throws -> Int64 {
         guard let val = try toInt64MaybeNil(.required(.number)) else {
-            throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null)
+            throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null))
         }
         return val
     }
@@ -324,12 +324,12 @@ public extension JSON {
             return i
         case .double(let d):
             guard let val = convertDoubleToInt64(d) else {
-                throw JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self)
+                throw hideThrow(JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self))
             }
             return val
         case .decimal(let d):
             guard let val = convertDecimalToInt64(d) else {
-                throw JSONError.outOfRangeDecimal(path: nil, value: d, expected: Int64.self)
+                throw hideThrow(JSONError.outOfRangeDecimal(path: nil, value: d, expected: Int64.self))
             }
             return val
         case .string(let s):
@@ -337,7 +337,7 @@ public extension JSON {
                 return i
             } else if let d = Double(s) {
                 guard let val = convertDoubleToInt64(d) else {
-                    throw JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self)
+                    throw hideThrow(JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self))
                 }
                 return val
             }
@@ -346,7 +346,7 @@ public extension JSON {
         default:
             break
         }
-        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self)))
     }
     
     /// Returns the receiver coerced to an integral value.
@@ -359,7 +359,7 @@ public extension JSON {
     func toInt() throws -> Int {
         let val = try toInt64()
         let truncated = Int(truncatingBitPattern: val)
-        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
     
@@ -373,7 +373,7 @@ public extension JSON {
     func toIntOrNil() throws -> Int? {
         guard let val = try toInt64OrNil() else { return nil }
         let truncated = Int(truncatingBitPattern: val)
-        guard Int64(truncated) == val else { throw JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self) }
+        guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
     
@@ -383,7 +383,7 @@ public extension JSON {
     ///   or a string that cannot be coerced to a floating-point value.
     func toDouble() throws -> Double {
         guard let val = try toDoubleMaybeNil(.required(.number)) else {
-            throw JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null)
+            throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .null))
         }
         return val
     }
@@ -411,7 +411,7 @@ public extension JSON {
         case .null: return nil
         default: break
         }
-        throw JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self))
+        throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self)))
     }
 }
 
@@ -1786,3 +1786,18 @@ internal extension ContiguousArray {
         return self[index]
     }
 }
+
+// Swift on Linux has a bug in Simplify CFG that breaks compilation under the release configuration.
+// The following function works around this issue. This has been reproduced in Swift 3.0.2 and Swift 3.1.
+// FIXME: See if this is fixed in the next release.
+#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    @inline(__always)
+    func hideThrow<E: Error>(_ e: E) -> E {
+        return e
+    }
+#else
+    @inline(never)
+    func hideThrow<E: Error>(_ e: E) -> E {
+        return e
+    }
+#endif
