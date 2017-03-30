@@ -12,7 +12,7 @@ import PMJSON
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     
     /// Tests for [JSONTestSuite](https://github.com/nst/JSONTestSuite).
-    final class JSONTestSuite: XCTestCase {
+    public final class JSONTestSuite: XCTestCase {
         /// How we should expect to parse various test cases.
         /// This is mainly intended for defining indeterminate cases, but may also
         /// be used to override other cases when the case is believed to be incorrect.
@@ -117,7 +117,7 @@ import PMJSON
         }
         #endif
         
-        static let allLinuxTests: [(String, (JSONTestSuite) -> () throws -> Void)] = Array(testCases.keys.map({ name in
+        public static let allLinuxTests: [(String, (JSONTestSuite) -> () throws -> Void)] = Array(testCases.keys.map({ name in
             return (name, { suite in { try suite.execute(name: name) } })
         }))
         

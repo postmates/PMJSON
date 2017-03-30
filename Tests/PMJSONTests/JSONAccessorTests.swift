@@ -9,8 +9,8 @@
 import XCTest
 import PMJSON
 
-class JSONAccessorTests: XCTestCase {
-    static let allLinuxTests = [
+public final class JSONAccessorTests: XCTestCase {
+    public static let allLinuxTests = [
         ("testConvenienceAccessors", testConvenienceAccessors),
         ("testConvenienceAccessorAssignments", testConvenienceAccessorAssignments),
         ("testMixedTypeEquality", testMixedTypeEquality)

@@ -14,13 +14,13 @@ import XCTest
 #endif
 
 /// - Note: The encoder is primarily tested with round-trip tests in `JSONDecoderTests`.
-final class JSONEncoderTests: XCTestCase {
+public final class JSONEncoderTests: XCTestCase {
     #if swift(>=3.1)
-    static let allLinuxTests = [
+    public static let allLinuxTests = [
         ("testDecimalEncoding", testDecimalEncoding)
     ]
     #else
-    static let allLinuxTests: [(String, (JSONEncoderTests) -> () -> Void)] = []
+    public static let allLinuxTests: [(String, (JSONEncoderTests) -> () -> Void)] = []
     #endif
     
     #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)

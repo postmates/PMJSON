@@ -9,8 +9,8 @@
 import XCTest
 import PMJSON
 
-class JSONParserTests: XCTestCase {
-    static let allLinuxTests = [
+public final class JSONParserTests: XCTestCase {
+    public static let allLinuxTests = [
         ("testParserErrorDescription", testParserErrorDescription),
         ("testTrailingCharacters", testTrailingCharacters),
         ("testEmptyInput", testEmptyInput),

@@ -1,5 +1,5 @@
 import XCTest
-@testable import PMJSONTests
+import PMJSONTests
 
 XCTMain([
     testCase(JSONDecoderTests.allLinuxTests),

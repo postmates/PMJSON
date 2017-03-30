@@ -41,8 +41,8 @@ private func readFixture(_ name: String, withExtension ext: String?) throws -> D
     return try Data(contentsOf: url)
 }
 
-class JSONDecoderTests: XCTestCase {
-    static let allLinuxTests: [(String, (JSONDecoderTests) -> () throws -> Void)] = {
+public final class JSONDecoderTests: XCTestCase {
+    public static let allLinuxTests: [(String, (JSONDecoderTests) -> () throws -> Void)] = {
         var tests: [(String, (JSONDecoderTests) -> () throws -> Void)] = [
             ("testBasic", testBasic),
             ("testDouble", testDouble),
@@ -223,8 +223,8 @@ class JSONDecoderTests: XCTestCase {
 }
 
 /// Tests both `JSONDecoder`'s streaming mode and `JSONStreamDecoder`.
-class JSONStreamDecoderTests: XCTestCase {
-    static let allLinuxTests = [
+public class JSONStreamDecoderTests: XCTestCase {
+    public static let allLinuxTests = [
         ("testDecoderStreamingMode", testDecoderStreamingMode),
         ("testStreamingDecoder", testStreamingDecoder)
     ]
@@ -327,8 +327,8 @@ class JSONStreamDecoderTests: XCTestCase {
     }
 }
 
-class JSONBenchmarks: XCTestCase {
-    static let allLinuxTests: [(String, (JSONBenchmarks) -> () throws -> Void)] = [
+public class JSONBenchmarks: XCTestCase {
+    public static let allLinuxTests: [(String, (JSONBenchmarks) -> () throws -> Void)] = [
         ("testDecodePerformance", testDecodePerformance),
         ("testDecodeDecimalPerformance", testDecodeDecimalPerformance),
         ("testDecodePerformanceCocoa", testDecodePerformanceCocoa),
