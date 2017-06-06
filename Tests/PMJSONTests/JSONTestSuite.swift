@@ -95,7 +95,7 @@ import PMJSON
         
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
         static private var initializedDynamicTests = false
-        override class func defaultTestSuite() -> XCTestSuite {
+        public override class func defaultTestSuite() -> XCTestSuite {
             if !initializedDynamicTests {
                 initializedDynamicTests = true
                 let imp = unsafeBitCast(executeIMP, to: IMP.self)
