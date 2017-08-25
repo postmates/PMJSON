@@ -277,12 +277,12 @@ public extension JSON {
     
     private func toStringMaybeNil(_ expected: JSONError.ExpectedType) throws -> String? {
         switch self {
-        case .string(let s): return s
-        case .null: return nil
-        case .bool(let b): return String(b)
-        case .int64(let i): return String(i)
-        case .double(let d): return String(d)
-        case .decimal(let d):
+        case let .string(s): return s
+        case let .null: return nil
+        case let .bool(b): return String(b)
+        case let .int64(i): return String(i)
+        case let .double(d): return String(d)
+        case let .decimal(d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return String(describing: d)
             #else
