@@ -1780,9 +1780,9 @@ internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     }
 }
 
-internal extension ContiguousArray {
-    subscript(safe index: Int) -> Element? {
-        guard index >= startIndex && index < endIndex else { return nil }
+internal extension Collection {
+    subscript(safe index: Index) -> Iterator.Element? {
+        guard (startIndex..<endIndex).contains(index) else { return nil }
         return self[index]
     }
 }
