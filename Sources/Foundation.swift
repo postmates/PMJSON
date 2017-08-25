@@ -143,13 +143,13 @@ extension JSON {
         public var ns: Any {
             switch self {
             case .null: return NSNull()
-            case .bool(let b): return NSNumber(value: b)
-            case .string(let s): return s
-            case .int64(let i): return NSNumber(value: i)
-            case .double(let d): return d
-            case .decimal(let d): return NSDecimalNumber(decimal: d)
-            case .object(let obj): return obj.ns
-            case .array(let ary):
+            case let .bool(b): return NSNumber(value: b)
+            case let .string(s): return s
+            case let .int64(i): return NSNumber(value: i)
+            case let .double(d): return d
+            case let .decimal(d): return NSDecimalNumber(decimal: d)
+            case let .object(obj): return obj.ns
+            case let .array(ary):
                 return ary.map({$0.ns})
             }
         }
@@ -158,14 +158,14 @@ extension JSON {
         public var nsNoNull: Any? {
             switch self {
             case .null: return nil
-            case .bool(let b): return NSNumber(value: b)
-            case .string(let s): return s
-            case .int64(let i): return NSNumber(value: i)
-            case .double(let d): return d
-            case .decimal(let d): return d
-            case .object(let obj): return obj.nsNoNull
-            case .array(let ary):
-                return ary.flatMap({$0.nsNoNull})
+            case let .bool(b): return NSNumber(value: b)
+            case let .string(s): return s
+            case let .int64(i): return NSNumber(value: i)
+            case let .double(d): return d
+            case let .decimal(d): return d
+            case let .object(obj): return obj.nsNoNull
+            case let .array(ary):
+                return ary.flatMap {$0.nsNoNull}
             }
         }
     }
@@ -260,7 +260,7 @@ private struct UTF8Decoder: Sequence {
         
         mutating func next() -> UnicodeScalar? {
             switch utf8.decode(&iter) {
-            case .scalarValue(let scalar): return scalar
+            case let .scalarValue(scalar): return scalar
             case .error: return "\u{FFFD}"
             case .emptyInput: return nil
             }
@@ -344,8 +344,8 @@ private struct UTF16Decoder: Sequence {
         
         mutating func next() -> UInt16? {
             switch (iter.next(), endian) {
-            case (let x?, .big): return UInt16(bigEndian: x)
-            case (let x?, .little): return UInt16(littleEndian: x)
+            case let (x?, .big): return UInt16(bigEndian: x)
+            case let (x?, .little): return UInt16(littleEndian: x)
             case (nil, _) where trailingFFFD:
                 trailingFFFD = false
                 return 0xFFFD
@@ -432,8 +432,8 @@ private struct UTF32Decoder: Sequence {
         
         mutating func next() -> UInt32? {
             switch (iter.next(), endian) {
-            case (let x?, .big): return UInt32(bigEndian: x)
-            case (let x?, .little): return UInt32(littleEndian: x)
+            case let (x?, .big): return UInt32(bigEndian: x)
+            case let (x?, .little): return UInt32(littleEndian: x)
             case (nil, _) where trailingFFFD:
                 trailingFFFD = false
                 return 0xFFFD

@@ -125,14 +125,14 @@ extension JSONObject {
     /// Keys appear in the same order as they occur as the `.0` member of key-value pairs in `self`.
     /// Each key in the result has a unique value.
     public var keys: LazyMapCollection<JSONObject, String> {
-        return lazy.map({ $0.0 })
+        return lazy.map { $0.0 }
     }
     
     /// A collection containing just the values of `self`.
     ///
     /// Values appear in the same order as they occur as the `.1` member of key-value pairs in `self`.
     public var values: LazyMapCollection<JSONObject, JSON> {
-        return lazy.map({ $0.1 })
+        return lazy.map { $0.1 }
     }
     
     /// Returns the `Index` for the given key, or `nil` if the key is not present in the object.
@@ -209,7 +209,7 @@ extension JSONObject: Equatable {
 
 extension JSONObject: CustomReflectable {
     public var customMirror: Mirror {
-        let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map({ ($0,$1) })
+        let children: LazyMapCollection<Dictionary<String, JSON>, Mirror.Child> = dictionary.lazy.map { ($0,$1) }
         return Mirror(self, children: children, displayStyle: .dictionary)
     }
 }

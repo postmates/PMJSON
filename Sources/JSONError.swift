@@ -91,8 +91,8 @@ public enum JSONError: Error, CustomStringConvertible {
         
         public var description: String {
             switch self {
-            case .required(let type): return type.description
-            case .optional(let type): return "\(type) or null"
+            case let .required(type): return type.description
+            case let .optional(type): return "\(type) or null"
             }
         }
     }
@@ -277,12 +277,12 @@ public extension JSON {
     
     private func toStringMaybeNil(_ expected: JSONError.ExpectedType) throws -> String? {
         switch self {
-        case .string(let s): return s
-        case .null: return nil
-        case .bool(let b): return String(b)
-        case .int64(let i): return String(i)
-        case .double(let d): return String(d)
-        case .decimal(let d):
+        case let .string(s): return s
+        case let .null: return nil
+        case let .bool(b): return String(b)
+        case let .int64(i): return String(i)
+        case let .double(d): return String(d)
+        case let .decimal(d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return String(describing: d)
             #else
@@ -320,19 +320,19 @@ public extension JSON {
     
     private func toInt64MaybeNil(_ expected: JSONError.ExpectedType) throws -> Int64? {
         switch self {
-        case .int64(let i):
+        case let .int64(i):
             return i
-        case .double(let d):
+        case let .double(d):
             guard let val = convertDoubleToInt64(d) else {
                 throw hideThrow(JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self))
             }
             return val
-        case .decimal(let d):
+        case let .decimal(d):
             guard let val = convertDecimalToInt64(d) else {
                 throw hideThrow(JSONError.outOfRangeDecimal(path: nil, value: d, expected: Int64.self))
             }
             return val
-        case .string(let s):
+        case let .string(s):
             if let i = Int64(s, radix: 10) {
                 return i
             } else if let d = Double(s) {
@@ -398,16 +398,16 @@ public extension JSON {
     
     private func toDoubleMaybeNil(_ expected: JSONError.ExpectedType) throws -> Double? {
         switch self {
-        case .int64(let i): return Double(i)
-        case .double(let d): return d
-        case .decimal(let d):
+        case let.int64(i): return Double(i)
+        case let .double(d): return d
+        case let .decimal(d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 // NB: Decimal does not have any appropriate accessor
                 return NSDecimalNumber(decimal: d).doubleValue
             #else
                 break
             #endif
-        case .string(let s): return Double(s)
+        case let .string(s): return Double(s)
         case .null: return nil
         default: break
         }
@@ -1780,9 +1780,9 @@ internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     }
 }
 
-internal extension ContiguousArray {
-    subscript(safe index: Int) -> Element? {
-        guard index >= startIndex && index < endIndex else { return nil }
+internal extension Collection {
+    subscript(safe index: Index) -> Iterator.Element? {
+        guard (startIndex..<endIndex).contains(index) else { return nil }
         return self[index]
     }
 }
