@@ -114,27 +114,27 @@ extension JSON: Equatable {
     public static func ==(lhs: JSON, rhs: JSON) -> Bool {
         switch (lhs, rhs) {
         case (.null, .null): return true
-        case (.bool(let a), .bool(let b)): return a == b
-        case (.string(let a), .string(let b)): return a == b
-        case (.int64(let a), .int64(let b)): return a == b
-        case (.double(let a), .double(let b)): return a == b
-        case (.decimal(let a), .decimal(let b)): return a == b
-        case (.int64(let a), .double(let b)): return Double(a) == b
-        case (.int64(let a), .decimal(let b)):
+        case let (.bool(a), .bool(b)): return a == b
+        case let (.string(a), .string(b)): return a == b
+        case let (.int64(a), .int64(b)): return a == b
+        case let (.double(a), .double(b)): return a == b
+        case let (.decimal(a), .decimal(b)): return a == b
+        case let (.int64(a), .double(b)): return Double(a) == b
+        case let (.int64(a), .decimal(b)):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return Decimal(workaround: a) == b
             #else
                 return false
             #endif
-        case (.double(let a), .decimal(let b)):
+        case let (.double(a), .decimal(b)):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 return Decimal(workaround: a) == b
             #else
                 return false
             #endif
         case (.double, .int64), (.decimal, .int64), (.decimal, .double): return rhs == lhs
-        case (.object(let a), .object(let b)): return a == b
-        case (.array(let a), .array(let b)): return a == b
+        case let (.object(a), .object(b)): return a == b
+        case let (.array(a), .array(b)): return a == b
         default: return false
         }
     }
@@ -206,10 +206,10 @@ extension JSON: CustomReflectable {
     public var customMirror: Mirror {
         switch self {
         case .null, .bool, .string, .int64, .double, .decimal: return Mirror(self, children: [])
-        case .object(let obj):
+        case let .object(obj):
             let children: LazyMapCollection<JSONObject, Mirror.Child> = obj.lazy.map({ ($0, $1) })
             return Mirror(self, children: children, displayStyle: .dictionary)
-        case .array(let ary):
+        case let .array(ary):
             return Mirror(self, unlabeledChildren: ary, displayStyle: .collection)
         }
     }
