@@ -91,8 +91,8 @@ public enum JSONError: Error, CustomStringConvertible {
         
         public var description: String {
             switch self {
-            case .required(let type): return type.description
-            case .optional(let type): return "\(type) or null"
+            case let .required(type): return type.description
+            case let .optional(type): return "\(type) or null"
             }
         }
     }
@@ -320,19 +320,19 @@ public extension JSON {
     
     private func toInt64MaybeNil(_ expected: JSONError.ExpectedType) throws -> Int64? {
         switch self {
-        case .int64(let i):
+        case let .int64(i):
             return i
-        case .double(let d):
+        case let .double(d):
             guard let val = convertDoubleToInt64(d) else {
                 throw hideThrow(JSONError.outOfRangeDouble(path: nil, value: d, expected: Int64.self))
             }
             return val
-        case .decimal(let d):
+        case let .decimal(d):
             guard let val = convertDecimalToInt64(d) else {
                 throw hideThrow(JSONError.outOfRangeDecimal(path: nil, value: d, expected: Int64.self))
             }
             return val
-        case .string(let s):
+        case let .string(s):
             if let i = Int64(s, radix: 10) {
                 return i
             } else if let d = Double(s) {
@@ -398,16 +398,16 @@ public extension JSON {
     
     private func toDoubleMaybeNil(_ expected: JSONError.ExpectedType) throws -> Double? {
         switch self {
-        case .int64(let i): return Double(i)
-        case .double(let d): return d
-        case .decimal(let d):
+        case let.int64(i): return Double(i)
+        case let .double(d): return d
+        case let .decimal(d):
             #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
                 // NB: Decimal does not have any appropriate accessor
                 return NSDecimalNumber(decimal: d).doubleValue
             #else
                 break
             #endif
-        case .string(let s): return Double(s)
+        case let .string(s): return Double(s)
         case .null: return nil
         default: break
         }
