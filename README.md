@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v2.0.2-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v2.0.3-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -248,7 +248,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### Development
+#### v2.0.3 (2017-09-12)
 
 * Add Linux support for `Decimal` (on Swift 3.1 and later). NOTE: Decimal support is still buggy in Swift 3.1, and the workarounds we employ to get the correct values on Apple platforms don't work on Linux. You probably shouldn't rely on this working correctly on Linux until Swift fixes its Decimal implementation.
 * Add Linux support for decoding from/encoding to `Data`.
