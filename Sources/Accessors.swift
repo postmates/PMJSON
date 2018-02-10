@@ -169,7 +169,7 @@ public extension JSON {
     var int: Int? {
         get {
             guard let value = self.int64 else { return nil}
-            let truncated = Int(truncatingBitPattern: value)
+            let truncated = Int(truncatingIfNeeded: value)
             guard Int64(truncated) == value else { return nil }
             return truncated
         }

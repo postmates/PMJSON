@@ -362,13 +362,13 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 tempBuffer.reserveCapacity(12)
             }
             defer { self.tempBuffer = tempBuffer }
-            tempBuffer.append(Int8(truncatingBitPattern: c.value))
+            tempBuffer.append(Int8(truncatingIfNeeded: c.value))
             if options.strict {
                 let digit: UnicodeScalar
                 if c == "-" {
                     guard let c2 = bump(), case "0"..."9" = c2 else { throw error(.invalidNumber) }
                     digit = c2
-                    tempBuffer.append(Int8(truncatingBitPattern: digit.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: digit.value))
                 } else {
                     digit = c
                 }
@@ -397,11 +397,11 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
             /// Invoke this after parsing the "e" character.
             func parseExponent() throws -> JSONEvent {
                 let c = try bumpRequired()
-                tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                 switch c {
                 case "-", "+":
                     guard let c = bump(), case "0"..."9" = c else { throw error(.invalidNumber) }
-                    tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                 case "0"..."9": break
                 default: throw error(.invalidNumber)
                 }
@@ -409,7 +409,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     switch c {
                     case "0"..."9":
                         bump()
-                        tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                        tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                     default:
                         break loop
                     }
@@ -426,20 +426,20 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 switch c {
                 case "0"..."9":
                     bump()
-                    tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                 case ".":
                     bump()
-                    tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                     guard let c = bump(), case "0"..."9" = c else { throw error(.invalidNumber) }
-                    tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                     loop: while let c = base.peek() {
                         switch c {
                         case "0"..."9":
                             bump()
-                            tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                            tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                         case "e", "E":
                             bump()
-                            tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                            tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                             return try parseExponent()
                         default:
                             break loop
@@ -454,7 +454,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
                 case "e", "E":
                     bump()
-                    tempBuffer.append(Int8(truncatingBitPattern: c.value))
+                    tempBuffer.append(Int8(truncatingIfNeeded: c.value))
                     return try parseExponent()
                 default:
                     break outerLoop
@@ -533,7 +533,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 throw error(.invalidEscape)
             }
         }
-        return UInt16(truncatingBitPattern: codepoint)
+        return UInt16(truncatingIfNeeded: codepoint)
     }
     
     @inline(__always) @discardableResult private mutating func bump() -> UnicodeScalar? {

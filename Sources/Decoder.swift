@@ -66,7 +66,7 @@ extension JSON {
     /// - Parameter scalars: A sequence of `UnicodeScalar`s to parse as a JSON stream.
     /// - Parameter options: Options that controls JSON parsing. Defaults to no options. See `JSONOptions` for details.
     /// - Returns: A `JSONStreamDecoder`.
-    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, options: JSONOptions = []) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
+    public static func decodeStream<Seq>(_ scalars: Seq, options: JSONOptions = []) -> JSONStreamDecoder<JSONParser<Seq>> {
         var parserOptions = options.parserOptions
         parserOptions.streaming = true
         let parser = JSONParser(scalars, options: parserOptions)
@@ -74,7 +74,7 @@ extension JSON {
     }
     
     @available(*, deprecated, message: "Use JSON.decodeStream(_:options:) instead")
-    public static func decodeStream<Seq: Sequence>(_ scalars: Seq, strict: Bool) -> JSONStreamDecoder<JSONParser<Seq>> where Seq.Iterator.Element == UnicodeScalar {
+    public static func decodeStream<Seq>(_ scalars: Seq, strict: Bool) -> JSONStreamDecoder<JSONParser<Seq>> {
         return decodeStream(scalars, options: JSONOptions(strict: strict))
     }
 }

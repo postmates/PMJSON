@@ -101,7 +101,7 @@ import PMJSON
         
         #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
         static private var initializedDynamicTests = false
-        public override class func defaultTestSuite() -> XCTestSuite {
+        public override class var defaultTestSuite: XCTestSuite {
             if !initializedDynamicTests {
                 initializedDynamicTests = true
                 let imp = unsafeBitCast(executeIMP, to: IMP.self)
@@ -109,7 +109,7 @@ import PMJSON
                     class_addMethod(self, Selector(name), imp, "c@:^@")
                 }
             }
-            return super.defaultTestSuite()
+            return super.defaultTestSuite
         }
         
         static let executeIMP: @convention(c) (JSONTestSuite, Selector, NSErrorPointer) -> Bool = { (this, cmd, outError) in

@@ -190,7 +190,7 @@ public extension JSON {
     ///   is too large to fit in an `Int`.
     func getInt() throws -> Int {
         guard let val = self.int64 else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))) }
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
@@ -201,7 +201,7 @@ public extension JSON {
     ///   is too large to fit in an `Int`.
     func getIntOrNil() throws -> Int? {
         if let val = self.int64 {
-            let truncated = Int(truncatingBitPattern: val)
+            let truncated = Int(truncatingIfNeeded: val)
             guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
             return truncated
         } else if isNull { return nil }
@@ -358,7 +358,7 @@ public extension JSON {
     ///   or a floating-point value that does not fit in an `Int`.
     func toInt() throws -> Int {
         let val = try toInt64()
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
@@ -372,7 +372,7 @@ public extension JSON {
     ///   or a floating-point value that does not fit in an `Int`.
     func toIntOrNil() throws -> Int? {
         guard let val = try toInt64OrNil() else { return nil }
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
