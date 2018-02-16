@@ -461,11 +461,20 @@
         static let minDecimal: Decimal = Decimal(workaround: Int64.min)
     }
     
+    internal extension UInt64 {
+        static let maxDecimal: Decimal = Decimal(workaround: UInt64.max)
+        static let minDecimal: Decimal = Decimal(workaround: UInt64.min)
+    }
+    
     internal extension Decimal {
         // NB: As of Swift 3.0.1, Decimal(_: Int64) incorrectly passes through Double first (SR-3125)
         // and Decimal(_: Double) can produce incorrect results (SR-3130), so for now we're going to
         // always go through NSNumber.
         init(workaround value: Int64) {
+            self = NSNumber(value: value).decimalValue
+        }
+        
+        init(workaround value: UInt64) {
             self = NSNumber(value: value).decimalValue
         }
         

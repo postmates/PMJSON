@@ -312,8 +312,21 @@ internal func convertDoubleToInt64(_ d: Double) -> Int64? {
         // NB: Decimal does not have any appropriate accessor
         return NSDecimalNumber(decimal: d).int64Value
     }
+    
+    internal func convertDecimalToUInt64(_ d: Decimal) -> UInt64? {
+        if d > UInt64.maxDecimal || d < UInt64.minDecimal {
+            return nil
+        }
+        // NB: Decimal does not have any appropriate accessor
+        return NSDecimalNumber(decimal: d).uint64Value
+    }
 #else
     internal func convertDecimalToInt64(_ d: DecimalPlaceholder) -> Int64? {
         return nil
     }
+    
+    internal func convertDecimalToUInt64(_ d: DecimalPlaceholder) -> UInt64? {
+        return nil
+    }
+
 #endif

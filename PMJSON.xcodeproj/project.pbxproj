@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		0A0F2BAA1BF1BBE50095D290 /* JSONError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BA91BF1BBE50095D290 /* JSONError.swift */; };
 		0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */; };
+		0AE408A4203413AE00A73EBC /* Codable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A3203413AE00A73EBC /* Codable.swift */; };
+		0AE408A62036A36200A73EBC /* SwiftDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */; };
 		9E0317C51D664B9000096D9E /* sample.json in Resources */ = {isa = PBXBuildFile; fileRef = 9E0317C41D664B9000096D9E /* sample.json */; };
 		9E0AD0C31C69B3360038B4F5 /* DecimalNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */; };
 		9E1B24441BC73D7600E5BC19 /* PMJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = 9E1B24431BC73D7600E5BC19 /* PMJSON.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -42,6 +44,8 @@
 		0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONObject.swift; sourceTree = "<group>"; };
 		0A79B5071E8AFE6700A8C727 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
+		0AE408A3203413AE00A73EBC /* Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Codable.swift; sourceTree = "<group>"; };
+		0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDecoderTests.swift; sourceTree = "<group>"; };
 		9E0317C41D664B9000096D9E /* sample.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = sample.json; sourceTree = "<group>"; };
 		9E0317C61D664D7D00096D9E /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DecimalNumber.swift; sourceTree = "<group>"; };
@@ -126,6 +130,7 @@
 				0A0F2BA91BF1BBE50095D290 /* JSONError.swift */,
 				9E87937B1BC8341500BC6A15 /* Foundation.swift */,
 				9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */,
+				0AE408A3203413AE00A73EBC /* Codable.swift */,
 				9E1B246A1BC7463D00E5BC19 /* Parser.swift */,
 				9E8793771BC7547800BC6A15 /* Decoder.swift */,
 				9E5983DB1C60282F008495F6 /* Encoder.swift */,
@@ -144,6 +149,7 @@
 				9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */,
 				9E4997EF1DC96E110049EECD /* JSONEncoderTests.swift */,
 				9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */,
+				0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */,
 				9E0317C61D664D7D00096D9E /* README.txt */,
 				9E0317C41D664B9000096D9E /* sample.json */,
 				9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */,
@@ -272,6 +278,7 @@
 				9E0AD0C31C69B3360038B4F5 /* DecimalNumber.swift in Sources */,
 				9E1B24591BC73DA000E5BC19 /* JSON.swift in Sources */,
 				9E87937E1BC835F500BC6A15 /* Accessors.swift in Sources */,
+				0AE408A4203413AE00A73EBC /* Codable.swift in Sources */,
 				0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -284,6 +291,7 @@
 				9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */,
 				9E4997F01DC96E110049EECD /* JSONEncoderTests.swift in Sources */,
 				9EC52A6A1DCBC2E900658723 /* JSONAccessorTests.swift in Sources */,
+				0AE408A62036A36200A73EBC /* SwiftDecoderTests.swift in Sources */,
 				9E1B24501BC73D7600E5BC19 /* JSONDecoderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
