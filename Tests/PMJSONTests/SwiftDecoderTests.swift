@@ -132,4 +132,10 @@ final class SwiftDecoderTests: XCTestCase {
             }
         }
     }
+    
+    func testDecodeSingleValue() throws {
+        let json: JSON = "red"
+        let color = try JSON.Decoder().decode(Person.Color.self, from: json)
+        XCTAssertEqual(color, .red)
+    }
 }
