@@ -337,35 +337,6 @@ private struct _JSONKeyedDecoder<K: CodingKey>: KeyedDecodingContainerProtocol {
     }
 }
 
-private enum JSONKey: CodingKey {
-    static let `super` = JSONKey.string("super")
-    
-    case int(Int)
-    case string(String)
-    
-    var stringValue: String {
-        switch self {
-        case .int(let x): return String(x)
-        case .string(let s): return s
-        }
-    }
-    
-    var intValue: Int? {
-        switch self {
-        case .int(let x): return x
-        case .string: return nil
-        }
-    }
-    
-    init?(stringValue: String) {
-        self = .string(stringValue)
-    }
-    
-    init?(intValue: Int) {
-        self = .int(intValue)
-    }
-}
-
 private struct _JSONUnkeyedDecoder: UnkeyedDecodingContainer {
     private let _data: DecoderData
     private let value: JSONArray
