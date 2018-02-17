@@ -30,7 +30,7 @@ extension JSON {
         /// - Parameter data: The data containing JSON to decode.
         /// - Parameter options: An optional set of options to control the JSON decoder.
         /// - Returns: An instance of `type`.
-        /// - Throws: `DecoderError.dataCorrupted` if the JSON fails to decode (where the
+        /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
         ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
         ///   `DecoderError`s if the object decode fails.
         public func decode<T: Decodable>(_ type: T.Type, from data: Data, options: JSONOptions = []) throws -> T {
@@ -49,7 +49,7 @@ extension JSON {
         /// - Parameter string: The string containing JSON to decode.
         /// - Parameter options: An optional set of options to control the JSON decoder.
         /// - Returns: An instance of `type`.
-        /// - Throws: `DecoderError.dataCorrupted` if the JSON fails to decode (where the
+        /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
         ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
         ///   `DecoderError`s if the object decode fails.
         public func decode<T: Decodable>(_ type: T.Type, from string: String, options: JSONOptions = []) throws -> T {
@@ -67,7 +67,7 @@ extension JSON {
         /// - Parameter type: The type of the object to decode.
         /// - Parameter json: The JSON to decode.
         /// - Returns: An instance of `type`.
-        /// - Throws: `DecoderError` if the object decode fails.
+        /// - Throws: `DecodingError` if the object decode fails.
         public func decode<T: Decodable>(_ type: T.Type, from json: JSON) throws -> T {
             let data = DecoderData()
             data.userInfo = userInfo
