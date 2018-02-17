@@ -235,7 +235,7 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0900;
-				ORGANIZATIONNAME = Postmates;
+				ORGANIZATIONNAME = "Kevin Ballard";
 				TargetAttributes = {
 					9E1B24401BC73D7600E5BC19 = {
 						CreatedOnToolsVersion = 7.0.1;
