@@ -55,7 +55,7 @@
 		0AE408A72036BEEF00A73EBC /* Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Codable.swift; sourceTree = "<group>"; };
 		0AE408A92036C6A000A73EBC /* SwiftCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftCodableTests.swift; sourceTree = "<group>"; };
 		0AE408AC2038024E00A73EBC /* JSONKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONKey.swift; sourceTree = "<group>"; };
-		0AE408AE2038028100A73EBC /* PMJSON.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = PMJSON.podspec; sourceTree = "<group>"; };
+		0AE408AE2038028100A73EBC /* PMJSON.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; path = PMJSON.podspec; sourceTree = "<group>"; };
 		0AE408B52038063500A73EBC /* SwiftEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoder.swift; sourceTree = "<group>"; };
 		9E0317C41D664B9000096D9E /* sample.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = sample.json; sourceTree = "<group>"; };
 		9E0317C61D664D7D00096D9E /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };

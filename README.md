@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v2.0.3-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v3.0.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -197,7 +197,7 @@ The [Swift Package Manager][] may be used to install PMJSON by adding it to your
 let package = Package(
     name: "YourPackage",
     dependencies: [
-        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 2)
+        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 3)
     ]
 )
 ```
@@ -209,13 +209,13 @@ let package = Package(
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
+github "postmates/PMJSON" ~> 3.0
+```
+
+This release supports Swift 4. If you want Swift 3.x support, you can use
+
+```
 github "postmates/PMJSON" ~> 2.0
-```
-
-This release supports Swift 3. If you want Swift 2.3 support, you can use
-
-```
-github "postmates/PMJSON" ~> 0.9.4
 ```
 
 ### CocoaPods
@@ -223,13 +223,13 @@ github "postmates/PMJSON" ~> 0.9.4
 To install using [CocoaPods][], add the following to your Podfile:
 
 ```
+pod 'PMJSON', '~> 3.0'
+```
+
+This release supports Swift 4. If you want Swift 3.x support, you can use
+
+```
 pod 'PMJSON', '~> 2.0'
-```
-
-This release supports Swift 3. If you want Swift 2.3 support, you can use
-
-```
-pod 'PMJSON', '~> 0.9.4'
 ```
 
 [CocoaPods]: https://cocoapods.org
@@ -248,7 +248,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### Development
+#### v3.0.0 (2018-02-18)
 
 * Convert to Swift 4.
 * Implement `Codable` on `JSON`.
