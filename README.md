@@ -71,6 +71,8 @@ struct Config {
 }
 ```
 
+This library also provides support for `Swift.Encoder` and `Swift.Decoder`. See [this section](#swiftencoder-and-swiftdecoder) for details.
+
 ### Parsing
 
 The JSON decoder is split into separate parser and decoder stages. The parser consums any sequence of unicode scalars, and produces a sequence of JSON "events" (similar to a SAX XML parser). The decoder accepts a sequence of JSON events and produces a `JSON` value. This architecture is designed such that you can use just the parser alone in order to decode directly to your own data structures and bypass the `JSON` representation entirely if desired. However, most clients are expected to use both components, and this is exposed via a simple method `JSON.decode(_:options:)`.
@@ -176,6 +178,18 @@ try json.mapArray("elements", Element.init(json:))
 The `JSON` type has static methods `map()` and `flatMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
 There are also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+
+### Codable support
+
+The `JSON` type conforms to `Codable`, so it can be encoded to a `Swift.Encoder` and decoded from a `Swift.Decoder`. This has been tested against the standard library-provided `JSONEncoder` and `JSONDecoder`. Due to limitations in the decoding protocol, decoding a `JSON` must attempt to decode multiple different types of values, so it's possible that a poorly-written `Swift.Decoder` may produce surprising results when decoding a `JSON`.
+
+Encoding to a `JSON.Encoder` and decoding from a `JSON.Decoder` is optimized to avoid unnecessary work.
+
+### `Swift.Encoder` and `Swift.Decoder`
+
+This library provides an implementation of `Swift.Encoder` called `JSON.Encoder`. This can encode any `Encodable` to a `JSON`, a `String`, or a `Data`. It's used similarly to `Swift.JSONEncoder` (except at this time it doesn't have options to control encoding of specific types).
+
+This library provides an implementation of `Swift.Decoder` called `JSON.Decoder`. This can decode any `Decodable` from a `JSON`, a `String`, or a `Data`. It's used similar to `Swift.JSONDecoder` (except at this time it doesn't have options to control decoding of specific types).
 
 ### Performance
 
