@@ -281,13 +281,11 @@ public final class JSONAccessorTests: XCTestCase {
         json.double = nil
         XCTAssertEqual(json, JSON.null)
         
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertNil(json.decimal)
-            json.decimal = 42
-            XCTAssertEqual(json, 42)
-            json.decimal = nil
-            XCTAssertEqual(json, JSON.null)
-        #endif
+        XCTAssertNil(json.decimal)
+        json.decimal = 42
+        XCTAssertEqual(json, 42)
+        json.decimal = nil
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.object)
         json.object = ["foo": "bar"]
@@ -313,14 +311,12 @@ public final class JSONAccessorTests: XCTestCase {
     func testMixedTypeEquality() {
         XCTAssertEqual(JSON.int64(42), JSON.double(42))
         XCTAssertNotEqual(JSON.int64(42), JSON.double(42.1))
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
-            XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
-            XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
-            XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
-            XCTAssertEqual(JSON.double(42), JSON.decimal(42))
-            XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
-            XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
-        #endif
+        XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
+        XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
+        XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
     }
 }

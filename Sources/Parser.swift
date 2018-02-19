@@ -19,9 +19,7 @@
     import Darwin
 #endif
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-    import struct Foundation.Decimal
-#endif
+import struct Foundation.Decimal
 
 /// A streaming JSON parser that consumes a sequence of unicode scalars.
 public struct JSONParser<Seq: Sequence>: Sequence where Seq.Iterator.Element == UnicodeScalar {
@@ -377,23 +375,21 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                     throw error(.invalidNumber)
                 }
             }
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                @inline(__always) func parseDecimal(from buffer: UnsafeBufferPointer<CChar>) throws -> Decimal {
-                    guard let baseAddress = buffer.baseAddress,
-                        // NB: For some reason String(bytesNoCopy:length:encoding:freeWhenDone:) takes a mutable pointer,
-                        // even though it doesn't mutate the data.
-                        let str = String(bytesNoCopy: UnsafeMutableRawPointer(mutating: UnsafeRawPointer(baseAddress)), length: buffer.count, encoding: .utf8, freeWhenDone: false)
-                        else {
-                            // It shouldn't be possible to fail, we already know it's valid utf-8
-                            return .nan
-                    }
-                    guard let decimal = Decimal(string: str, locale: nil) else {
-                        // The above shouldn't fail, we only pass valid numbers to Decimal
-                        throw error(.invalidNumber)
-                    }
-                    return decimal
+            @inline(__always) func parseDecimal(from buffer: UnsafeBufferPointer<CChar>) throws -> Decimal {
+                guard let baseAddress = buffer.baseAddress,
+                    // NB: For some reason String(bytesNoCopy:length:encoding:freeWhenDone:) takes a mutable pointer,
+                    // even though it doesn't mutate the data.
+                    let str = String(bytesNoCopy: UnsafeMutableRawPointer(mutating: UnsafeRawPointer(baseAddress)), length: buffer.count, encoding: .utf8, freeWhenDone: false)
+                    else {
+                        // It shouldn't be possible to fail, we already know it's valid utf-8
+                        return .nan
                 }
-            #endif
+                guard let decimal = Decimal(string: str, locale: nil) else {
+                    // The above shouldn't fail, we only pass valid numbers to Decimal
+                    throw error(.invalidNumber)
+                }
+                return decimal
+            }
             /// Invoke this after parsing the "e" character.
             func parseExponent() throws -> JSONEvent {
                 let c = try bumpRequired()
@@ -414,11 +410,9 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                         break loop
                     }
                 }
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                    if options.useDecimals {
-                        return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
-                    }
-                #endif
+                if options.useDecimals {
+                    return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
+                }
                 tempBuffer.append(0)
                 return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
             }
@@ -445,11 +439,9 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                             break loop
                         }
                     }
-                    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                        if options.useDecimals {
-                            return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
-                        }
-                    #endif
+                    if options.useDecimals {
+                        return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
+                    }
                     tempBuffer.append(0)
                     return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
                 case "e", "E":
@@ -477,12 +469,10 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
                 return .int64Value(num)
             }
             // out of range, fall back to double/decimal
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                if options.useDecimals {
-                    tempBuffer.removeLast() // drop the NUL
-                    return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
-                }
-            #endif
+            if options.useDecimals {
+                tempBuffer.removeLast() // drop the NUL
+                return try .decimalValue(tempBuffer.withUnsafeBufferPointer(parseDecimal(from:)))
+            }
             return .doubleValue(tempBuffer.withUnsafeBufferPointer({strtod($0.baseAddress!, nil)}))
         case "t":
             let line = self.line, column = self.column
@@ -613,11 +603,7 @@ public enum JSONEvent: Hashable {
     case int64Value(Int64)
     /// A double value.
     case doubleValue(Double)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     case decimalValue(Decimal)
-    #else
-    case decimalValue(DecimalPlaceholder)
-    #endif
     /// A string value.
     case stringValue(String)
     /// The null value.
@@ -634,12 +620,7 @@ public enum JSONEvent: Hashable {
         case .booleanValue(let b): return b.hashValue << 4 + 5
         case .int64Value(let i): return i.hashValue << 4 + 6
         case .doubleValue(let d): return d.hashValue << 4 + 7
-        case .decimalValue(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                return d.hashValue << 4 + 8
-            #else
-                return 8
-            #endif
+        case .decimalValue(let d): return d.hashValue << 4 + 8
         case .stringValue(let s): return s.hashValue << 4 + 9
         case .nullValue: return 10
         case .error(let error): return error.hashValue << 4 + 11

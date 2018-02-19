@@ -51,14 +51,10 @@ public final class JSONDecoderTests: XCTestCase {
             ("testReencode", testReencode),
             ("testConverions", testConversions),
             ("testDepthLimit", testBOMDetection),
-            ("testUnicodeHeuristicDetection", testUnicodeHeuristicDetection)
+            ("testUnicodeHeuristicDetection", testUnicodeHeuristicDetection),
+            ("testDecimalParsing", testDecimalParsing),
+            ("testJSONErrorNSErrorDescription", testJSONErrorNSErrorDescription)
         ]
-        #if swift(>=3.1)
-            tests.append(contentsOf: [
-                ("testDecimalParsing", testDecimalParsing),
-                ("testJSONErrorNSErrorDescription", testJSONErrorNSErrorDescription),
-                ])
-        #endif
         return tests
     }()
     
@@ -70,17 +66,13 @@ public final class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("[1, 2, 3]"), [1, 2, 3])
         assertMatchesJSON(try JSON.decode("{\"one\": 1, \"two\": 2, \"three\": 3}"), ["one": 1, "two": 2, "three": 3])
         assertMatchesJSON(try JSON.decode("[1.23, 4e7]"), [1.23, 4e7])
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimals]), [JSON(1.23 as Decimal), JSON(4e7 as Decimal)])
-        #endif
+        assertMatchesJSON(try JSON.decode("[1.23, 4e7]", options: [.useDecimals]), [JSON(1.23 as Decimal), JSON(4e7 as Decimal)])
     }
     
     func testDouble() {
         XCTAssertEqual(try JSON.decode("-5.4272823085455e-05"), -5.4272823085455e-05)
         XCTAssertEqual(try JSON.decode("-5.4272823085455e+05"), -5.4272823085455e+05)
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimals]), JSON(Decimal(string: "-5.4272823085455e+05")!))
-        #endif
+        XCTAssertEqual(try JSON.decode("-5.4272823085455e+05", options: [.useDecimals]), JSON(Decimal(string: "-5.4272823085455e+05")!))
     }
     
     func testStringEscapes() {
@@ -92,7 +84,6 @@ public final class JSONDecoderTests: XCTestCase {
         assertMatchesJSON(try JSON.decode("\"emoji fun: 💩\\uD83D\\uDCA9\""), "emoji fun: 💩💩")
     }
     
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     func testDecimalParsing() throws {
         let data = try readFixture("sample", withExtension: "json")
         // Decode the data and make sure it contains no .double values
@@ -102,7 +93,6 @@ public final class JSONDecoderTests: XCTestCase {
         }
         XCTAssertNil(value)
     }
-    #endif
     
     func testReencode() throws {
         // sample.json contains a lot of edge cases, so we'll make sure we can re-encode it and re-decode it and get the same thing
@@ -116,19 +106,17 @@ public final class JSONDecoderTests: XCTestCase {
                 XCTFail("Re-encoded JSON doesn't match original")
             }
         }
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            do {
-                // test again with decimals
-                let json = try JSON.decode(data, options: [.useDecimals])
-                let encoded = JSON.encodeAsString(json)
-                let json2 = try JSON.decode(encoded, options: [.useDecimals])
-                if json != json2 { // This preserves all precision, but may still convert between int64 and decimal so we can't use matchesJSON
-                    // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
-                    try json.debugMatches(json2, ==)
-                    XCTFail("Re-encoded JSON doesn't match original")
-                }
+        do {
+            // test again with decimals
+            let json = try JSON.decode(data, options: [.useDecimals])
+            let encoded = JSON.encodeAsString(json)
+            let json2 = try JSON.decode(encoded, options: [.useDecimals])
+            if json != json2 { // This preserves all precision, but may still convert between int64 and decimal so we can't use matchesJSON
+                // NB: Don't use XCTAssertEquals because this JSON is too large to be printed to the console
+                try json.debugMatches(json2, ==)
+                XCTFail("Re-encoded JSON doesn't match original")
             }
-        #endif
+        }
     }
     
     func testConversions() {
@@ -136,9 +124,7 @@ public final class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON(42 as Int64), JSON.int64(42))
         XCTAssertEqual(JSON(42 as Double), JSON.double(42))
         XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertEqual(JSON(42 as Decimal), JSON.decimal(42))
-        #endif
+        XCTAssertEqual(JSON(42 as Decimal), JSON.decimal(42))
         XCTAssertEqual(JSON("foo"), JSON.string("foo"))
         XCTAssertEqual(JSON(["foo": true]), ["foo": true])
         XCTAssertEqual(JSON([JSON.bool(true)] as JSONArray), [true]) // JSONArray
@@ -147,7 +133,6 @@ public final class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
     }
     
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     func testJSONErrorNSErrorDescription() throws {
         let jserror: JSONError?
         do {
@@ -163,7 +148,6 @@ public final class JSONDecoderTests: XCTestCase {
         }
         XCTAssertEqual(String(describing: error), error.localizedDescription)
     }
-    #endif
     
     func testDepthLimit() {
         func assertThrowsDepthError(_ string: String, limit: Int, file: StaticString = #file, line: UInt = #line) {
