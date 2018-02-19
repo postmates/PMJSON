@@ -31,6 +31,14 @@ public struct JSONObject {
         }
     }
     
+    /// Creates an object from a dictionary.
+    ///
+    /// - Note: This is not `public` because `JSONObject` is not guaranteed to be a `Dictionary`
+    ///   wrapper in the future and we don't want anyone to assume this has O(1) behavior.
+    internal init(dict: [String: JSON]) {
+        dictionary = dict
+    }
+    
     /// The JSON object represented as a `[String: JSON]`.
     public fileprivate(set) var dictionary: [String: JSON]
     

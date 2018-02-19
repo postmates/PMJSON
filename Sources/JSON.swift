@@ -12,16 +12,7 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-    import struct Foundation.Decimal
-#else
-    /// A placeholder used for platforms that don't support `Decimal`.
-    public struct DecimalPlaceholder: Equatable {
-        public static func ==(lhs: DecimalPlaceholder, rhs: DecimalPlaceholder) -> Bool {
-            return true
-        }
-    }
-#endif
+import struct Foundation.Decimal
 
 /// A single JSON-compatible value.
 public enum JSON {
@@ -37,18 +28,10 @@ public enum JSON {
     /// When decoding, any integer that doesn't fit in 64 bits and any floating-point number
     /// is decoded as a `Double`.
     case double(Double)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     /// A decimal number.
     /// When the decoding option `.useDecimals` is used, any value that would otherwise be
     /// decoded as a `Double` is decoded as a `Decimal` instead.
     case decimal(Decimal)
-    #else
-    /// A placeholder for decimal number support.
-    /// This exists purely to work around Swift's poor support for conditionally-compiled
-    /// enum variants. At such time as Linux gains `Decimal` support, this will turn
-    /// into a real case. In the meantime, this case should be ignored.
-    case decimal(DecimalPlaceholder)
-    #endif
     /// An object.
     case object(JSONObject)
     /// An array.
@@ -70,11 +53,9 @@ public enum JSON {
     public init(_ d: Double) {
         self = .double(d)
     }
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     public init(_ d: Decimal) {
         self = .decimal(d)
     }
-    #endif
     /// Initializes `self` as an object with the value `obj`.
     public init(_ obj: JSONObject) {
         self = .object(obj)
@@ -121,17 +102,9 @@ extension JSON: Equatable {
         case (.decimal(let a), .decimal(let b)): return a == b
         case (.int64(let a), .double(let b)): return Double(a) == b
         case (.int64(let a), .decimal(let b)):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                return Decimal(workaround: a) == b
-            #else
-                return false
-            #endif
+            return Decimal(workaround: a) == b
         case (.double(let a), .decimal(let b)):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                return Decimal(workaround: a) == b
-            #else
-                return false
-            #endif
+            return Decimal(workaround: a) == b
         case (.double, .int64), (.decimal, .int64), (.decimal, .double): return rhs == lhs
         case (.object(let a), .object(let b)): return a == b
         case (.array(let a), .array(let b)): return a == b

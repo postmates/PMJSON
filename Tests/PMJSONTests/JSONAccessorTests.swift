@@ -134,7 +134,7 @@ public final class JSONAccessorTests: XCTestCase {
             XCTAssertEqual(elts, [5,4,3])
             XCTAssertEqual(indices, [0,1,2])
             
-            XCTAssertFalse(try dict.forEachArrayOrNil("invalid", { _ in
+            XCTAssertFalse(try dict.forEachArrayOrNil("invalid", { _,_  in
                 XCTFail("this shouldn't be invoked")
             }))
             
@@ -146,7 +146,7 @@ public final class JSONAccessorTests: XCTestCase {
             XCTAssertEqual(elts, [5,4,3])
             XCTAssertEqual(indices, [0,1,2])
             
-            XCTAssertFalse(try dict.object!.forEachArrayOrNil("invalid", { _ in
+            XCTAssertFalse(try dict.object!.forEachArrayOrNil("invalid", { _,_  in
                 XCTFail("this shouldn't be invoked")
             }))
         } catch {
@@ -159,8 +159,8 @@ public final class JSONAccessorTests: XCTestCase {
         XCTAssertThrowsError(try dict["array"]!.flatMapArray("xs", { _ in [1] }))
         XCTAssertThrowsError(try dict["array"]!.flatMapArrayOrNil("xs", { _ -> Int? in 1 }))
         XCTAssertThrowsError(try dict["array"]!.flatMapArrayOrNil("xs", { _ in [1] }))
-        XCTAssertThrowsError(try dict["array"]!.forEachArray("xs", { _ in () }))
-        XCTAssertThrowsError(try dict["array"]!.forEachArrayOrNil("xs", { _ in () }))
+        XCTAssertThrowsError(try dict["array"]!.forEachArray("xs", { _,_ in () }))
+        XCTAssertThrowsError(try dict["array"]!.forEachArrayOrNil("xs", { _,_ in () }))
         
         // array-style accessors
         let array = dict["array"]!
@@ -216,13 +216,13 @@ public final class JSONAccessorTests: XCTestCase {
             XCTAssertEqual(elts, [2, 4, 6])
             XCTAssertEqual(indices, [0,1,2])
             
-            XCTAssertThrowsError(try array.forEachArray(3, { _ in // null
+            XCTAssertThrowsError(try array.forEachArray(3, { _,_  in // null
                 XCTFail("this shouldn't be invoked")
             }))
-            XCTAssertThrowsError(try array.forEachArray(4, { _ in // string
+            XCTAssertThrowsError(try array.forEachArray(4, { _,_  in // string
                 XCTFail("this shouldn't be invoked")
             }))
-            XCTAssertThrowsError(try array.forEachArray(100, { _ in // out of bounds
+            XCTAssertThrowsError(try array.forEachArray(100, { _,_  in // out of bounds
                 XCTFail("this shouldn't be invoked")
             }))
             
@@ -234,13 +234,13 @@ public final class JSONAccessorTests: XCTestCase {
             XCTAssertEqual(elts, [2, 4, 6])
             XCTAssertEqual(indices, [0,1,2])
             
-            XCTAssertFalse(try array.forEachArrayOrNil(3, { _ in // null
+            XCTAssertFalse(try array.forEachArrayOrNil(3, { _,_  in // null
                 XCTFail("this shouldn't be invoked")
             }))
-            XCTAssertThrowsError(try array.forEachArrayOrNil(4, { _ in // string
+            XCTAssertThrowsError(try array.forEachArrayOrNil(4, { _,_  in // string
                 XCTFail("this shouldn't be invoked")
             }))
-            XCTAssertFalse(try array.forEachArrayOrNil(100, { _ in // out of bounds
+            XCTAssertFalse(try array.forEachArrayOrNil(100, { _,_  in // out of bounds
                 XCTFail("this shouldn't be invoked")
             }))
         } catch {
@@ -281,13 +281,11 @@ public final class JSONAccessorTests: XCTestCase {
         json.double = nil
         XCTAssertEqual(json, JSON.null)
         
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertNil(json.decimal)
-            json.decimal = 42
-            XCTAssertEqual(json, 42)
-            json.decimal = nil
-            XCTAssertEqual(json, JSON.null)
-        #endif
+        XCTAssertNil(json.decimal)
+        json.decimal = 42
+        XCTAssertEqual(json, 42)
+        json.decimal = nil
+        XCTAssertEqual(json, JSON.null)
         
         XCTAssertNil(json.object)
         json.object = ["foo": "bar"]
@@ -313,14 +311,12 @@ public final class JSONAccessorTests: XCTestCase {
     func testMixedTypeEquality() {
         XCTAssertEqual(JSON.int64(42), JSON.double(42))
         XCTAssertNotEqual(JSON.int64(42), JSON.double(42.1))
-        #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-            XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
-            XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
-            XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
-            XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
-            XCTAssertEqual(JSON.double(42), JSON.decimal(42))
-            XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
-            XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
-        #endif
+        XCTAssertEqual(JSON.int64(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.int64(Int64.max), JSON.decimal(Decimal(string: "9223372036854775807")!)) // Decimal(Int64.max) produces the wrong value
+        XCTAssertEqual(JSON.int64(7393662029337442), JSON.decimal(Decimal(string: "7393662029337442")!))
+        XCTAssertNotEqual(JSON.int64(42), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(42), JSON.decimal(42))
+        XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
+        XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
     }
 }

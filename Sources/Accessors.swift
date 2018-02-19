@@ -12,10 +12,8 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-    import class Foundation.NSDecimalNumber
-    import struct Foundation.Decimal
-#endif
+import class Foundation.NSDecimalNumber
+import struct Foundation.Decimal
 
 public extension JSON {
     /// Returns `true` iff the receiver is `.null`.
@@ -71,13 +69,7 @@ public extension JSON {
     ///   On platforms where `.decimal` is a dummy value, it's not a treated as a number.
     var isNumber: Bool {
         switch self {
-        case .int64, .double: return true
-        case .decimal:
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                return true
-            #else
-                return false
-            #endif
+        case .int64, .double, .decimal: return true
         default: return false
         }
     }
@@ -169,7 +161,7 @@ public extension JSON {
     var int: Int? {
         get {
             guard let value = self.int64 else { return nil}
-            let truncated = Int(truncatingBitPattern: value)
+            let truncated = Int(truncatingIfNeeded: value)
             guard Int64(truncated) == value else { return nil }
             return truncated
         }
@@ -192,12 +184,8 @@ public extension JSON {
             case .int64(let i): return Double(i)
             case .double(let d): return d
             case .decimal(let d):
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                    // NB: Decimal does not have any accessor to produce a Double
-                    return NSDecimalNumber(decimal: d).doubleValue
-                #else
-                    return nil
-                #endif
+                // NB: Decimal does not have any accessor to produce a Double
+                return NSDecimalNumber(decimal: d).doubleValue
             default: return nil
             }
         }
@@ -304,16 +292,18 @@ internal func convertDoubleToInt64(_ d: Double) -> Int64? {
     return Int64(d)
 }
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-    internal func convertDecimalToInt64(_ d: Decimal) -> Int64? {
-        if d > Int64.maxDecimal || d < Int64.minDecimal {
-            return nil
-        }
-        // NB: Decimal does not have any appropriate accessor
-        return NSDecimalNumber(decimal: d).int64Value
-    }
-#else
-    internal func convertDecimalToInt64(_ d: DecimalPlaceholder) -> Int64? {
+internal func convertDecimalToInt64(_ d: Decimal) -> Int64? {
+    if d > Int64.maxDecimal || d < Int64.minDecimal {
         return nil
     }
-#endif
+    // NB: Decimal does not have any appropriate accessor
+    return NSDecimalNumber(decimal: d).int64Value
+}
+
+internal func convertDecimalToUInt64(_ d: Decimal) -> UInt64? {
+    if d > UInt64.maxDecimal || d < UInt64.minDecimal {
+        return nil
+    }
+    // NB: Decimal does not have any appropriate accessor
+    return NSDecimalNumber(decimal: d).uint64Value
+}

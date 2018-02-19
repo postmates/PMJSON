@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		0A0F2BAA1BF1BBE50095D290 /* JSONError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BA91BF1BBE50095D290 /* JSONError.swift */; };
 		0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */; };
+		0A550CCE203A28A700941526 /* SwiftEncoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */; };
+		0AE408A4203413AE00A73EBC /* SwiftDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A3203413AE00A73EBC /* SwiftDecoder.swift */; };
+		0AE408A62036A36200A73EBC /* SwiftDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */; };
+		0AE408A82036BEEF00A73EBC /* Codable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A72036BEEF00A73EBC /* Codable.swift */; };
+		0AE408AA2036C6A000A73EBC /* SwiftCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A92036C6A000A73EBC /* SwiftCodableTests.swift */; };
+		0AE408AD2038024E00A73EBC /* JSONKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408AC2038024E00A73EBC /* JSONKey.swift */; };
+		0AE408B62038063500A73EBC /* SwiftEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408B52038063500A73EBC /* SwiftEncoder.swift */; };
 		9E0317C51D664B9000096D9E /* sample.json in Resources */ = {isa = PBXBuildFile; fileRef = 9E0317C41D664B9000096D9E /* sample.json */; };
 		9E0AD0C31C69B3360038B4F5 /* DecimalNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */; };
 		9E1B24441BC73D7600E5BC19 /* PMJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = 9E1B24431BC73D7600E5BC19 /* PMJSON.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -40,8 +47,16 @@
 /* Begin PBXFileReference section */
 		0A0F2BA91BF1BBE50095D290 /* JSONError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONError.swift; sourceTree = "<group>"; };
 		0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONObject.swift; sourceTree = "<group>"; };
+		0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoderTests.swift; sourceTree = "<group>"; };
 		0A79B5071E8AFE6700A8C727 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
+		0AE408A3203413AE00A73EBC /* SwiftDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDecoder.swift; sourceTree = "<group>"; };
+		0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDecoderTests.swift; sourceTree = "<group>"; };
+		0AE408A72036BEEF00A73EBC /* Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Codable.swift; sourceTree = "<group>"; };
+		0AE408A92036C6A000A73EBC /* SwiftCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftCodableTests.swift; sourceTree = "<group>"; };
+		0AE408AC2038024E00A73EBC /* JSONKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONKey.swift; sourceTree = "<group>"; };
+		0AE408AE2038028100A73EBC /* PMJSON.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; path = PMJSON.podspec; sourceTree = "<group>"; };
+		0AE408B52038063500A73EBC /* SwiftEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoder.swift; sourceTree = "<group>"; };
 		9E0317C41D664B9000096D9E /* sample.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = sample.json; sourceTree = "<group>"; };
 		9E0317C61D664D7D00096D9E /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DecimalNumber.swift; sourceTree = "<group>"; };
@@ -95,10 +110,21 @@
 			path = Tests;
 			sourceTree = "<group>";
 		};
+		0AE408AB2038023D00A73EBC /* Coders */ = {
+			isa = PBXGroup;
+			children = (
+				0AE408A3203413AE00A73EBC /* SwiftDecoder.swift */,
+				0AE408B52038063500A73EBC /* SwiftEncoder.swift */,
+				0AE408AC2038024E00A73EBC /* JSONKey.swift */,
+			);
+			path = Coders;
+			sourceTree = "<group>";
+		};
 		9E1B24271BC73D1900E5BC19 = {
 			isa = PBXGroup;
 			children = (
 				0A79B5071E8AFE6700A8C727 /* Package.swift */,
+				0AE408AE2038028100A73EBC /* PMJSON.podspec */,
 				9E49DEF31C1F9E2F004FDCAD /* README.md */,
 				9E69BE0B1C6E843D00D92762 /* LICENSE-APACHE */,
 				9E49DEF21C1F9E2F004FDCAD /* LICENSE-MIT */,
@@ -126,6 +152,8 @@
 				0A0F2BA91BF1BBE50095D290 /* JSONError.swift */,
 				9E87937B1BC8341500BC6A15 /* Foundation.swift */,
 				9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */,
+				0AE408A72036BEEF00A73EBC /* Codable.swift */,
+				0AE408AB2038023D00A73EBC /* Coders */,
 				9E1B246A1BC7463D00E5BC19 /* Parser.swift */,
 				9E8793771BC7547800BC6A15 /* Decoder.swift */,
 				9E5983DB1C60282F008495F6 /* Encoder.swift */,
@@ -144,6 +172,9 @@
 				9EC4CD951DB83DE8003A4268 /* JSONParserTests.swift */,
 				9E4997EF1DC96E110049EECD /* JSONEncoderTests.swift */,
 				9ECD04F61DC15CAD00DBE7CA /* JSONTestSuite.swift */,
+				0AE408A92036C6A000A73EBC /* SwiftCodableTests.swift */,
+				0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */,
+				0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */,
 				9E0317C61D664D7D00096D9E /* README.txt */,
 				9E0317C41D664B9000096D9E /* sample.json */,
 				9ECD04F41DC15C9800DBE7CA /* JSONTestSuite */,
@@ -210,15 +241,15 @@
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
 				LastUpgradeCheck = 0900;
-				ORGANIZATIONNAME = Postmates;
+				ORGANIZATIONNAME = "Kevin Ballard";
 				TargetAttributes = {
 					9E1B24401BC73D7600E5BC19 = {
 						CreatedOnToolsVersion = 7.0.1;
-						LastSwiftMigration = 0800;
+						LastSwiftMigration = 0920;
 					};
 					9E1B24491BC73D7600E5BC19 = {
 						CreatedOnToolsVersion = 7.0.1;
-						LastSwiftMigration = 0800;
+						LastSwiftMigration = 0920;
 					};
 				};
 			};
@@ -270,9 +301,13 @@
 				9E8793781BC7547800BC6A15 /* Decoder.swift in Sources */,
 				0A0F2BAA1BF1BBE50095D290 /* JSONError.swift in Sources */,
 				9E0AD0C31C69B3360038B4F5 /* DecimalNumber.swift in Sources */,
+				0AE408A82036BEEF00A73EBC /* Codable.swift in Sources */,
 				9E1B24591BC73DA000E5BC19 /* JSON.swift in Sources */,
 				9E87937E1BC835F500BC6A15 /* Accessors.swift in Sources */,
+				0AE408A4203413AE00A73EBC /* SwiftDecoder.swift in Sources */,
 				0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */,
+				0AE408B62038063500A73EBC /* SwiftEncoder.swift in Sources */,
+				0AE408AD2038024E00A73EBC /* JSONKey.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -282,8 +317,11 @@
 			files = (
 				9EC4CD961DB83DE8003A4268 /* JSONParserTests.swift in Sources */,
 				9ECD04F71DC15CAD00DBE7CA /* JSONTestSuite.swift in Sources */,
+				0A550CCE203A28A700941526 /* SwiftEncoderTests.swift in Sources */,
+				0AE408AA2036C6A000A73EBC /* SwiftCodableTests.swift in Sources */,
 				9E4997F01DC96E110049EECD /* JSONEncoderTests.swift in Sources */,
 				9EC52A6A1DCBC2E900658723 /* JSONAccessorTests.swift in Sources */,
+				0AE408A62036A36200A73EBC /* SwiftDecoderTests.swift in Sources */,
 				9E1B24501BC73D7600E5BC19 /* JSONDecoderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -421,7 +459,7 @@
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos watchsimulator watchos appletvsimulator appletvos";
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -475,7 +513,7 @@
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos watchsimulator watchos appletvsimulator appletvos";
 				SWIFT_INSTALL_OBJC_HEADER = NO;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 				TARGETED_DEVICE_FAMILY = "1,2,3,4";
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -529,7 +567,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
 		};
@@ -572,7 +610,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

@@ -116,7 +116,7 @@ private func assertParserEvents(_ input: String, streaming: Bool = false, _ even
     assertParserEvents(parser, events, file: file, line: line)
 }
 
-private func assertParserEvents<Seq: Sequence>(_ parser: JSONParser<Seq>, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) where Seq.Iterator.Element == UnicodeScalar {
+private func assertParserEvents<Seq>(_ parser: JSONParser<Seq>, _ events: [JSONEvent], file: StaticString = #file, line: UInt = #line) {
     var iter = parser.makeIterator()
     for (i, expected) in events.enumerated() {
         guard let event = iter.next() else {

@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v2.0.3-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v3.0.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -70,6 +70,8 @@ struct Config {
     }
 }
 ```
+
+This library also provides support for `Swift.Encoder` and `Swift.Decoder`. See [this section](#swiftencoder-and-swiftdecoder) for details.
 
 ### Parsing
 
@@ -177,6 +179,18 @@ The `JSON` type has static methods `map()` and `flatMap()` for working with arra
 
 There are also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
 
+### Codable support
+
+The `JSON` type conforms to `Codable`, so it can be encoded to a `Swift.Encoder` and decoded from a `Swift.Decoder`. This has been tested against the standard library-provided `JSONEncoder` and `JSONDecoder`. Due to limitations in the decoding protocol, decoding a `JSON` must attempt to decode multiple different types of values, so it's possible that a poorly-written `Swift.Decoder` may produce surprising results when decoding a `JSON`.
+
+Encoding to a `JSON.Encoder` and decoding from a `JSON.Decoder` is optimized to avoid unnecessary work.
+
+### `Swift.Encoder` and `Swift.Decoder`
+
+This library provides an implementation of `Swift.Encoder` called `JSON.Encoder`. This can encode any `Encodable` to a `JSON`, a `String`, or a `Data`. It's used similarly to `Swift.JSONEncoder` (except at this time it doesn't have options to control encoding of specific types).
+
+This library provides an implementation of `Swift.Decoder` called `JSON.Decoder`. This can decode any `Decodable` from a `JSON`, a `String`, or a `Data`. It's used similar to `Swift.JSONDecoder` (except at this time it doesn't have options to control decoding of specific types).
+
 ### Performance
 
 The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to a `Data` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does.
@@ -197,7 +211,7 @@ The [Swift Package Manager][] may be used to install PMJSON by adding it to your
 let package = Package(
     name: "YourPackage",
     dependencies: [
-        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 2)
+        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 3)
     ]
 )
 ```
@@ -209,13 +223,13 @@ let package = Package(
 To install using [Carthage][], add the following to your Cartfile:
 
 ```
+github "postmates/PMJSON" ~> 3.0
+```
+
+This release supports Swift 4. If you want Swift 3.x support, you can use
+
+```
 github "postmates/PMJSON" ~> 2.0
-```
-
-This release supports Swift 3. If you want Swift 2.3 support, you can use
-
-```
-github "postmates/PMJSON" ~> 0.9.4
 ```
 
 ### CocoaPods
@@ -223,13 +237,13 @@ github "postmates/PMJSON" ~> 0.9.4
 To install using [CocoaPods][], add the following to your Podfile:
 
 ```
+pod 'PMJSON', '~> 3.0'
+```
+
+This release supports Swift 4. If you want Swift 3.x support, you can use
+
+```
 pod 'PMJSON', '~> 2.0'
-```
-
-This release supports Swift 3. If you want Swift 2.3 support, you can use
-
-```
-pod 'PMJSON', '~> 0.9.4'
 ```
 
 [CocoaPods]: https://cocoapods.org
@@ -247,6 +261,13 @@ Licensed under either of
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you shall be dual licensed as above, without any additional terms or conditions.
 
 ## Version History
+
+#### v3.0.0 (2018-02-18)
+
+* Convert to Swift 4.
+* Implement `Codable` on `JSON`.
+* Add a `Swift.Decoder` implementation called `JSON.Decoder`.
+* Add a `Swift.Encoder` implementation called `JSON.Encoder`.
 
 #### v2.0.3 (2017-09-12)
 

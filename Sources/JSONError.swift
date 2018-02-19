@@ -12,10 +12,8 @@
 //  except according to those terms.
 //
 
-#if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-    import struct Foundation.Decimal
-    import class Foundation.NSDecimalNumber
-#endif
+import struct Foundation.Decimal
+import class Foundation.NSDecimalNumber
 
 // MARK: JSONError
 
@@ -38,22 +36,12 @@ public enum JSONError: Error, CustomStringConvertible {
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case outOfRangeDouble(path: String?, value: Double, expected: Any.Type)
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
     /// Thrown when a decimal value is coerced to a smaller type (e.g. `Decimal` to `Int`)
     /// and the value doesn't fit in the smaller type.
     /// - Parameter path: The path of the value that cuased the error.
     /// - Parameter value: The actual value at that path.
     /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
     case outOfRangeDecimal(path: String?, value: Decimal, expected: Any.Type)
-    #else
-    /// Thrown when a decimal value is coerced to a smaller type (e.g. `Decimal` to `Int`)
-    /// and the value doesn't fit in the smaller type.
-    /// - Note: This error is never actually thrown for platforms that do not support `Decimal`.
-    /// - Parameter path: The path of the value that cuased the error.
-    /// - Parameter value: The actual value at that path.
-    /// - Parameter expected: The type that the value doesn't fit in, e.g. `Int.self`.
-    case outOfRangeDecimal(path: String?, value: DecimalPlaceholder, expected: Any.Type)
-    #endif
     
     public var description: String {
         switch self {
@@ -104,22 +92,13 @@ public enum JSONError: Error, CustomStringConvertible {
         case number = "number"
         case object = "object"
         case array = "array"
-        #if !os(iOS) && !os(OSX) && !os(watchOS) && !os(tvOS) && !swift(>=3.1)
-        case decimalPlaceholder = "decimalPlaceholder"
-        #endif
         
         internal static func forValue(_ value: JSON) -> JSONType {
             switch value {
             case .null: return .null
             case .bool: return .bool
             case .string: return .string
-            case .int64, .double: return .number
-            case .decimal:
-                #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                    return .number
-                #else
-                    return .decimalPlaceholder
-                #endif
+            case .int64, .double, .decimal: return .number
             case .object: return .object
             case .array: return .array
             }
@@ -190,7 +169,7 @@ public extension JSON {
     ///   is too large to fit in an `Int`.
     func getInt() throws -> Int {
         guard let val = self.int64 else { throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self))) }
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
@@ -201,7 +180,7 @@ public extension JSON {
     ///   is too large to fit in an `Int`.
     func getIntOrNil() throws -> Int? {
         if let val = self.int64 {
-            let truncated = Int(truncatingBitPattern: val)
+            let truncated = Int(truncatingIfNeeded: val)
             guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
             return truncated
         } else if isNull { return nil }
@@ -282,12 +261,7 @@ public extension JSON {
         case .bool(let b): return String(b)
         case .int64(let i): return String(i)
         case .double(let d): return String(d)
-        case .decimal(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                return String(describing: d)
-            #else
-                break
-            #endif
+        case .decimal(let d): return String(describing: d)
         default: break
         }
         throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: expected, actual: .forValue(self)))
@@ -358,7 +332,7 @@ public extension JSON {
     ///   or a floating-point value that does not fit in an `Int`.
     func toInt() throws -> Int {
         let val = try toInt64()
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
@@ -372,7 +346,7 @@ public extension JSON {
     ///   or a floating-point value that does not fit in an `Int`.
     func toIntOrNil() throws -> Int? {
         guard let val = try toInt64OrNil() else { return nil }
-        let truncated = Int(truncatingBitPattern: val)
+        let truncated = Int(truncatingIfNeeded: val)
         guard Int64(truncated) == val else { throw hideThrow(JSONError.outOfRangeInt64(path: nil, value: val, expected: Int.self)) }
         return truncated
     }
@@ -401,12 +375,8 @@ public extension JSON {
         case .int64(let i): return Double(i)
         case .double(let d): return d
         case .decimal(let d):
-            #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS) || swift(>=3.1)
-                // NB: Decimal does not have any appropriate accessor
-                return NSDecimalNumber(decimal: d).doubleValue
-            #else
-                break
-            #endif
+            // NB: Decimal does not have any appropriate accessor
+            return NSDecimalNumber(decimal: d).doubleValue
         case .string(let s): return Double(s)
         case .null: return nil
         default: break
