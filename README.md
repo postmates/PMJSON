@@ -211,7 +211,7 @@ The [Swift Package Manager][] may be used to install PMJSON by adding it to your
 let package = Package(
     name: "YourPackage",
     dependencies: [
-        .Package(url: "https://github.com/postmates/PMJSON.git", majorVersion: 3)
+        .package(url: "https://github.com/postmates/PMJSON.git", from: "3.0.1")
     ]
 )
 ```
