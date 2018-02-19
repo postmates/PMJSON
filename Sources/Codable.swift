@@ -49,7 +49,7 @@ extension JSON: Codable {
         }
     }
     
-    public func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Swift.Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .null:
