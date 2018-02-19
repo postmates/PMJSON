@@ -3,5 +3,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "PMJSON"
+    name: "PMJSON",
+    products: [
+        .library(
+            name: "PMJSON",
+            targets: ["PMJSON"]),
+    ],
+    targets: [
+        .target(
+            name: "PMJSON",
+            path: "Sources"),
+        .testTarget(
+            name: "PMJSONTests",
+            dependencies: ["PMJSON"]),
+    ]
 )
