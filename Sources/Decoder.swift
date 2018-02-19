@@ -99,8 +99,6 @@ public struct JSONOptions {
     /// instead of as `Double` values.
     ///
     /// The default value is `false`.
-    ///
-    /// - Note: This option is ignored on platforms without `Decimal`.
     public var useDecimals: Bool = false
     
     /// Returns a new `JSONOptions` with default values.
