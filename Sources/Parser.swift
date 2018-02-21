@@ -143,7 +143,7 @@ public struct JSONParserIterator<Iter: IteratorProtocol>: JSONEventIterator wher
         set { options.strict = newValue }
     }
     
-    @available(*, deprecated, renamed: "options.strict")
+    @available(*, deprecated, renamed: "options.streaming")
     public var streaming: Bool {
         get { return options.streaming }
         set { options.streaming = newValue }
