@@ -122,6 +122,70 @@ final class SwiftDecodableTests: XCTestCase {
     }
 }
 
+final class SwiftMiscellaneousCodableTests: XCTestCase {
+    private enum TestKey: CodingKey {
+        case int(Int)
+        case string(String)
+        
+        init?(intValue: Int) {
+            self = .int(intValue)
+        }
+        
+        init?(stringValue: String) {
+            self = .string(stringValue)
+        }
+        
+        var intValue: Int? {
+            switch self {
+            case .int(let x): return x
+            case .string: return nil
+            }
+        }
+        
+        var stringValue: String {
+            switch self {
+            case .int(let x): return String(x)
+            case .string(let s): return s
+            }
+        }
+    }
+    
+    func testErrorWithEmptyPrefixedCodingPath() {
+        let error = JSONError.missingOrInvalidType(path: "x", expected: .required(.number), actual: nil)
+        XCTAssertEqual(error.withPrefixedCodingPath([]).path, "x")
+    }
+    
+    func testErrorWithSingleStringPrefixedCodingPath() {
+        let error = JSONError.outOfRangeInt64(path: "x", value: 32760, expected: Int8.self)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.string("foo")]).path, "foo.x")
+    }
+    
+    func testErrorWithMultipleStringPrefixedCodingPath() {
+        let error = JSONError.outOfRangeDouble(path: "[1]", value: 32760, expected: Int8.self)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.string("foo"), TestKey.string("bar")]).path, "foo.bar[1]")
+    }
+    
+    func testErrorWithSingleIntPrefixedCodingPath() {
+        let error = JSONError.outOfRangeDecimal(path: "x", value: 32760, expected: Int8.self)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.int(42)]).path, "[42].x")
+    }
+    
+    func testErrorWithMultipleIntPrefixedCodingPath() {
+        let error = JSONError.missingOrInvalidType(path: "x", expected: .required(.number), actual: nil)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.int(2), TestKey.int(42)]).path, "[2][42].x")
+    }
+    
+    func testErrorWithMixedPrefixedCodignPath() {
+        let error = JSONError.missingOrInvalidType(path: "x", expected: .required(.number), actual: nil)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.string("foo"), TestKey.int(42), TestKey.string("bar")]).path, "foo[42].bar.x")
+    }
+    
+    func testErrorWithNilPathPrefixedCodingPath() {
+        let error = JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: nil)
+        XCTAssertEqual(error.withPrefixedCodingPath([TestKey.string("foo"), TestKey.string("bar")]).path, "foo.bar")
+    }
+}
+
 /// Wrapper to make JSONEncoder/JSONDecoder happy about encoding values.
 private struct ValueWrapper: Codable {
     let value: JSON

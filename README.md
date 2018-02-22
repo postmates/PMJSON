@@ -265,6 +265,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 #### Development
 
 * Add convenience property `JSONError.path`.
+* Add method `JSONError.withPrefixedCodingPath(_:)` to make it easier to use `JSONError`-throwing methods in a `Decodable` implementation.
 
 #### v3.0.1 (2018-02-18)
 

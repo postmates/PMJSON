@@ -62,6 +62,40 @@ public enum JSONError: Error, CustomStringConvertible {
         }
     }
     
+    /// A helper method to modify the error path based on a `Decoder` coding path.
+    ///
+    /// This is meant to be used when using `PMJSON` accessors in a `Decodable.init(from:)`
+    /// implementation. It produces a new `JSONError` that prepends the given coding path to the
+    /// error's existing path. This can be convenient when writing a `Decodable` adapter for an
+    /// existing type that already can initialize itself from a `JSONObject. For example:
+    ///
+    ///     init(from decoder: Decoder) throws {
+    ///         var container = try decoder.singleValueContainer()
+    ///         let object = try container.decode(JSONObject.self)
+    ///         do {
+    ///             try self.init(json: object)
+    ///         } catch let error as JSONError {
+    ///             throw error.withPrefixedCodingPath(decoder.codingPath)
+    ///         }
+    ///     }
+    ///
+    /// - Parameter codingPath: A coding path. This should be taken from `decoder.codingPath`.
+    /// - Returns: A new `JSONError` that matches the receiver but with a new path.
+    public func withPrefixedCodingPath(_ codingPath: [CodingKey]) -> JSONError {
+        var prefix = ""
+        for key in codingPath {
+            if let intValue = key.intValue {
+                prefix += "[\(intValue)]"
+            } else {
+                if !prefix.isEmpty {
+                    prefix += "."
+                }
+                prefix += key.stringValue
+            }
+        }
+        return prefix.isEmpty ? self : withPrefix(prefix)
+    }
+    
     fileprivate func withPrefix(_ prefix: String) -> JSONError {
         func prefixPath(_ path: String?, with prefix: String) -> String {
             guard let path = path, !path.isEmpty else { return prefix }
