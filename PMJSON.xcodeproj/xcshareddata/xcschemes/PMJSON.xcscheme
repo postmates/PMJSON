@@ -38,6 +38,11 @@
                BlueprintName = "PMJSONTests"
                ReferencedContainer = "container:PMJSON.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "JSONBenchmarks">
+               </Test>
+            </SkippedTests>
          </TestableReference>
       </Testables>
       <MacroExpansion>
