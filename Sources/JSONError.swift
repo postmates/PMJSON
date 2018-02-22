@@ -52,6 +52,16 @@ public enum JSONError: Error, CustomStringConvertible {
         }
     }
     
+    /// The path that the error occurred at.
+    public var path: String? {
+        switch self {
+        case .missingOrInvalidType(let path, expected: _, actual: _): return path
+        case .outOfRangeInt64(let path, value: _, expected: _): return path
+        case .outOfRangeDouble(let path, value: _, expected: _): return path
+        case .outOfRangeDecimal(let path, value: _, expected: _): return path
+        }
+    }
+    
     fileprivate func withPrefix(_ prefix: String) -> JSONError {
         func prefixPath(_ path: String?, with prefix: String) -> String {
             guard let path = path, !path.isEmpty else { return prefix }

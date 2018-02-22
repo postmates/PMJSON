@@ -262,6 +262,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add convenience property `JSONError.path`.
+
 #### v3.0.1 (2018-02-18)
 
 * Fix Swift Package Manager support.
