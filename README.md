@@ -193,7 +193,7 @@ This library provides an implementation of `Swift.Decoder` called `JSON.Decoder`
 
 ### Performance
 
-The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to a `Data` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does.
+The test suite includes some basic performance tests. Decoding ~70KiB of JSON using PMJSON takes about 2.5-3x the time that `NSJSONSerialization` does, though I haven't tested this with different distributions of inputs and it's possible this performance is specific to the characteristics of the test input. However, encoding the same JSON back to a `Data` is actually faster with PMJSON, taking around 75% of the time that `NSJSONSerialization` does. These benchmarks were performed with Swift 2.x and it's possible the numbers have changed since then.
 
 ## Requirements
 
