@@ -121,7 +121,7 @@ extension JSON {
     
     private static func encodeObject<Target: TextOutputStream>(_ object: JSONObject, toStream stream: inout Target, indent: Int?) {
         let indented = indent.map({$0+1})
-        if let indent = indented {
+        if let indent = indented, !object.isEmpty {
             stream.write("{\n")
             writeIndent(indent, toStream: &stream)
         } else {
@@ -141,7 +141,7 @@ extension JSON {
             stream.write(indented != nil ? ": " : ":")
             encode(value, to: &stream, indent: indented)
         }
-        if let indent = indent {
+        if let indent = indent, !object.isEmpty {
             stream.write("\n")
             writeIndent(indent, toStream: &stream)
         }
@@ -150,7 +150,7 @@ extension JSON {
     
     private static func encodeArray<Target: TextOutputStream>(_ array: JSONArray, toStream stream: inout Target, indent: Int?) {
         let indented = indent.map({$0+1})
-        if let indent = indented {
+        if let indent = indented, !array.isEmpty {
             stream.write("[\n")
             writeIndent(indent, toStream: &stream)
         } else {
@@ -168,7 +168,7 @@ extension JSON {
             }
             encode(elt, to: &stream, indent: indented)
         }
-        if let indent = indent {
+        if let indent = indent, !array.isEmpty {
             stream.write("\n")
             writeIndent(indent, toStream: &stream)
         }
