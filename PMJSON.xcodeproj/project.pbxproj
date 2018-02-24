@@ -47,6 +47,7 @@
 /* Begin PBXFileReference section */
 		0A0F2BA91BF1BBE50095D290 /* JSONError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONError.swift; sourceTree = "<group>"; };
 		0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONObject.swift; sourceTree = "<group>"; };
+		0A2556FF2041263D00AA1DC5 /* PMJSON.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = PMJSON.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoderTests.swift; sourceTree = "<group>"; };
 		0A79B5071E8AFE6700A8C727 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
@@ -128,6 +129,7 @@
 				9E49DEF31C1F9E2F004FDCAD /* README.md */,
 				9E69BE0B1C6E843D00D92762 /* LICENSE-APACHE */,
 				9E49DEF21C1F9E2F004FDCAD /* LICENSE-MIT */,
+				0A2556FF2041263D00AA1DC5 /* PMJSON.playground */,
 				9E1B24421BC73D7600E5BC19 /* JSON */,
 				0A79B5081E8B0BDE00A8C727 /* Tests */,
 				9E1B24341BC73D3600E5BC19 /* Products */,
