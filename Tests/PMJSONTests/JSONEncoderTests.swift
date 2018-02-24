@@ -32,10 +32,25 @@ public final class JSONEncoderTests: XCTestCase {
 public final class JSONEncoderBenchmarks: XCTestCase {
     public static let allLinuxTests = [
         ("testEncodePerformance", testEncodePerformance),
-        ("testEncodePrettyPerformance", testEncodePrettyPerformance)
+        ("testEncodeAsDataPerformance", testEncodeAsDataPerformance),
+        ("testEncodePrettyPerformance", testEncodePrettyPerformance),
+        ("testEncodePrettyAsDataPerformance", testEncodePrettyAsDataPerformance)
     ]
     
     func testEncodePerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measure {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsString(json)
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testEncodeAsDataPerformance() {
         do {
             let json = try JSON.decode(bigJson)
             measure {
@@ -68,6 +83,19 @@ public final class JSONEncoderBenchmarks: XCTestCase {
     #endif
     
     func testEncodePrettyPerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measure {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsString(json, options: [.pretty])
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    func testEncodePrettyAsDataPerformance() {
         do {
             let json = try JSON.decode(bigJson)
             measure {
