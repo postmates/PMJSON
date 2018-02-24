@@ -316,8 +316,6 @@ public class JSONDecoderBenchmarks: XCTestCase {
         ("testDecodePerformance", testDecodePerformance),
         ("testDecodeDecimalPerformance", testDecodeDecimalPerformance),
         ("testDecodePerformanceCocoa", testDecodePerformanceCocoa),
-        ("testEncodePerformance", testEncodePerformance),
-        ("testEncodePrettyPerformance", testEncodePrettyPerformance),
         ("testDecodeSampleJSONPerformance", testDecodeSampleJSONPerformance),
         ("testDecodeSampleJSONDecimalPerformance", testDecodeSampleJSONDecimalPerformance),
         ("testDecodeSampleJSONCocoaPerformance", testDecodeSampleJSONCocoaPerformance)
@@ -373,70 +371,6 @@ public class JSONDecoderBenchmarks: XCTestCase {
             }
         }
     }
-    
-    func testEncodePerformance() {
-        do {
-            let json = try JSON.decode(bigJson)
-            measure {
-                for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json)
-                }
-            }
-        } catch {
-            XCTFail("error parsing json: \(error)")
-        }
-    }
-    
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    func testEncodeCocoaPerformance() {
-        do {
-            let json = try JSON.decode(bigJson).ns
-            measure {
-                for _ in 0..<10 {
-                    do {
-                        _ = try JSONSerialization.data(withJSONObject: json)
-                    } catch {
-                        XCTFail("error encoding json: \(error)")
-                    }
-                }
-            }
-        } catch {
-            XCTFail("error parsing json: \(error)")
-        }
-    }
-    #endif
-    
-    func testEncodePrettyPerformance() {
-        do {
-            let json = try JSON.decode(bigJson)
-            measure {
-                for _ in 0..<10 {
-                    _ = JSON.encodeAsData(json, options: [.pretty])
-                }
-            }
-        } catch {
-            XCTFail("error parsing json: \(error)")
-        }
-    }
-    
-    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
-    func testEncodePrettyCocoaPerformance() {
-        do {
-            let json = try JSON.decode(bigJson).ns
-            measure {
-                for _ in 0..<10 {
-                    do {
-                        _ = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted])
-                    } catch {
-                        XCTFail("error encoding json: \(error)")
-                    }
-                }
-            }
-        } catch {
-            XCTFail("error parsing json: \(error)")
-        }
-    }
-    #endif
     
     func testDecodeSampleJSONPerformance() throws {
         let data = try readFixture("sample", withExtension: "json")

@@ -28,3 +28,74 @@ public final class JSONEncoderTests: XCTestCase {
         XCTAssertEqual(JSON.encodeAsString([1, JSON(Decimal(string: "1.234567890123456789")!)]), "[1,1.234567890123456789]")
     }
 }
+
+public final class JSONEncoderBenchmarks: XCTestCase {
+    public static let allLinuxTests = [
+        ("testEncodePerformance", testEncodePerformance),
+        ("testEncodePrettyPerformance", testEncodePrettyPerformance)
+    ]
+    
+    func testEncodePerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measure {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsData(json)
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    func testEncodeCocoaPerformance() {
+        do {
+            let json = try JSON.decode(bigJson).ns
+            measure {
+                for _ in 0..<10 {
+                    do {
+                        _ = try JSONSerialization.data(withJSONObject: json)
+                    } catch {
+                        XCTFail("error encoding json: \(error)")
+                    }
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    #endif
+    
+    func testEncodePrettyPerformance() {
+        do {
+            let json = try JSON.decode(bigJson)
+            measure {
+                for _ in 0..<10 {
+                    _ = JSON.encodeAsData(json, options: [.pretty])
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    
+    #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)
+    func testEncodePrettyCocoaPerformance() {
+        do {
+            let json = try JSON.decode(bigJson).ns
+            measure {
+                for _ in 0..<10 {
+                    do {
+                        _ = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted])
+                    } catch {
+                        XCTFail("error encoding json: \(error)")
+                    }
+                }
+            }
+        } catch {
+            XCTFail("error parsing json: \(error)")
+        }
+    }
+    #endif
+}
