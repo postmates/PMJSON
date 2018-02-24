@@ -44,14 +44,20 @@ extension JSON {
     /// - Returns: An `NSData` with the JSON representation of *json*.
     public static func encodeAsData(_ json: JSON, options: JSONEncoderOptions = []) -> Data {
         struct Output: TextOutputStream {
-            var data = Data()
+            // NB: Data is really slow even in Swift 4
+            let data = NSMutableData()
             mutating func write(_ string: String) {
-                data.append(contentsOf: string.utf8)
+                let len = data.length
+                data.increaseLength(by: string.utf8.count)
+                let bytes = data.mutableBytes
+                for (i, byte) in string.utf8.enumerated() {
+                    bytes.storeBytes(of: byte, toByteOffset: len+i, as: UInt8.self)
+                }
             }
         }
         var output = Output()
         JSON.encode(json, to: &output, options: options)
-        return output.data
+        return output.data as Data
     }
     
     @available(*, deprecated, message: "Use JSON.encodeAsData(_:options:) instead")
