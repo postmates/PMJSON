@@ -40,7 +40,7 @@
             </BuildableReference>
             <SkippedTests>
                <Test
-                  Identifier = "JSONBenchmarks">
+                  Identifier = "JSONDecoderBenchmarks">
                </Test>
             </SkippedTests>
          </TestableReference>

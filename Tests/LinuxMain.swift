@@ -7,6 +7,6 @@ XCTMain([
     testCase(JSONAccessorTests.allLinuxTests),
     testCase(JSONParserTests.allLinuxTests),
     testCase(JSONEncoderTests.allLinuxTests),
-    //testCase(JSONBenchmarks.allLinuxTests)
+    //testCase(JSONDecoderBenchmarks.allLinuxTests)
     // NB: Benchmarks are disabled for now because they're really slow under debug configuration
     ])

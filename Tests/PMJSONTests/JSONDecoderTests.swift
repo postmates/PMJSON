@@ -311,8 +311,8 @@ public class JSONStreamDecoderTests: XCTestCase {
     }
 }
 
-public class JSONBenchmarks: XCTestCase {
-    public static let allLinuxTests: [(String, (JSONBenchmarks) -> () throws -> Void)] = [
+public class JSONDecoderBenchmarks: XCTestCase {
+    public static let allLinuxTests: [(String, (JSONDecoderBenchmarks) -> () throws -> Void)] = [
         ("testDecodePerformance", testDecodePerformance),
         ("testDecodeDecimalPerformance", testDecodeDecimalPerformance),
         ("testDecodePerformanceCocoa", testDecodePerformanceCocoa),
