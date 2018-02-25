@@ -123,6 +123,7 @@ public final class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON(true), JSON.bool(true))
         XCTAssertEqual(JSON(42 as Int64), JSON.int64(42))
         XCTAssertEqual(JSON(42 as Double), JSON.double(42))
+        XCTAssertEqual(JSON(42 as CGFloat), JSON.double(42))
         XCTAssertEqual(JSON(42 as Int), JSON.int64(42))
         XCTAssertEqual(JSON(42 as Decimal), JSON.decimal(42))
         XCTAssertEqual(JSON("foo"), JSON.string("foo"))
@@ -131,6 +132,9 @@ public final class JSONDecoderTests: XCTestCase {
         XCTAssertEqual(JSON([true].lazy.map(JSON.bool)), [true]) // Sequence of JSON
         XCTAssertEqual(JSON([["foo": true], ["bar": 42]].lazy.map(JSONObject.init)), [["foo": true], ["bar": 42]]) // Sequence of JSONObject
         XCTAssertEqual(JSON([[1,2,3],[4,5,6]].lazy.map(JSONArray.init)), [[1,2,3],[4,5,6]]) // Sequence of JSONArray
+        
+        XCTAssertEqual(JSON.int(42), JSON.int64(42))
+        XCTAssertEqual(JSON.cgFloat(42), JSON.double(42))
     }
     
     func testJSONErrorNSErrorDescription() throws {

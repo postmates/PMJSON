@@ -67,7 +67,12 @@ public enum JSON {
 }
 
 // Convenience conversions.
-public extension JSON {
+extension JSON {
+    /// Returns a `JSON.int64` with the given value.
+    public static func int(_ value: Int) -> JSON {
+        return .int64(Int64(value))
+    }
+    
     /// Initializes `self` as a 64-bit integer with the value `i`.
     public init(_ i: Int) {
         self = .int64(Int64(i))

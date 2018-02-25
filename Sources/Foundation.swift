@@ -112,6 +112,20 @@ internal struct _DataOutput: TextOutputStream {
     }
 }
 
+// MARK: - Convenience
+
+extension JSON {
+    /// Returns a `JSON.double` with the given value.
+    public static func cgFloat(_ value: CGFloat) -> JSON {
+        return .double(Double(value))
+    }
+    
+    /// Initializes `self` as a `Double` with the given value.
+    public init(_ value: CGFloat) {
+        self = .double(Double(value))
+    }
+}
+
 // MARK: - Objective-C Compatibility
 
 #if os(iOS) || os(OSX) || os(watchOS) || os(tvOS)

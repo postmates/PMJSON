@@ -267,6 +267,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Improve `.pretty` output for empty arrays/dictionaries.
 * Speed up `JSON.encodeAsData()` pretty significantly. It's now very nearly as fast as `JSON.encodeAsString()`.
 * Speed up `JSON.Encoder.encodeAsString()` and `JSON.Encoder.encodeAsData()`.
+* Add a couple of convenience static methods to `JSON` that mimic the enum cases: `JSON.int(_:)` and `JSON.cgFloat(_:)`. These can be used when `JSON(_:)` triggers too much type complexity. Also add a `JSON(_:)` override for `CGFloat`.
 
 #### v3.0.2 (2018-02-21)
 
