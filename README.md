@@ -262,6 +262,11 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Improve `.pretty` output for empty arrays/dictionaries.
+* Speed up `JSON.encodeAsData()` pretty significantly. It's now very nearly as fast as `JSON.encodeAsString()`.
+
 #### v3.0.2 (2018-02-21)
 
 * Add convenience property `JSONError.path`.
