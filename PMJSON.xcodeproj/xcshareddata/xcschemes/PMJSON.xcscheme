@@ -42,6 +42,9 @@
                <Test
                   Identifier = "JSONDecoderBenchmarks">
                </Test>
+               <Test
+                  Identifier = "JSONEncoderBenchmarks">
+               </Test>
             </SkippedTests>
          </TestableReference>
       </Testables>
