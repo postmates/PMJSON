@@ -35,7 +35,8 @@ extension JSON {
     /// - Parameter stream: The output stream to write the encoded JSON to.
     /// - Parameters options: Options that controls JSON encoding. Defaults to no options. See `JSONEncoderOptions` for details.
     public static func encode<Target: TextOutputStream>(_ json: JSON, to stream: inout Target, options: JSONEncoderOptions = []) {
-        encode(json, to: &stream, indent: options.pretty ? 0 : nil)
+        var encoder = JSONEventEncoder(options: options)
+        encode(json, with: &encoder, to: &stream)
     }
     
     @available(*, deprecated, message: "Use JSON.encode(_:to:options:) instead")
@@ -48,142 +49,27 @@ extension JSON {
         encode(json, to: &stream, options: JSONEncoderOptions(pretty: pretty))
     }
     
-    private static func encode<Target: TextOutputStream>(_ json: JSON, to stream: inout Target, indent: Int?) {
+    private static func encode<Target: TextOutputStream>(_ json: JSON, with encoder: inout JSONEventEncoder, to stream: inout Target) {
         switch json {
-        case .null: encodeNull(&stream)
-        case .bool(let b): encodeBool(b, toStream: &stream)
-        case .int64(let i): encodeInt64(i, toStream: &stream)
-        case .double(let d): encodeDouble(d, toStream: &stream)
-        case .decimal(let d): encodeDecimal(d, toStream: &stream)
-        case .string(let s): encodeString(s, toStream: &stream)
-        case .object(let obj): encodeObject(obj, toStream: &stream, indent: indent)
-        case .array(let ary): encodeArray(ary, toStream: &stream, indent: indent)
-        }
-    }
-    
-    private static func encodeNull<Target: TextOutputStream>(_ stream: inout Target) {
-        stream.write("null")
-    }
-    
-    private static func encodeBool<Target: TextOutputStream>(_ value: Bool, toStream stream: inout Target) {
-        stream.write(value ? "true" : "false")
-    }
-    
-    private static func encodeInt64<Target: TextOutputStream>(_ value: Int64, toStream stream: inout Target) {
-        stream.write(String(value))
-    }
-    
-    private static func encodeDouble<Target: TextOutputStream>(_ value: Double, toStream stream: inout Target) {
-        stream.write(String(value))
-    }
-    
-    private static func encodeDecimal<Target: TextOutputStream>(_ value: Decimal, toStream stream: inout Target) {
-        stream.write(String(describing: value))
-    }
-    
-    private static func encodeString<Target: TextOutputStream>(_ value: String, toStream stream: inout Target) {
-        stream.write("\"")
-        let scalars = value.unicodeScalars
-        var start = scalars.startIndex
-        let end = scalars.endIndex
-        var idx = start
-        while idx < scalars.endIndex {
-            let s: String
-            let c = scalars[idx]
-            switch c {
-            case "\\": s = "\\\\"
-            case "\"": s = "\\\""
-            case "\n": s = "\\n"
-            case "\r": s = "\\r"
-            case "\t": s = "\\t"
-            case "\u{8}": s = "\\b"
-            case "\u{C}": s = "\\f"
-            case "\0"..<"\u{10}":
-                s = "\\u000\(String(c.value, radix: 16, uppercase: true))"
-            case "\u{10}"..<" ":
-                s = "\\u00\(String(c.value, radix: 16, uppercase: true))"
-            default:
-                idx = scalars.index(after: idx)
-                continue
+        case .null: encoder.encode(.nullValue, to: &stream)
+        case .bool(let b): encoder.encode(.booleanValue(b), to: &stream)
+        case .int64(let i): encoder.encode(.int64Value(i), to: &stream)
+        case .double(let d): encoder.encode(.doubleValue(d), to: &stream)
+        case .decimal(let d): encoder.encode(.decimalValue(d), to: &stream)
+        case .string(let s): encoder.encode(.stringValue(s), to: &stream)
+        case .object(let obj):
+            encoder.encode(.objectStart, to: &stream)
+            for (key, value) in obj {
+                encoder.encode(.stringValue(key), isKey: true, to: &stream)
+                encode(value, with: &encoder, to: &stream)
             }
-            if idx != start {
-                stream.write(String(scalars[start..<idx]))
+            encoder.encode(.objectEnd, to: &stream)
+        case .array(let ary):
+            encoder.encode(.arrayStart, to: &stream)
+            for value in ary {
+                encode(value, with: &encoder, to: &stream)
             }
-            stream.write(s)
-            idx = scalars.index(after: idx)
-            start = idx
-        }
-        if start != end {
-            String(scalars[start..<end]).write(to: &stream)
-        }
-        stream.write("\"")
-    }
-    
-    private static func encodeObject<Target: TextOutputStream>(_ object: JSONObject, toStream stream: inout Target, indent: Int?) {
-        let indented = indent.map({$0+1})
-        if let indent = indented, !object.isEmpty {
-            stream.write("{\n")
-            writeIndent(indent, toStream: &stream)
-        } else {
-            stream.write("{")
-        }
-        var first = true
-        for (key, value) in object {
-            if first {
-                first = false
-            } else if let indent = indented {
-                stream.write(",\n")
-                writeIndent(indent, toStream: &stream)
-            } else {
-                stream.write(",")
-            }
-            encodeString(key, toStream: &stream)
-            stream.write(indented != nil ? ": " : ":")
-            encode(value, to: &stream, indent: indented)
-        }
-        if let indent = indent, !object.isEmpty {
-            stream.write("\n")
-            writeIndent(indent, toStream: &stream)
-        }
-        stream.write("}")
-    }
-    
-    private static func encodeArray<Target: TextOutputStream>(_ array: JSONArray, toStream stream: inout Target, indent: Int?) {
-        let indented = indent.map({$0+1})
-        if let indent = indented, !array.isEmpty {
-            stream.write("[\n")
-            writeIndent(indent, toStream: &stream)
-        } else {
-            stream.write("[")
-        }
-        var first = true
-        for elt in array {
-            if first {
-                first = false
-            } else if let indent = indented {
-                stream.write(",\n")
-                writeIndent(indent, toStream: &stream)
-            } else {
-                stream.write(",")
-            }
-            encode(elt, to: &stream, indent: indented)
-        }
-        if let indent = indent, !array.isEmpty {
-            stream.write("\n")
-            writeIndent(indent, toStream: &stream)
-        }
-        stream.write("]")
-    }
-    
-    private static func writeIndent<Target: TextOutputStream>(_ indent: Int, toStream stream: inout Target) {
-        for _ in stride(from: 4, through: indent, by: 4) {
-            stream.write("        ")
-        }
-        switch indent % 4 {
-        case 1: stream.write("  ")
-        case 2: stream.write("    ")
-        case 3: stream.write("      ")
-        default: break
+            encoder.encode(.arrayEnd, to: &stream)
         }
     }
 }
@@ -217,6 +103,143 @@ extension JSONEncoderOptions: ExpressibleByArrayLiteral {
             switch elt {
             case .pretty: pretty = true
             }
+        }
+    }
+}
+
+/// A struct that encode a series of `JSONEvent`s to an output stream.
+///
+/// - Warning: The `JSONEvent` sequence must describe a single JSON value. Passing an invalid
+///   sequence of events to this struct will result in invalid JSON output.
+///
+/// - Note: This struct ignores the `.error` event.
+internal struct JSONEventEncoder {
+    private var firstElement = true
+    private var isObjectValue = false
+    /// The indent level. `nil` means pretty output is disabled.
+    private var indent: Int?
+    
+    init(options: JSONEncoderOptions) {
+        indent = options.pretty ? 0 : nil
+    }
+    
+    // Note: The isKey parameter is a pretty big hack, but it avoids the need for this type to have
+    // a dynamically-growing array just to track whether it's in an object or not.
+    
+    /// - Parameter event: The `JSONEvent` to encode.
+    /// - Parameter isKey: `true` if this event represents a key in an object.
+    /// - Parameter output: The output to write the JSON to.
+    mutating func encode<Target: TextOutputStream>(_ event: JSONEvent, isKey: Bool = false, to output: inout Target) {
+        // If we write two sibling values, assume we're in a collection, because otherwise we'd be
+        // dealing with invalid JSON.
+        
+        switch event {
+        case .objectEnd, .arrayEnd:
+            if let indent = indent {
+                self.indent = indent - 1
+                if !firstElement { // empty arrays/objects should be compact
+                    writeIndentedLine(to: &output)
+                }
+            }
+        case .error:
+            break
+        default:
+            if isObjectValue {
+                if indent != nil {
+                    output.write(": ")
+                } else {
+                    output.write(":")
+                }
+            } else {
+                if !firstElement {
+                    output.write(",")
+                }
+                if indent ?? 0 > 0 {
+                    writeIndentedLine(to: &output)
+                }
+            }
+        }
+        isObjectValue = isKey
+        firstElement = false
+        switch event {
+        case .objectStart:
+            output.write("{")
+            firstElement = true
+            indent = indent.map({ $0 + 1 })
+        case .objectEnd:
+            output.write("}")
+        case .arrayStart:
+            output.write("[")
+            firstElement = true
+            indent = indent.map({ $0 + 1 })
+        case .arrayEnd:
+            output.write("]")
+        case .booleanValue(let value):
+            output.write(value ? "true" : "false")
+        case .int64Value(let value):
+            output.write(String(value))
+        case .doubleValue(let value):
+            output.write(String(value))
+        case .decimalValue(let value):
+            output.write(String(describing: value))
+        case .stringValue(let value):
+            encodeString(value, to: &output)
+        case .nullValue:
+            output.write("null")
+        case .error:
+            break
+        }
+    }
+    
+    private mutating func encodeString<Target: TextOutputStream>(_ value: String, to output: inout Target) {
+        output.write("\"")
+        let scalars = value.unicodeScalars
+        var start = scalars.startIndex
+        let end = scalars.endIndex
+        var idx = start
+        while idx < scalars.endIndex {
+            let s: String
+            let c = scalars[idx]
+            switch c {
+            case "\\": s = "\\\\"
+            case "\"": s = "\\\""
+            case "\n": s = "\\n"
+            case "\r": s = "\\r"
+            case "\t": s = "\\t"
+            case "\u{8}": s = "\\b"
+            case "\u{C}": s = "\\f"
+            case "\0"..<"\u{10}":
+                s = "\\u000\(String(c.value, radix: 16, uppercase: true))"
+            case "\u{10}"..<" ":
+                s = "\\u00\(String(c.value, radix: 16, uppercase: true))"
+            default:
+                idx = scalars.index(after: idx)
+                continue
+            }
+            if idx != start {
+                output.write(String(scalars[start..<idx]))
+            }
+            output.write(s)
+            idx = scalars.index(after: idx)
+            start = idx
+        }
+        if start != end {
+            String(scalars[start..<end]).write(to: &output)
+        }
+        output.write("\"")
+    }
+    
+    private mutating func writeIndentedLine<Target: TextOutputStream>(to output: inout Target) {
+        guard let indent = indent else { return }
+        switch indent % 4 {
+        case 0: output.write("\n")
+        case 1: output.write("\n  ")
+        case 2: output.write("\n    ")
+        case 3: output.write("\n      ")
+        default: break
+        }
+        for _ in stride(from: 4, through: indent, by: 4) {
+            output.write("        ")
         }
     }
 }
