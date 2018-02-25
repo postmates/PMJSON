@@ -266,6 +266,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 * Improve `.pretty` output for empty arrays/dictionaries.
 * Speed up `JSON.encodeAsData()` pretty significantly. It's now very nearly as fast as `JSON.encodeAsString()`.
+* Speed up `JSON.Encoder.encodeAsString()` and `JSON.Encoder.encodeAsData()`.
 
 #### v3.0.2 (2018-02-21)
 
