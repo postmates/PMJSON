@@ -18,10 +18,10 @@ import Foundation
 // encoders aren't strictly scoped-based (because of nested keyed encoders, and super encoders, and
 // the fact that you can ask for multiple container encoders from a single Encoder).
 //
-// The first is to build up a parallel JSON-like enum that boxes up objets/arrays so they can be
+// The first is to build up a parallel JSON-like enum that boxes up objetcs/arrays so they can be
 // shared with the containers. This approach is relatively simple, but the downside is if we want to
-// create a `JSON` we need to deep-copy the whole thing (though if we write a streaming encoder we
-// can serialize to `String`/`Data` without the deep copy).
+// create a `JSON` we need to deep-copy the whole thing (though with a streaming encoder we can
+// serialize to `String`/`Data` without the deep copy).
 //
 // The second approach is to have the encoder hold an enum that contains either a `JSON` primitive
 // or a boxed object/array, and have it write this value into its parent when it deinits. Because
