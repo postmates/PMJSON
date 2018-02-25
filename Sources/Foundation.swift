@@ -106,7 +106,9 @@ internal struct _DataOutput: TextOutputStream {
             data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
             buffer = ""
         }
-        return data as Data
+        // NB: We don't really care about whether this references the NSData or not, in fact we'd
+        // rather the stdlib make that decision, except `data as Data` isn't compatible with Linux
+        return Data(referencing: data)
     }
 }
 
