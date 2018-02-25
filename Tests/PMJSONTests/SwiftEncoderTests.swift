@@ -504,4 +504,232 @@ final class SwiftEncoderTests: XCTestCase {
         }
         try assertEncodedJSON(for: Child(), equals: [24, ["name": "Anne"], 42])
     }
+    
+    // MARK: - KeyEncodingStrategy
+    
+    func testConvertToSnakeCase() throws {
+        var encoder = JSON.Encoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        
+        func assertEqual(_ key: String, _ expected: String, file: StaticString = #file, line: UInt = #line) throws {
+            let dict: [String: Bool] = [key: true]
+            let json = try encoder.encodeAsJSON(dict)
+            XCTAssertEqual(json, [expected: true], file: file, line: line)
+        }
+        
+        try assertEqual("", "")
+        try assertEqual("hello", "hello")
+        try assertEqual("HELLO", "hello")
+        try assertEqual("123", "123")
+        try assertEqual("fooBar", "foo_bar")
+        try assertEqual("oneTwoThree", "one_two_three")
+        try assertEqual("URLForConfig", "url_for_config")
+        try assertEqual("_oneTwoThree_", "_one_two_three_")
+        try assertEqual("one_two_three", "one_two_three")
+        try assertEqual("23Skidoo", "23_skidoo")
+        try assertEqual("ABC123", "abc123")
+        try assertEqual("ABC123def", "abc123_def")
+        try assertEqual("A1sauce", "a1_sauce")
+        try assertEqual("A1Sauce", "a1_sauce")
+        try assertEqual("A1B2C3", "a1b2c3")
+        try assertEqual("foo12Bar", "foo12_bar")
+        try assertEqual("endsWithSingleX", "ends_with_single_x")
+        try assertEqual("fooU\u{308}ber", "foo_u\u{308}ber")
+    }
+    
+    func testEncodingConvertToSnakeCase() throws {
+        struct Person: Encodable {
+            let name: String
+            let isAlive: Bool
+            let favoriteColors: [Color]
+            let fruitRankings: [String: String]
+        }
+        struct Color: Encodable {
+            let name: String
+            let isVibrant: Bool
+        }
+        
+        var encoder = JSON.Encoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let json = try encoder.encodeAsJSON(Person(name: "Anne", isAlive: true, favoriteColors: [Color(name: "red", isVibrant: true), Color(name: "blue", isVibrant: false)], fruitRankings: ["apple": "good", "notAFruit": "bad"]))
+        XCTAssertEqual(json, [
+            "name": "Anne",
+            "is_alive": true,
+            "favorite_colors": [
+                [
+                    "name": "red",
+                    "is_vibrant": true
+                ],
+                [
+                    "name": "blue",
+                    "is_vibrant": false
+                ]
+            ],
+            "fruit_rankings": [
+                "apple": "good",
+                "not_a_fruit": "bad"
+            ]
+            ])
+    }
+    
+    func testEncodingObjectConvertToSnakeCase() throws {
+        var encoder = JSON.Encoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        // use default applyKeyEncodingStrategyToJSONObject
+        do { // JSON
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": true
+                ]] as JSON)
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        do { // JSONObject
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": true
+                ] as JSONObject])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        encoder.applyKeyEncodingStrategyToJSONObject = true
+        do { // JSON
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": false
+                ]] as JSON)
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+        }
+        do { // JSONObject
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": false
+                ] as JSONObject])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+        }
+    }
+    
+    func testEncodingCustom() throws {
+        struct Person: Encodable {
+            let name: String
+            let isAlive: Bool
+            let favoriteColors: [Color]
+            let fruitRankings: [String: String]
+        }
+        struct Color: Encodable {
+            let name: String
+            let isVibrant: Bool
+        }
+        struct MyKey: CodingKey {
+            let stringValue: String
+            var intValue: Int? { return nil }
+            init(stringValue: String) {
+                self.stringValue = stringValue
+            }
+            init?(intValue: Int) {
+                return nil
+            }
+        }
+        var encoder = JSON.Encoder()
+        encoder.keyEncodingStrategy = .custom({ (codingPath, key) -> CodingKey in
+            switch key.stringValue {
+            case "name":
+                if codingPath.first?.stringValue == "favoriteColors" {
+                    return MyKey(stringValue: "shade")
+                } else {
+                    return MyKey(stringValue: "firstName")
+                }
+            case let s:
+                return MyKey(stringValue: "\(s)!")
+            }
+        })
+        let json = try encoder.encodeAsJSON(Person(name: "Anne", isAlive: true, favoriteColors: [Color(name: "red", isVibrant: true), Color(name: "blue", isVibrant: false)], fruitRankings: ["apple": "good", "notAFruit": "bad"]))
+        XCTAssertEqual(json, [
+            "firstName": "Anne",
+            "isAlive!": true,
+            "favoriteColors!": [
+                [
+                    "shade": "red",
+                    "isVibrant!": true
+                ],
+                [
+                    "shade": "blue",
+                    "isVibrant!": false
+                ]
+            ],
+            "fruitRankings!": [
+                "apple!": "good",
+                "notAFruit!": "bad"
+            ]
+            ])
+    }
+    
+    func testEncodingObjectCustom() throws {
+        struct MyKey: CodingKey {
+            let stringValue: String
+            var intValue: Int? { return nil }
+            init(stringValue: String) {
+                self.stringValue = stringValue
+            }
+            init?(intValue: Int) {
+                return nil
+            }
+        }
+        var encoder = JSON.Encoder()
+        encoder.keyEncodingStrategy = .custom({ (codingPath, key) -> CodingKey in
+            return MyKey(stringValue: key.stringValue + "!")
+        })
+        // use default applyKeyEncodingStrategyToJSONObject
+        do { // JSON
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": true
+                ]] as JSON)
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        do { // JSONObject
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": true
+                ] as JSONObject])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        encoder.applyKeyEncodingStrategyToJSONObject = true
+        do { // JSON
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": false
+                ]] as JSON)
+            XCTAssertEqual(json, [[
+                "foo!": "bar",
+                "camelCase!": false
+                ]])
+        }
+        do { // JSONObject
+            let json = try encoder.encodeAsJSON([[
+                "foo": "bar",
+                "camelCase": false
+                ] as JSONObject])
+            XCTAssertEqual(json, [[
+                "foo!": "bar",
+                "camelCase!": false
+                ]])
+        }
+    }
 }
