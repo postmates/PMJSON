@@ -44,10 +44,26 @@ private struct Wrapper<Value: Encodable>: Encodable {
 final class SwiftEncoderTests: XCTestCase {
     let encoder = JSON.Encoder()
     
+    private func assertEncodedJSON<T: Encodable>(for value: T, equals expected: JSON, file: StaticString = #file, line: UInt = #line) throws {
+        do { // encodeAsJSON
+            let json = try encoder.encodeAsJSON(value)
+            XCTAssertEqual(json, expected, "encodeAsJSON", file: file, line: line)
+        }
+        do { // encodeAsString
+            let jsonStr = try encoder.encodeAsString(value)
+            let json = try JSON.decode(jsonStr)
+            XCTAssertEqual(json, expected, "encodeAsString", file: file, line: line)
+        }
+        do { // encodeAsData
+            let jsonData = try encoder.encodeAsData(value)
+            let json = try JSON.decode(jsonData)
+            XCTAssertEqual(json, expected, "encodeAsData", file: file, line: line)
+        }
+    }
+    
     func testBasicEncode() throws {
         let person = Person(name: "Anne", age: 24, isAlive: true, favoriteColors: [.red, .green, .blue], fruitRatings: ["apple": 3, "pear": 4, "banana": 5], birthstone: "opal")
-        let json = try encoder.encodeAsJSON(person)
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: person, equals: [
             "name": "Anne",
             "age": 24,
             "isAlive": true,
@@ -59,8 +75,7 @@ final class SwiftEncoderTests: XCTestCase {
     
     func testEncodeOptional() throws {
         let person = Person(name: "Anne", age: 24, isAlive: true, favoriteColors: [.red, .green, .blue], fruitRatings: ["apple": 3, "pear": 4, "banana": 5], birthstone: nil)
-        let json = try encoder.encodeAsJSON(person)
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: person, equals: [
             "name": "Anne",
             "age": 24,
             "isAlive": true,
@@ -70,8 +85,7 @@ final class SwiftEncoderTests: XCTestCase {
     }
     
     func testEncodePrimitve() throws {
-        let json = try encoder.encodeAsJSON(42)
-        XCTAssertEqual(json, 42)
+        try assertEncodedJSON(for: 42, equals: 42)
     }
     
     func testEncodeNull() throws {
@@ -85,8 +99,7 @@ final class SwiftEncoderTests: XCTestCase {
             }
         }
         
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, ["value": nil])
+        try assertEncodedJSON(for: Object(), equals: ["value": nil])
     }
     
     func testEncodeJSONValue() throws {
@@ -100,8 +113,7 @@ final class SwiftEncoderTests: XCTestCase {
     
     func testEncodeDecimal() throws {
         let wrapper = Wrapper<Decimal>(value: 12.34)
-        let json = try encoder.encodeAsJSON(wrapper)
-        XCTAssertEqual(json, ["value": .decimal(12.34)])
+        try assertEncodedJSON(for: wrapper, equals: ["value": .decimal(12.34)])
     }
     
     // MARK: -
@@ -164,9 +176,7 @@ final class SwiftEncoderTests: XCTestCase {
                 }
             }
         }
-        
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Object(), equals: [
             "name": "Anne",
             "age": 24,
             "color": "red",
@@ -194,9 +204,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try container2.encode("banana", forKey: .fruit)
             }
         }
-        
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Object(), equals: [
             "name": "Anne",
             "age": 24,
             "color": "red",
@@ -224,8 +232,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try nested.encode(24, forKey: .age)
             }
         }
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Object(), equals: [
             "name": "Anne",
             "nested": [
                 "color": "red",
@@ -248,8 +255,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try nested.encode(42)
             }
         }
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Object(), equals: [
             "name": "Anne",
             "nested": ["foo", 42]
             ])
@@ -274,8 +280,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try nested.encode(24, forKey: .age)
             }
         }
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Object(), equals: [
             "name": "Anne",
             "nested": "foo"
             ])
@@ -295,8 +300,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try nested.encode(24, forKey: .age)
             }
         }
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, ["Anne", ["color": "red", "age": 24]])
+        try assertEncodedJSON(for: Object(), equals: ["Anne", ["color": "red", "age": 24]])
     }
     
     func testArrayNestedUnkeyedEncoder() throws {
@@ -309,8 +313,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try nested.encode(24)
             }
         }
-        let json = try encoder.encodeAsJSON(Object())
-        XCTAssertEqual(json, ["Anne", ["red", 24]])
+        try assertEncodedJSON(for: Object(), equals: ["Anne", ["red", 24]])
     }
     
     // MARK: - Super encoders
@@ -332,8 +335,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: container.superEncoder())
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "name": "Anne",
             "super": "foo",
             ])
@@ -357,8 +359,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: container.superEncoder(forKey: .otherSuper))
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "name": "Anne",
             "otherSuper": "foo"
             ])
@@ -384,8 +385,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: container.superEncoder())
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "age": 24,
             "super": [
                 "name": "Anne"
@@ -411,8 +411,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: container.superEncoder())
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "age": 24,
             "super": ["foo", 42]
             ])
@@ -436,8 +435,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: superEncoder)
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "name": "Anne",
             "super": "foo",
             ])
@@ -463,8 +461,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: superEncoder) // this line should have no effect on the result
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [
+        try assertEncodedJSON(for: Child(), equals: [
             "name": "Anne",
             "super": "bar",
             ])
@@ -484,8 +481,7 @@ final class SwiftEncoderTests: XCTestCase {
                 try super.encode(to: container.superEncoder())
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, ["Anne", "foo"])
+        try assertEncodedJSON(for: Child(), equals: ["Anne", "foo"])
     }
     
     func testArraySuperObjectEncoder() throws {
@@ -506,7 +502,6 @@ final class SwiftEncoderTests: XCTestCase {
                 try container.encode(42)
             }
         }
-        let json = try encoder.encodeAsJSON(Child())
-        XCTAssertEqual(json, [24, ["name": "Anne"], 42])
+        try assertEncodedJSON(for: Child(), equals: [24, ["name": "Anne"], 42])
     }
 }
