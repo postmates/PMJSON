@@ -20,12 +20,30 @@ import struct Foundation.Decimal
 /// - Note: The encoder is primarily tested with round-trip tests in `JSONDecoderTests`.
 public final class JSONEncoderTests: XCTestCase {
     public static let allLinuxTests = [
-        ("testDecimalEncoding", testDecimalEncoding)
+        ("testDecimalEncoding", testDecimalEncoding),
+        ("testEncodeAsData", testEncodeAsData)
     ]
     
     func testDecimalEncoding() {
         XCTAssertEqual(JSON.encodeAsString(.decimal(42.714)), "42.714")
         XCTAssertEqual(JSON.encodeAsString([1, JSON(Decimal(string: "1.234567890123456789")!)]), "[1,1.234567890123456789]")
+    }
+    
+    func testEncodeAsData() {
+        // Because we hve the fancy buffering in encodeAsData, let's make sure we get the correct
+        // results for a few different inputs
+        func helper(_ input: JSON, file: StaticString = #file, line: UInt = #line) {
+            let str = JSON.encodeAsString(input)
+            let data = JSON.encodeAsData(input)
+            XCTAssertEqual(str.data(using: .utf8)!, data, file: file, line: line)
+        }
+        
+        // Whole thing is below max chunk size
+        helper(["foo": "bar"])
+        // Include a single chunk larger than the max chunk size
+        helper(["long string": .string(String(repeating: "A", count: 33 * 1024))])
+        // Whole JSON string is multiple chunks
+        helper(["array": .array(JSONArray(repeating: "hello", count: 32 * 1024))])
     }
 }
 
