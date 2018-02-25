@@ -150,6 +150,32 @@ private enum EncodedJSON {
         default: self = .unboxed(json)
         }
     }
+    
+    func encode<Target: TextOutputStream>(with encoder: inout JSONEventEncoder, to stream: inout Target) {
+        switch self {
+        case .unboxed(let json):
+            JSON.encode(json, with: &encoder, to: &stream)
+        case .object(let box):
+            encoder.encode(.objectStart, to: &stream)
+            for (key, value) in box.value {
+                encoder.encode(.stringValue(key), isKey: true, to: &stream)
+                value.encode(with: &encoder, to: &stream)
+            }
+            encoder.encode(.objectEnd, to: &stream)
+        case .array(let box):
+            encoder.encode(.arrayStart, to: &stream)
+            for value in box.value {
+                value.encode(with: &encoder, to: &stream)
+            }
+            encoder.encode(.arrayEnd, to: &stream)
+        case .super(let box):
+            if let value = box.value {
+                value.encode(with: &encoder, to: &stream)
+            } else {
+                EncodedJSON.unboxed([:]).encode(with: &encoder, to: &stream)
+            }
+        }
+    }
 }
 
 extension JSON {
@@ -167,7 +193,11 @@ extension JSON {
         /// - Returns: Data containing the JSON encoding of the value.
         /// - Throws: Any error thrown by a value's `encode(to:)` method.
         public func encodeAsData<T: Encodable>(_ value: T, options: JSONEncoderOptions = []) throws -> Data {
-            return try JSON.encodeAsData(encodeAsJSON(value), options: options)
+            var output = _DataOutput()
+            let json = try _encodeAsEncodedJSON(value)
+            var encoder = JSONEventEncoder(options: options)
+            json.encode(with: &encoder, to: &output)
+            return output.finish()
         }
         
         /// Returns a JSON-encoded representation of the value you supply.
@@ -176,7 +206,11 @@ extension JSON {
         /// - Returns: A string containing the JSON encoding of the value.
         /// - Throws: Any error thrown by a value's `encode(to:)` method.
         public func encodeAsString<T: Encodable>(_ value: T, options: JSONEncoderOptions = []) throws -> String {
-            return try JSON.encodeAsString(encodeAsJSON(value), options: options)
+            var output = ""
+            let json = try _encodeAsEncodedJSON(value)
+            var encoder = JSONEventEncoder(options: options)
+            json.encode(with: &encoder, to: &output)
+            return output
         }
         
         /// Returns a JSON-encoded representation of the value you supply.
@@ -186,6 +220,16 @@ extension JSON {
         /// - Throws: Any error thrown by a value's `encode(to:)` method, or
         ///   `EncodingError.invalidValue` if the value doesn't encode anything.
         public func encodeAsJSON<T: Encodable>(_ value: T) throws -> JSON {
+            let json = try _encodeAsEncodedJSON(value)
+            return json.unbox()
+        }
+        
+        @available(*, unavailable, renamed: "encodeAsData(_:)")
+        public func encode<T: Encodable>(_ value: T) throws -> Data {
+            return try encodeAsData(value)
+        }
+        
+        private func _encodeAsEncodedJSON<T: Encodable>(_ value: T) throws -> EncodedJSON {
             let data = EncoderData()
             data.userInfo = userInfo
             let encoder = _JSONEncoder(data: data)
@@ -193,12 +237,7 @@ extension JSON {
             guard let json = encoder.json else {
                 throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: [], debugDescription: "Top-level \(type(of: value)) did not encode any values."))
             }
-            return json.unbox()
-        }
-        
-        @available(*, unavailable, renamed: "encodeAsData(_:)")
-        public func encode<T: Encodable>(_ value: T) throws -> Data {
-            return try encodeAsData(value)
+            return json
         }
     }
 }

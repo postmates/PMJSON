@@ -15,3 +15,16 @@ let json: JSON = [
 ]
 
 print(JSON.encodeAsString(json, options: [.pretty]))
+
+// Also try some Encodable output
+
+struct Person: Encodable {
+    let name: String
+    let age: Int
+    let isAlive: Bool
+    let favoriteColors: [String]
+    let fruitRatings: [String: String]
+}
+
+let person = Person(name: "Anne", age: 24, isAlive: true, favoriteColors: ["red", "green", "blue"], fruitRatings: ["apple": "good", "pear": "better", "banana": "great", "melon": "okay"])
+try print(JSON.Encoder().encodeAsString(person, options: [.pretty]))

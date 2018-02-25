@@ -43,45 +43,7 @@ extension JSON {
     /// - Parameter options: Options that controls JSON encoding. Defaults to no options. See `JSONEncoderOptions` for details.
     /// - Returns: An `NSData` with the JSON representation of *json*.
     public static func encodeAsData(_ json: JSON, options: JSONEncoderOptions = []) -> Data {
-        struct Output: TextOutputStream {
-            // Trying to encode directly to a `Data` or `NSMutableData` isn't all that fast.
-            // Encoding the whole thing as a `String` and converting to `Data` once is 40% faster
-            // than writing each chunk to a data. On the flip side, encoding everything to a
-            // `String` first and then converting to `Data` doubles the memory usage. To strike a
-            // balance, we encode to a `String` in chunks up to 64kb, and every time we pass that,
-            // we convert it to `Data`.
-            // NB: Data is really slow even in Swift 4, so we actually use `NSMutableData` instead.
-            
-            private var buffer = String()
-            private let data = NSMutableData()
-            /// Maximum number of UTF-16 characters in the buffer before flushing to data.
-            let maxChunkSize = 32 * 1024
-            
-            mutating func write(_ string: String) {
-                // Measure the string in UTF-16 because it's O(1). If this is an ASCII string, we'll
-                // be off by a factor of 2 on the size, but if it's non-ASCII then we'll have an
-                // accurate representation of the string's size in-memory.
-                let writeChunkNow = string.utf16.count >= maxChunkSize
-                if writeChunkNow ||  buffer.utf16.count >= maxChunkSize {
-                    data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
-                    buffer = ""
-                }
-                if writeChunkNow {
-                    data.append(string.data(using: .utf8, allowLossyConversion: true)!)
-                } else {
-                    buffer.append(string)
-                }
-            }
-            
-            mutating func finish() -> Data {
-                if !buffer.isEmpty {
-                    data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
-                    buffer = ""
-                }
-                return data as Data
-            }
-        }
-        var output = Output()
+        var output = _DataOutput()
         JSON.encode(json, to: &output, options: options)
         return output.finish()
     }
@@ -106,6 +68,45 @@ extension JSON {
         } else {
             return JSONParser(AnySequence(UTF8Decoder(data: data)), options: options)
         }
+    }
+}
+
+internal struct _DataOutput: TextOutputStream {
+    // Trying to encode directly to a `Data` or `NSMutableData` isn't all that fast.
+    // Encoding the whole thing as a `String` and converting to `Data` once is 40% faster
+    // than writing each chunk to a data. On the flip side, encoding everything to a
+    // `String` first and then converting to `Data` doubles the memory usage. To strike a
+    // balance, we encode to a `String` in chunks up to 64kb, and every time we pass that,
+    // we convert it to `Data`.
+    // NB: Data is really slow even in Swift 4, so we actually use `NSMutableData` instead.
+    
+    private var buffer = String()
+    private let data = NSMutableData()
+    /// Maximum number of UTF-16 characters in the buffer before flushing to data.
+    let maxChunkSize = 32 * 1024
+    
+    mutating func write(_ string: String) {
+        // Measure the string in UTF-16 because it's O(1). If this is an ASCII string, we'll
+        // be off by a factor of 2 on the size, but if it's non-ASCII then we'll have an
+        // accurate representation of the string's size in-memory.
+        let writeChunkNow = string.utf16.count >= maxChunkSize
+        if writeChunkNow ||  buffer.utf16.count >= maxChunkSize {
+            data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
+            buffer = ""
+        }
+        if writeChunkNow {
+            data.append(string.data(using: .utf8, allowLossyConversion: true)!)
+        } else {
+            buffer.append(string)
+        }
+    }
+    
+    mutating func finish() -> Data {
+        if !buffer.isEmpty {
+            data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
+            buffer = ""
+        }
+        return data as Data
     }
 }
 

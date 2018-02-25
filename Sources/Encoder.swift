@@ -49,7 +49,7 @@ extension JSON {
         encode(json, to: &stream, options: JSONEncoderOptions(pretty: pretty))
     }
     
-    private static func encode<Target: TextOutputStream>(_ json: JSON, with encoder: inout JSONEventEncoder, to stream: inout Target) {
+    internal static func encode<Target: TextOutputStream>(_ json: JSON, with encoder: inout JSONEventEncoder, to stream: inout Target) {
         switch json {
         case .null: encoder.encode(.nullValue, to: &stream)
         case .bool(let b): encoder.encode(.booleanValue(b), to: &stream)
