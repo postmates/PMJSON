@@ -521,6 +521,75 @@ private struct _JSONUnkeyedDecoder: UnkeyedDecodingContainer {
 
 // MARK: -
 
+extension JSON.Decoder {
+    /// The strategy to use for automatically changing the keys before decoding.
+    public enum KeyDecodingStrategy {
+        /// Use the keys specified by each type. This is the default strategy.
+        case useDefaultKeys
+        
+        /// Convert from "snake_case_keys" to "camelCaseKeys" before attempting to match a key with
+        /// the one specified by each type.
+        ///
+        /// The conversion to uppercase uses the ICU "root" locale (meaning the conversion is not
+        /// affected by the current locale).
+        ///
+        /// Converting from snake_case to camelCase:
+        /// 1. Capitalizes each word starting after `_`.
+        /// 2. Removes all `_` in between words.
+        /// 3. Preserves all `_` at the start and end.
+        ///
+        /// For example, `one_two_three` becomes `oneTwoThree` and `__foo_bar__` becomes
+        /// `__fooBar__`.
+        ///
+        /// - Note: Using this key encoding strategy incurs a minor performance cost.
+        case convertFromSnakeCase
+        
+        /// Provide a custom conversion from the key used in the JSON to the key specified by the
+        /// decoding type. The first parameter is the full path leading up to the current key, which
+        /// can provide context for the conversion, and the second parameter is the key itself,
+        /// which will be replaced by the return value from the function.
+        ///
+        /// - Note: If the result of the conversion is a duplicate key, only one value will be
+        ///   present in the container for the type to decode from.
+        case custom((_ codingPath: [CodingKey], _ key: CodingKey) -> CodingKey)
+        
+        fileprivate static func _convertFromSnakeCase(_ key: String) -> String {
+            guard !key.isEmpty else { return key }
+            
+            let scalars = key.unicodeScalars
+            
+            guard let firstIdx = scalars.index(where: { $0 != "_" }),
+                let lastIdx = scalars.reversed().index(where: { $0 != "_" })?.base
+                else {
+                    // the string is all underscores
+                    return key
+            }
+            
+            guard var nextUnderscoreIdx = scalars[firstIdx..<lastIdx].index(of: "_") else {
+                // only one word
+                return key
+            }
+            
+            var result: String = String(scalars[..<nextUnderscoreIdx])
+            while let nextOtherIdx = scalars[scalars.index(after: nextUnderscoreIdx)..<lastIdx].index(where: { $0 != "_" }) {
+                guard let idx = scalars[scalars.index(after: nextOtherIdx)..<lastIdx].index(of: "_") else {
+                    // this must be the last word
+                    result.append(Substring(scalars[nextOtherIdx..<lastIdx]).capitalized)
+                    break
+                }
+                result.append(Substring(scalars[nextOtherIdx..<idx]).capitalized)
+                nextUnderscoreIdx = idx
+            }
+            if lastIdx != scalars.endIndex {
+                result.unicodeScalars.append(contentsOf: scalars[lastIdx...])
+            }
+            return result
+        }
+    }
+}
+
+// MARK: -
+
 private func _wrapTypeMismatch<T>(key: CodingKey? = nil, _ f: () throws -> T, data: DecoderData) throws -> T {
     do {
         return try f()
