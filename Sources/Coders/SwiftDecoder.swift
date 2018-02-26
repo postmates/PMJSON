@@ -848,14 +848,14 @@ private func _getUInt64(from value: JSON, data: DecoderData) throws -> UInt64 {
 }
 
 @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
-private var _iso8601Formatter: ISO8601DateFormatter = {
+internal var _iso8601Formatter: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime]
     return formatter
 }()
 
 @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
-private var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
+internal var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter

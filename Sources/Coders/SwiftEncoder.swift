@@ -198,6 +198,9 @@ extension JSON {
         /// - Note: This property does not affect the encoding of `Dictionary`.
         public var applyKeyEncodingStrategyToJSONObject = false
         
+        /// The strategy to use in encoding dates. Defaults to `.deferredToDate`.
+        public var dateEncodingStrategy: DateEncodingStrategy = .deferredToDate
+        
         /// Creates a new, reusable JSON encoder.
         public init() {}
         
@@ -248,6 +251,7 @@ extension JSON {
             data.userInfo = userInfo
             data.keyEncodingStrategy = keyEncodingStrategy
             data.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
+            data.dateEncodingStrategy = dateEncodingStrategy
             let encoder = _JSONEncoder(data: data)
             try encoder.encode(value)
             guard let json = encoder.json else {
@@ -263,6 +267,7 @@ private class EncoderData {
     var userInfo: [CodingUserInfoKey: Any] = [:]
     var keyEncodingStrategy: JSON.Encoder.KeyEncodingStrategy = .useDefaultKeys
     var applyKeyEncodingStrategyToJSONObject = false
+    var dateEncodingStrategy: JSON.Encoder.DateEncodingStrategy = .deferredToDate
     
     var shouldRekeyJSONObjects: Bool {
         switch keyEncodingStrategy {
@@ -277,6 +282,7 @@ private class EncoderData {
         result.userInfo = userInfo
         result.keyEncodingStrategy = keyEncodingStrategy
         result.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
+        result.dateEncodingStrategy = dateEncodingStrategy
         return result
     }
 }
@@ -472,6 +478,7 @@ extension _JSONEncoder: SingleValueEncodingContainer {
     }
     
     func encode<T>(_ value: T) throws where T : Encodable {
+        assertCanWriteValue()
         switch value {
         case let json as JSON:
             switch json {
@@ -486,6 +493,38 @@ extension _JSONEncoder: SingleValueEncodingContainer {
             self.json = .unboxed(.object(object))
         case let decimal as Decimal:
             json = .unboxed(.decimal(decimal))
+        case let date as Date:
+            switch _data.dateEncodingStrategy {
+            case .deferredToDate:
+                try value.encode(to: self)
+            case .secondsSince1970:
+                try encode(date.timeIntervalSince1970)
+            case .millisecondsSince1970:
+                try encode(date.timeIntervalSince1970 * 1000)
+            case .iso8601:
+                if #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) {
+                    let str = _iso8601Formatter.string(from: date)
+                    try encode(str)
+                } else {
+                    fatalError("ISO8601DateFormatter is not available on this platform")
+                }
+            case .iso8601WithFractionalSeconds:
+                if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                    let str = _iso8601FractionalSecondsFormatter.string(from: date)
+                    try encode(str)
+                } else {
+                    fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
+                }
+            case .formatted(let formatter):
+                let str = formatter.string(from: date)
+                try encode(str)
+            case .custom(let f):
+                try f(date, self)
+                if self.value?.isEmpty ?? true {
+                    // the function didn't encode anything
+                    self.json = .unboxed([:])
+                }
+            }
         default:
             try value.encode(to: self)
         }
@@ -859,5 +898,42 @@ extension JSON.Encoder {
             result.append(key[lastIdx...].lowercased())
             return result
         }
+    }
+    
+    /// The strategy to use for encoding `Date` values.
+    public enum DateEncodingStrategy {
+        /// Defer to `Date` for choosing an encoding. This is the default strategy.
+        case deferredToDate
+        
+        /// Encode the `Date` as a UNIX timestamp (as a JSON number).
+        case secondsSince1970
+        
+        /// Encode the `Date` as UNIX millisecond timestamp (as a JSON number).
+        case millisecondsSince1970
+        
+        /// Encode the `Date` as an ISO8601-formatted string (in RFC 3339 format).
+        ///
+        /// This encodes strings like `"1985-04-12T23:20:50Z"`.
+        ///
+        /// - Note: This does not include fractional seconds. Use `.iso8601WithFractionalSeconds`
+        ///   for that.
+        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        case iso8601
+        
+        /// Encode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
+        /// seconds.
+        ///
+        /// This encodes strings like `"1985-04-12T23:20:50.523Z"`.
+        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        case iso8601WithFractionalSeconds
+        
+        /// Encode the `Date` as a string formatted by the given formatter.
+        case formatted(DateFormatter)
+        
+        /// Encode the `Date` as a custom value encoded by the given closure.
+        ///
+        /// If the closure fails to encode a value into the given encoder, the encoder will encode
+        /// an empty object in its place.
+        case custom((Date, Encoder) throws -> Void)
     }
 }
