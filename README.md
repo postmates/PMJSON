@@ -268,7 +268,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Speed up `JSON.encodeAsData()` pretty significantly. It's now very nearly as fast as `JSON.encodeAsString()`.
 * Speed up `JSON.Encoder.encodeAsString()` and `JSON.Encoder.encodeAsData()`.
 * Add a couple of convenience static methods to `JSON` that mimic the enum cases: `JSON.int(_:)` and `JSON.cgFloat(_:)`. These can be used when `JSON(_:)` triggers too much type complexity. Also add a `JSON(_:)` override for `CGFloat`.
-* Add `JSON.Encoder.keyEncodingStrategy`. This is very similar to Swift 4.1's `JSONEncoder.keyEncodingStrategy`.
+* Add `JSON.Encoder.keyEncodingStrategy`. This is very similar to Swift 4.1's `JSONEncoder.keyEncodingStrategy`, although by default it won't apply to any nested values of type `JSON` or `JSONObject` (there's another option `applyKeyEncodingStrategyToJSONObject` that controls this).
+* Add `JSON.Decoder.keyDecodingStrategy`. This is very similar to Swift 4.1's `JSONDecoder.keyDecodingStrategy`, although by default it won't apply to decoding any values of type `JSON` or `JSONObject` (there's another option `applyKeyDecodingStrategyToJSONObject` that controls this).
 
 #### v3.0.2 (2018-02-21)
 
