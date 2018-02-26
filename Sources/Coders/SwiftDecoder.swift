@@ -71,8 +71,7 @@ extension JSON {
         public func decode<T: Decodable>(_ type: T.Type, from json: JSON) throws -> T {
             let data = DecoderData()
             data.userInfo = userInfo
-            let decoder = _JSONDecoder(data: data, value: json)
-            return try T(from: decoder)
+            return try _JSONDecoder(data: data, value: json).decode(type)
         }
     }
 }
@@ -195,6 +194,22 @@ extension _JSONDecoder: SingleValueDecodingContainer {
     }
     
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+        switch type {
+        case is JSON.Type:
+            return value as! T
+        case is JSONObject.Type:
+            do {
+                return try value.getObject() as! T
+            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
+                throw DecodingError.typeMismatch(JSONObject.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            }
+        case is Decimal.Type:
+            if case .decimal(let d) = value {
+                return d as! T
+            }
+        default:
+            break
+        }
         return try T(from: self)
     }
 }
@@ -305,7 +320,7 @@ private struct _JSONKeyedDecoder<K: CodingKey>: KeyedDecodingContainerProtocol {
         }
         _data.codingPath.append(key)
         defer { _data.codingPath.removeLast() }
-        return try T(from: _JSONDecoder(data: _data, value: value))
+        return try _JSONDecoder(data: _data, value: value).decode(type)
     }
     
     func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -486,7 +501,7 @@ private struct _JSONUnkeyedDecoder: UnkeyedDecodingContainer {
         try assertNotAtEnd(type)
         _data.codingPath.append(JSONKey.int(currentIndex))
         defer { _data.codingPath.removeLast() }
-        let result = try T(from: _JSONDecoder(data: _data, value: value[currentIndex]))
+        let result = try _JSONDecoder(data: _data, value: value[currentIndex]).decode(type)
         currentIndex += 1
         return result
     }
