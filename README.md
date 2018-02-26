@@ -272,6 +272,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Add `JSON.Decoder.keyDecodingStrategy`. This is very similar to Swift 4.1's `JSONDecoder.keyDecodingStrategy`, although by default it won't apply to decoding any values of type `JSON` or `JSONObject` (there's another option `applyKeyDecodingStrategyToJSONObject` that controls this).
 * Add `JSON.Encoder.dateEncodingStrategy`. This is very similar to `JSONEncoder.dateEncodingStrategy` except it includes another case for encoding ISO8601-formatted dates with fractional seconds (on Apple platforms).
 * Add `JSON.Decoder.dateDecodingStrategy`. This is very similar to `JSONDecoder.dateDecodingStrategy` except it includes another case for decoding ISO8601-formatted dates with fractional seconds (on Apple platforms).
+* Add `JSON.Encoder.dataEncodingStrategy`. This is identical to `JSONEncoder.dataEncodingStrategy`.
+* Add `JSON.Decoder.dataDecodingStrategy`. This is identical to `JSONDecoder.dataDecodingStrategy`.
 
 #### v3.0.2 (2018-02-21)
 

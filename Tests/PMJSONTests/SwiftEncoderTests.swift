@@ -811,6 +811,43 @@ final class SwiftEncoderTests: XCTestCase {
         let json = try encoder.encodeAsJSON(Date())
         XCTAssertEqual(json, [:])
     }
+    
+    // MARK: - DataEncodingStrategy
+    
+    func testEncodeDataDefaultStrategy() throws {
+        let input = "hello".data(using: .utf8)!
+        let encoder = JSON.Encoder()
+        // don't assume the default format since that's up to Data, just decode it after
+        let json = try encoder.encodeAsJSON(input)
+        let data = try JSON.Decoder().decode(Data.self, from: json)
+        XCTAssertEqual(data, input)
+    }
+    
+    func testEncodeDataBase64() throws {
+        var encoder = JSON.Encoder()
+        encoder.dataEncodingStrategy = .base64
+        let json = try encoder.encodeAsJSON("hello".data(using: .utf8)!)
+        XCTAssertEqual(json, "aGVsbG8=")
+    }
+    
+    func testEncodeDataCustom() throws {
+        var encoder = JSON.Encoder()
+        encoder.dataEncodingStrategy = .custom({ (data, encoder) in
+            let str = String(data.base64EncodedString().reversed())
+            try str.encode(to: encoder)
+        })
+        let json = try encoder.encodeAsJSON("hello".data(using: .utf8)!)
+        XCTAssertEqual(json, "=8GbsVGa")
+    }
+    
+    func testEncodeDataCustomNoEncode() throws {
+        var encoder = JSON.Encoder()
+        encoder.dataEncodingStrategy = .custom({ (data, encoder) in
+            // do nothing
+        })
+        let json = try encoder.encodeAsJSON("hello".data(using: .utf8)!)
+        XCTAssertEqual(json, [:])
+    }
 }
 
 private extension Date {

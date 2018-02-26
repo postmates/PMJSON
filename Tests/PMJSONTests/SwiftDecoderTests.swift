@@ -432,6 +432,38 @@ final class SwiftDecoderTests: XCTestCase {
         let date = try decoder.decode(Date.self, from: 541317080)
         XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541318080))
     }
+    
+    // MARK: - DataDecodingStrategy
+    
+    func testDecodeDataDefaultStrategy() throws {
+        let input = "hello".data(using: .utf8)!
+        let decoder = JSON.Decoder()
+        // don't assume the default format since that's up to Data, just encode it first
+        let json = try JSON.Encoder().encodeAsJSON(input)
+        let data = try decoder.decode(Data.self, from: json)
+        XCTAssertEqual(data, input)
+    }
+    
+    func testDecodeDataBase64() throws {
+        var decoder = JSON.Decoder()
+        decoder.dataDecodingStrategy = .base64
+        let data = try decoder.decode(Data.self, from: "aGVsbG8=" as JSON)
+        XCTAssertEqual(data, "hello".data(using: .utf8)!)
+    }
+    
+    func testDecodeDataCustom() throws {
+        var decoder = JSON.Decoder()
+        decoder.dataDecodingStrategy = .custom({ (decoder) -> Data in
+            let container = try decoder.singleValueContainer()
+            let str = try container.decode(String.self)
+            guard let data = Data(base64Encoded: String(str.reversed())) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Could not decode Data.")
+            }
+            return data
+        })
+        let data = try decoder.decode(Data.self, from: "=8GbsVGa" as JSON)
+        XCTAssertEqual(data, "hello".data(using: .utf8)!)
+    }
 }
 
 private extension Date {

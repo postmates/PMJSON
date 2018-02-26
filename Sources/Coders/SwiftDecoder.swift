@@ -38,6 +38,9 @@ extension JSON {
         /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
         public var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
         
+        /// The strategy to use in decoding binary data. Defaults to `.base64`.
+        public var dataDecodingStrategy: DataDecodingStrategy = .base64
+        
         /// Creates a new, reusable JSON decoder.
         public init() {}
         
@@ -91,6 +94,7 @@ extension JSON {
             data.keyDecodingStrategy = keyDecodingStrategy
             data.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
             data.dateDecodingStrategy = dateDecodingStrategy
+            data.dataDecodingStrategy = dataDecodingStrategy
             return try _JSONDecoder(data: data, value: json).decode(type)
         }
     }
@@ -102,6 +106,7 @@ private class DecoderData {
     var keyDecodingStrategy: JSON.Decoder.KeyDecodingStrategy = .useDefaultKeys
     var applyKeyDecodingStrategyToJSONObject = false
     var dateDecodingStrategy: JSON.Decoder.DateDecodingStrategy = .deferredToDate
+    var dataDecodingStrategy: JSON.Decoder.DataDecodingStrategy = .base64
     
     func copy() -> DecoderData {
         let result = DecoderData()
@@ -110,6 +115,7 @@ private class DecoderData {
         result.keyDecodingStrategy = keyDecodingStrategy
         result.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
         result.dateDecodingStrategy = dateDecodingStrategy
+        result.dataDecodingStrategy = dataDecodingStrategy
         return result
     }
 }
@@ -361,6 +367,19 @@ extension _JSONDecoder: SingleValueDecodingContainer {
                     throw DecodingError.dataCorruptedError(in: self, debugDescription: "Date string does not match format expected by formatter.")
                 }
                 return date as! T
+            case .custom(let decode):
+                return try decode(self) as! T
+            }
+        case is Data.Type:
+            switch _data.dataDecodingStrategy {
+            case .deferredToData:
+                break
+            case .base64:
+                let str = try wrapTypeMismatch(value.asJSON.getString())
+                guard let data = Data(base64Encoded: str) else {
+                    throw DecodingError.dataCorruptedError(in: self, debugDescription: "Encountered Data is not valid Base64.")
+                }
+                return data as! T
             case .custom(let decode):
                 return try decode(self) as! T
             }
@@ -810,6 +829,18 @@ extension JSON.Decoder {
         
         /// Decode the `Date` as a custom value decoded by the given closure.
         case custom((_ decoder: Decoder) throws -> Date)
+    }
+    
+    /// The strategy to use for decoding `Data` values.
+    public enum DataDecodingStrategy {
+        /// Defer to `Data` for decoding.
+        case deferredToData
+        
+        /// Decode the `Data` from a Base64-encoded string. This is the default strategy.
+        case base64
+        
+        /// Decodes the `Data` as a custom value decoded by the given closure.
+        case custom((_ decoder: Decoder) throws -> Data)
     }
 }
 

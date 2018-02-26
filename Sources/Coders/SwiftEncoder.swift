@@ -201,6 +201,9 @@ extension JSON {
         /// The strategy to use in encoding dates. Defaults to `.deferredToDate`.
         public var dateEncodingStrategy: DateEncodingStrategy = .deferredToDate
         
+        /// The strategy to use in encoding binary data. Defaults to `.base64`.
+        public var dataEncodingStrategy: DataEncodingStrategy = .base64
+        
         /// Creates a new, reusable JSON encoder.
         public init() {}
         
@@ -252,6 +255,7 @@ extension JSON {
             data.keyEncodingStrategy = keyEncodingStrategy
             data.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
             data.dateEncodingStrategy = dateEncodingStrategy
+            data.dataEncodingStrategy = dataEncodingStrategy
             let encoder = _JSONEncoder(data: data)
             try encoder.encode(value)
             guard let json = encoder.json else {
@@ -268,6 +272,7 @@ private class EncoderData {
     var keyEncodingStrategy: JSON.Encoder.KeyEncodingStrategy = .useDefaultKeys
     var applyKeyEncodingStrategyToJSONObject = false
     var dateEncodingStrategy: JSON.Encoder.DateEncodingStrategy = .deferredToDate
+    var dataEncodingStrategy: JSON.Encoder.DataEncodingStrategy = .base64
     
     var shouldRekeyJSONObjects: Bool {
         switch keyEncodingStrategy {
@@ -283,6 +288,7 @@ private class EncoderData {
         result.keyEncodingStrategy = keyEncodingStrategy
         result.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
         result.dateEncodingStrategy = dateEncodingStrategy
+        result.dataEncodingStrategy = dataEncodingStrategy
         return result
     }
 }
@@ -524,6 +530,19 @@ extension _JSONEncoder: SingleValueEncodingContainer {
                 try encode(str)
             case .custom(let f):
                 try f(date, self)
+                if self.value?.isEmpty ?? true {
+                    // the function didn't encode anything
+                    self.json = .unboxed([:])
+                }
+            }
+        case let data as Data:
+            switch _data.dataEncodingStrategy {
+            case .deferredToData:
+                try value.encode(to: self)
+            case .base64:
+                try encode(data.base64EncodedString())
+            case .custom(let f):
+                try f(data, self)
                 if self.value?.isEmpty ?? true {
                     // the function didn't encode anything
                     self.json = .unboxed([:])
@@ -952,5 +971,20 @@ extension JSON.Encoder {
         /// If the closure fails to encode a value into the given encoder, the encoder will encode
         /// an empty object in its place.
         case custom((Date, Encoder) throws -> Void)
+    }
+    
+    /// The strategy to use for encoding `Data` values.
+    public enum DataEncodingStrategy {
+        /// Defer to `Data` for choosing an encoding.
+        case deferredToData
+        
+        /// Encode the `Data` as a Base64-encoded string. This is the default strategy.
+        case base64
+        
+        /// Encode the `Data` as a custom value encoded by the given closure.
+        ///
+        /// If the closure fails to encode a value into the given encoder, the encoder will encode
+        /// an empty object in its place.
+        case custom((_ data: Data, _ encoder: Encoder) throws -> Void)
     }
 }
