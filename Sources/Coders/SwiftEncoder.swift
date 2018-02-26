@@ -509,12 +509,16 @@ extension _JSONEncoder: SingleValueEncodingContainer {
                     fatalError("ISO8601DateFormatter is not available on this platform")
                 }
             case .iso8601WithFractionalSeconds:
-                if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
-                    let str = _iso8601FractionalSecondsFormatter.string(from: date)
-                    try encode(str)
-                } else {
+                #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+                    if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                        let str = _iso8601FractionalSecondsFormatter.string(from: date)
+                        try encode(str)
+                    } else {
+                        fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
+                    }
+                #else
                     fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
-                }
+                #endif
             case .formatted(let formatter):
                 let str = formatter.string(from: date)
                 try encode(str)
@@ -920,12 +924,25 @@ extension JSON.Encoder {
         @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
         case iso8601
         
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         /// Encode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
         /// seconds.
         ///
         /// This encodes strings like `"1985-04-12T23:20:50.523Z"`.
         @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
         case iso8601WithFractionalSeconds
+        #else
+        // swift-corelibs-foundation doesn't support `.withFractionalSeconds`. We still declare the
+        // case though or we're in trouble trying to match it.
+        /// Encode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
+        /// seconds.
+        ///
+        /// This encodes strings like `"1985-04-12T23:20:50.523Z"`.
+        ///
+        /// - Important: This case is not supported on non-Apple platforms.
+        @available(*, unavailable, message: "This case is not supported on non-Apple platforms")
+        case iso8601WithFractionalSeconds
+        #endif
         
         /// Encode the `Date` as a string formatted by the given formatter.
         case formatted(DateFormatter)

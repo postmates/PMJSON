@@ -771,6 +771,7 @@ final class SwiftEncoderTests: XCTestCase {
         XCTAssertEqual(json, "2018-02-26T05:55:49Z")
     }
     
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
     func testEncodeDateISO8601FractionalSeconds() throws {
         var encoder = JSON.Encoder()
@@ -778,6 +779,7 @@ final class SwiftEncoderTests: XCTestCase {
         let json = try encoder.encodeAsJSON(Date(timeIntervalSinceReferenceDate: 541317349.605))
         XCTAssertEqual(json, "2018-02-26T05:55:49.605Z")
     }
+    #endif
     
     func testEncodeDateFormatted() throws {
         var encoder = JSON.Encoder()

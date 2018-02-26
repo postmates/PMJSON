@@ -395,6 +395,7 @@ final class SwiftDecoderTests: XCTestCase {
         XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541317349))
     }
     
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
     func testDecodeDateISO8601FractionalSeconds() throws {
         var decoder = JSON.Decoder()
@@ -408,6 +409,7 @@ final class SwiftDecoderTests: XCTestCase {
             XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541317349))
         }
     }
+    #endif
     
     func testDecodeDateFormatted() throws {
         var decoder = JSON.Decoder()

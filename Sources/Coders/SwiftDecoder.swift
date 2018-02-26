@@ -342,15 +342,19 @@ extension _JSONDecoder: SingleValueDecodingContainer {
                     fatalError("ISO8601DateFormatter is not available on this platform")
                 }
             case .iso8601WithFractionalSeconds:
-                if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
-                    let str = try wrapTypeMismatch(value.asJSON.getString())
-                    guard let date = _iso8601FractionalSecondsFormatter.date(from: str) ?? _iso8601Formatter.date(from: str) else {
-                        throw DecodingError.dataCorruptedError(in: self, debugDescription: "Expected date string to be ISO8601-formatted.")
+                #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+                    if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                        let str = try wrapTypeMismatch(value.asJSON.getString())
+                        guard let date = _iso8601FractionalSecondsFormatter.date(from: str) ?? _iso8601Formatter.date(from: str) else {
+                            throw DecodingError.dataCorruptedError(in: self, debugDescription: "Expected date string to be ISO8601-formatted.")
+                        }
+                        return date as! T
+                    } else {
+                        fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
                     }
-                    return date as! T
-                } else {
+                #else
                     fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
-                }
+                #endif
             case .formatted(let formatter):
                 let str = try wrapTypeMismatch(value.asJSON.getString())
                 guard let date = formatter.date(from: str) else {
@@ -775,6 +779,7 @@ extension JSON.Decoder {
         @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
         case iso8601
         
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         /// Decode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
         /// seconds.
         ///
@@ -784,6 +789,21 @@ extension JSON.Decoder {
         ///   strings with or without fractional seconds.
         @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
         case iso8601WithFractionalSeconds
+        #else
+        // swift-corelibs-foundation doesn't support `.withFractionalSeconds`. We still declare the
+        // case though or we're in trouble trying to match it.
+        /// Decode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
+        /// seconds.
+        ///
+        /// This matches strings like `"1985-04-12T23:20:50.52Z"`.
+        ///
+        /// - Note: If the decode fails, it will try again with `.iso8601`. This means it will match
+        ///   strings with or without fractional seconds.
+        ///
+        /// - Important: This case is not supported on non-Apple platforms.
+        @available(*, unavailable, message: "This case is not supported on non-Apple platforms")
+        case iso8601WithFractionalSeconds
+        #endif
         
         /// Decode the `Date` as a string parsed by the given formatter.
         case formatted(DateFormatter)
@@ -854,9 +874,11 @@ internal var _iso8601Formatter: ISO8601DateFormatter = {
     return formatter
 }()
 
-@available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
-internal var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
-}()
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+    internal var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+#endif
