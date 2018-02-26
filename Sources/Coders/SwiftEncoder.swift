@@ -184,6 +184,20 @@ extension JSON {
         /// A dictionary you use to customize the encoding process by providing contextual information.
         public var userInfo: [CodingUserInfoKey: Any] = [:]
         
+        /// The strategy to use for encoding keys. Defaults to `.useDefaultKeys`.
+        public var keyEncodingStrategy: KeyEncodingStrategy = .useDefaultKeys
+        
+        /// If `true`, apply the `keyEncodingStrategy` to the keys on any nested encoded
+        /// `JSONObject`. The default value is `false`.
+        ///
+        /// This defaults to `false` because the assumption is if you're encoding a `JSONObject`,
+        /// you want it to encode as-is.
+        ///
+        /// This property also affects encoding `JSON` values that contain objects.
+        ///
+        /// - Note: This property does not affect the encoding of `Dictionary`.
+        public var applyKeyEncodingStrategyToJSONObject = false
+        
         /// Creates a new, reusable JSON encoder.
         public init() {}
         
@@ -232,6 +246,8 @@ extension JSON {
         private func _encodeAsEncodedJSON<T: Encodable>(_ value: T) throws -> EncodedJSON {
             let data = EncoderData()
             data.userInfo = userInfo
+            data.keyEncodingStrategy = keyEncodingStrategy
+            data.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
             let encoder = _JSONEncoder(data: data)
             try value.encode(to: encoder)
             guard let json = encoder.json else {
@@ -245,11 +261,22 @@ extension JSON {
 private class EncoderData {
     var codingPath: [CodingKey] = []
     var userInfo: [CodingUserInfoKey: Any] = [:]
+    var keyEncodingStrategy: JSON.Encoder.KeyEncodingStrategy = .useDefaultKeys
+    var applyKeyEncodingStrategyToJSONObject = false
+    
+    var shouldRekeyJSONObjects: Bool {
+        switch keyEncodingStrategy {
+        case .useDefaultKeys: return false
+        default: return applyKeyEncodingStrategyToJSONObject
+        }
+    }
     
     func copy() -> EncoderData {
         let result = EncoderData()
         result.codingPath = codingPath
         result.userInfo = userInfo
+        result.keyEncodingStrategy = keyEncodingStrategy
+        result.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
         return result
     }
 }
@@ -447,7 +474,16 @@ extension _JSONEncoder: SingleValueEncodingContainer {
     func encode<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let json as JSON:
-            self.json = .unboxed(json)
+            switch json {
+            case .object(let object) where _data.shouldRekeyJSONObjects:
+                try encode(object)
+            case .array(let array) where _data.shouldRekeyJSONObjects:
+                try encode(Array(array))
+            default:
+                self.json = .unboxed(json)
+            }
+        case let object as JSONObject where !_data.shouldRekeyJSONObjects:
+            self.json = .unboxed(.object(object))
         case let decimal as Decimal:
             json = .unboxed(.decimal(decimal))
         default:
@@ -546,7 +582,16 @@ private class _JSONUnkeyedEncoder: UnkeyedEncodingContainer {
     func encode<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let json as JSON:
-            append(unboxed: json)
+            switch json {
+            case .object(let object) where _data.shouldRekeyJSONObjects:
+                try encode(object)
+            case .array(let array) where _data.shouldRekeyJSONObjects:
+                try encode(Array(array))
+            default:
+                append(unboxed: json)
+            }
+        case let object as JSONObject where !_data.shouldRekeyJSONObjects:
+            append(unboxed: .object(object))
         case let decimal as Decimal:
             append(unboxed: .decimal(decimal))
         default:
@@ -602,7 +647,7 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
     }
     
     private func store(unboxed json: JSON, forKey key: K) {
-        box.value[key.stringValue] = .unboxed(json)
+        box.value[_stringKey(for: key)] = .unboxed(json)
     }
     
     func encodeNil(forKey key: K) throws {
@@ -674,7 +719,16 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
     func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
         switch value {
         case let json as JSON:
-            store(unboxed: json, forKey: key)
+            switch json {
+            case .object(let object) where _data.shouldRekeyJSONObjects:
+                try encode(object, forKey: key)
+            case .array(let array) where _data.shouldRekeyJSONObjects:
+                try encode(Array(array), forKey: key)
+            default:
+                store(unboxed: json, forKey: key)
+            }
+        case let object as JSONObject where !_data.shouldRekeyJSONObjects:
+            store(unboxed: .object(object), forKey: key)
         case let decimal as Decimal:
             store(unboxed: .decimal(decimal), forKey: key)
         default:
@@ -685,7 +739,7 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
             guard let json = encoder.json else {
                 throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "\(type(of: value)) did not encode any values."))
             }
-            box.value[key.stringValue] = json
+            box.value[_stringKey(for: key)] = json
         }
     }
     
@@ -693,7 +747,7 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
         let data = _data.copy()
         data.codingPath.append(key)
         let box = EncodedJSON.BoxedObject([:])
-        self.box.value[key.stringValue] = .object(box)
+        self.box.value[_stringKey(for: key)] = .object(box)
         return KeyedEncodingContainer(_JSONKeyedEncoder<NestedKey>(data: data, box: box))
     }
     
@@ -701,7 +755,7 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
         let data = _data.copy()
         data.codingPath.append(key)
         let box = EncodedJSON.BoxedArray([])
-        self.box.value[key.stringValue] = .array(box)
+        self.box.value[_stringKey(for: key)] = .array(box)
         return _JSONUnkeyedEncoder(data: data, box: box)
     }
     
@@ -717,7 +771,125 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
         let data = _data.copy()
         data.codingPath.append(key)
         let box: EncodedJSON.Box<EncodedJSON?> = EncodedJSON.Box(nil)
-        self.box.value[key.stringValue] = .super(box)
+        self.box.value[_stringKey(for: key)] = .super(box)
         return _JSONEncoder(data: data, box: box)
+    }
+    
+    private func _stringKey(for key: CodingKey) -> String {
+        switch _data.keyEncodingStrategy {
+        case .useDefaultKeys:
+            return key.stringValue
+        case .convertToSnakeCase:
+            return JSON.Encoder.KeyEncodingStrategy._convertToSnakeCase(key.stringValue)
+        case .custom(let f):
+            return f(_data.codingPath, key).stringValue
+        }
+    }
+}
+
+// MARK: -
+
+extension JSON.Encoder {
+    /// The strategy to use for automatically changing the keys before encoding.
+    public enum KeyEncodingStrategy {
+        /// Use the keys specified by each type. This is the default strategy.
+        case useDefaultKeys
+        
+        /// Convert from "camelCaseKeys" to "snake_case_keys" before writing the JSON payload.
+        ///
+        /// Capital letters are determined by testing membership in `CharacterSet.uppercaseLetters`
+        /// and `CharacterSet.lowercaseLetters`. The conversion to lowercase uses the ICU "root"
+        /// locale (meaning the conversion is not affected by the current locale).
+        ///
+        /// Converting from camelCase to snake_case:
+        /// 1. Splits words at the boundary between lowercase and uppercase.
+        /// 2. Treats acronyms as a single word.
+        /// 3. Inserts `_` between words.
+        /// 4. Lowercases the entire string.
+        ///
+        /// For example, `oneTwoThree` becomes `one_two_three` and `URLForConfig` becomes
+        /// `url_for_config`.
+        ///
+        /// - Note: Using this key encoding strategy incurs a minor performance impact.
+        case convertToSnakeCase
+        
+        /// Provide a custom conversion from the key specified by the encoded type to the key used
+        /// in the encoded JSON. The first parameter is the full path leading up to the current key,
+        /// which can provide context for the conversion, and the second parameter is the key
+        /// itself, which will be replaced by the return value from the function.
+        ///
+        /// - Note: If the result of the conversion is a duplicate key, only one value will be
+        ///   present in the result.
+        case custom((_ codingPath: [CodingKey], _ key: CodingKey) -> CodingKey)
+        
+        fileprivate static func _convertToSnakeCase(_ key: String) -> String {
+            guard !key.isEmpty else { return key }
+            
+            let scalars = key.unicodeScalars
+            
+            enum State {
+                case lowercase
+                case uppercase
+            }
+            var state: State
+            switch scalars.first {
+            case nil: return key
+            case let c? where CharacterSet.uppercaseLetters.contains(c):
+                state = .uppercase
+            case _?:
+                state = .lowercase
+            }
+            
+            // NB: Always call lowercased() because there are some characters outside of
+            // CharacterSet.uppercaseLetters that are affected by it.
+            
+            var result: String = ""
+            var lastIdx = key.startIndex
+            // NB: We walk the character indices instead of the scalar indices so that way we ignore
+            // combining marks.
+            var idxIter = key.indices.makeIterator()
+            _ = idxIter.next() // skip the first character
+            loop: repeat {
+                switch state {
+                case .lowercase:
+                    while let idx = idxIter.next() {
+                        if CharacterSet.uppercaseLetters.contains(scalars[idx]) {
+                            state = .uppercase
+                            result.append(key[lastIdx..<idx].lowercased())
+                            lastIdx = idx
+                            result.append("_")
+                            continue loop
+                        }
+                    }
+                    break loop
+                case .uppercase:
+                    guard let idx = idxIter.next() else { break loop }
+                    if CharacterSet.lowercaseLetters.contains(scalars[idx]) {
+                        state = .lowercase
+                        // lastIdx is pointing at the uppercase letter so it's already correct
+                        continue loop
+                    }
+                    var prevIdx = idx
+                    while let idx = idxIter.next() {
+                        if CharacterSet.lowercaseLetters.contains(scalars[idx]) {
+                            state = .lowercase
+                            if !CharacterSet.uppercaseLetters.contains(scalars[prevIdx]) {
+                                // This catches keys like "ABC123def", where the first 'word' ends
+                                // in a non-capital.
+                                prevIdx = idx
+                            }
+                            result.append(key[lastIdx..<prevIdx].lowercased())
+                            lastIdx = prevIdx
+                            result.append("_")
+                            continue loop
+                        }
+                        prevIdx = idx
+                    }
+                    break loop
+                }
+            } while true
+            result.append(key[lastIdx...].lowercased())
+            return result
+        }
     }
 }

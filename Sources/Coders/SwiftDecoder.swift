@@ -21,6 +21,20 @@ extension JSON {
         /// A dictionary you use to customize the decoding process by providing contextual information.
         public var userInfo: [CodingUserInfoKey: Any] = [:]
         
+        /// The strategy to use for decoding keys. Defaults to `.useDefaultKeys`.
+        public var keyDecodingStrategy: KeyDecodingStrategy = .useDefaultKeys
+        
+        /// If `true`, apply the `keyDecodingStrategy` to the keys on any nested decoded
+        /// `JSONObject`. The default value is `false`.
+        ///
+        /// This defaults to `false` because the assumption is if you're decoding a `JSONObject`,
+        /// you want it to decode as-is.
+        ///
+        /// This property also affects decoding `JSON` values that contain objects.
+        ///
+        /// - Note: This property does not affect the encoding of `Dictionary`.
+        public var applyKeyDecodingStrategyToJSONObject = false
+        
         /// Creates a new, reusable JSON decoder.
         public init() {}
         
@@ -71,8 +85,9 @@ extension JSON {
         public func decode<T: Decodable>(_ type: T.Type, from json: JSON) throws -> T {
             let data = DecoderData()
             data.userInfo = userInfo
-            let decoder = _JSONDecoder(data: data, value: json)
-            return try T(from: decoder)
+            data.keyDecodingStrategy = keyDecodingStrategy
+            data.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
+            return try _JSONDecoder(data: data, value: json).decode(type)
         }
     }
 }
@@ -80,11 +95,15 @@ extension JSON {
 private class DecoderData {
     var codingPath: [CodingKey] = []
     var userInfo: [CodingUserInfoKey: Any] = [:]
+    var keyDecodingStrategy: JSON.Decoder.KeyDecodingStrategy = .useDefaultKeys
+    var applyKeyDecodingStrategyToJSONObject = false
     
     func copy() -> DecoderData {
         let result = DecoderData()
         result.codingPath = codingPath
         result.userInfo = userInfo
+        result.keyDecodingStrategy = keyDecodingStrategy
+        result.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
         return result
     }
 }
@@ -92,11 +111,51 @@ private class DecoderData {
 internal struct _JSONDecoder: Decoder {
     fileprivate init(data: DecoderData, value: JSON) {
         _data = data
-        self.value = value
+        switch (data.keyDecodingStrategy, value) {
+        case (.useDefaultKeys, _):
+            self.value = .primitive(value)
+        case (_, .object(let object)):
+            // If we have duplicate keys, keep the first one we saw. This matches `JSONDecoder`.
+            let rekeyed: JSONObject
+            switch _data.keyDecodingStrategy {
+            case .useDefaultKeys:
+                // this shouldn't happen
+                rekeyed = object
+            case .convertFromSnakeCase:
+                rekeyed = JSONObject(dict: Dictionary(object.dictionary.map({ (key, value) in
+                    (JSON.Decoder.KeyDecodingStrategy._convertFromSnakeCase(key), value)
+                }), uniquingKeysWith: { (first, _) in first }))
+            case .custom(let f):
+                rekeyed = JSONObject(dict: Dictionary(object.dictionary.map({ [codingPath=data.codingPath] (key, value) in
+                    (f(codingPath, JSONKey.string(key)).stringValue, value)
+                }), uniquingKeysWith: { (first, _) in first }))
+            }
+            self.value = .object(object, rekeyed: rekeyed)
+        case (_, .array(let array)):
+            self.value = .array(array)
+        default:
+            self.value = .primitive(value)
+        }
     }
     
     private let _data: DecoderData
-    let value: JSON
+    private let value: Value
+    
+    private enum Value {
+        /// Used for JSON primitives, or for everything if our key decoding strategy is
+        /// `.useDefaultKeys`.
+        case primitive(JSON)
+        case object(JSONObject, rekeyed: JSONObject)
+        case array(JSONArray)
+        
+        var asJSON: JSON {
+            switch self {
+            case .primitive(let json): return json
+            case .object(_, let rekeyed): return .object(rekeyed)
+            case .array(let array): return .array(array)
+            }
+        }
+    }
     
     // MARK: Decoder
     
@@ -109,12 +168,30 @@ internal struct _JSONDecoder: Decoder {
     }
     
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
-        let object = try _wrapTypeMismatch({ try value.getObject() }, data: _data)
+        let object: JSONObject
+        switch value {
+        case .primitive(let json):
+            object = try _wrapTypeMismatch({ try json.getObject() }, data: _data)
+        case .object(_, let rekeyed):
+            // If we reach here and we're decoding a JSON or JSONObject, we already know
+            // applyKeyDecodingStrategyToJSONObject is set
+            object = rekeyed
+        case .array:
+            throw DecodingError.typeMismatch(JSONObject.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected to decode object but found array"))
+        }
         return KeyedDecodingContainer(_JSONKeyedDecoder(data: _data, value: object))
     }
     
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        let array = try _wrapTypeMismatch({ try value.getArray() }, data: _data)
+        let array: JSONArray
+        switch value {
+        case .primitive(let json):
+            array = try _wrapTypeMismatch({ try json.getArray() }, data: _data)
+        case .object:
+            throw DecodingError.typeMismatch(JSONObject.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected to decode array but found object"))
+        case .array(let array_):
+            array = array_
+        }
         return _JSONUnkeyedDecoder(data: _data, value: array)
     }
     
@@ -135,66 +212,120 @@ extension _JSONDecoder: SingleValueDecodingContainer {
     }
     
     func decodeNil() -> Bool {
-        return value.isNull
+        return value.asJSON.isNull
     }
     
     func decode(_ type: Bool.Type) throws -> Bool {
-        return try wrapTypeMismatch(value.getBool())
+        return try wrapTypeMismatch(value.asJSON.getBool())
     }
     
     func decode(_ type: Int.Type) throws -> Int {
-        return try wrapTypeMismatch(value.getInt())
+        return try wrapTypeMismatch(value.asJSON.getInt())
     }
     
     func decode(_ type: Int8.Type) throws -> Int8 {
-        return try castNumber(wrapTypeMismatch(value.getInt()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt()))
     }
     
     func decode(_ type: Int16.Type) throws -> Int16 {
-        return try castNumber(wrapTypeMismatch(value.getInt()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt()))
     }
     
     func decode(_ type: Int32.Type) throws -> Int32 {
-        return try castNumber(wrapTypeMismatch(value.getInt()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt()))
     }
     
     func decode(_ type: Int64.Type) throws -> Int64 {
-        return try wrapTypeMismatch(value.getInt64())
+        return try wrapTypeMismatch(value.asJSON.getInt64())
     }
     
     func decode(_ type: UInt.Type) throws -> UInt {
-        return try castNumber(_getUInt64(from: value, data: _data))
+        return try castNumber(_getUInt64(from: value.asJSON, data: _data))
     }
     
     func decode(_ type: UInt8.Type) throws -> UInt8 {
-        return try castNumber(wrapTypeMismatch(value.getInt()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt()))
     }
     
     func decode(_ type: UInt16.Type) throws -> UInt16 {
-        return try castNumber(wrapTypeMismatch(value.getInt()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt()))
     }
     
     func decode(_ type: UInt32.Type) throws -> UInt32 {
-        return try castNumber(wrapTypeMismatch(value.getInt64()))
+        return try castNumber(wrapTypeMismatch(value.asJSON.getInt64()))
     }
     
     func decode(_ type: UInt64.Type) throws -> UInt64 {
-        return try _getUInt64(from: value, data: _data)
+        return try _getUInt64(from: value.asJSON, data: _data)
     }
     
     func decode(_ type: Float.Type) throws -> Float {
-        return try Float(wrapTypeMismatch(value.getDouble()))
+        return try Float(wrapTypeMismatch(value.asJSON.getDouble()))
     }
     
     func decode(_ type: Double.Type) throws -> Double {
-        return try wrapTypeMismatch(value.getDouble())
+        return try wrapTypeMismatch(value.asJSON.getDouble())
     }
     
     func decode(_ type: String.Type) throws -> String {
-        return try wrapTypeMismatch(value.getString())
+        return try wrapTypeMismatch(value.asJSON.getString())
     }
     
     func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+        switch type {
+        case is JSON.Type:
+            switch value {
+            case .primitive(let json):
+                return json as! T
+            case .object where _data.applyKeyDecodingStrategyToJSONObject:
+                break
+            case .object(let object, _):
+                return JSON.object(object) as! T
+            case .array where _data.applyKeyDecodingStrategyToJSONObject:
+                break
+            case .array(let array):
+                return JSON.array(array) as! T
+            }
+        case is JSONObject.Type:
+            do {
+                switch value {
+                case .primitive(let json):
+                    return try json.getObject() as! T
+                case .object where _data.applyKeyDecodingStrategyToJSONObject:
+                    break
+                case .object(let object, _):
+                    return object as! T
+                case .array:
+                    throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found array"))
+                }
+            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            }
+        case is JSONArray.Type:
+            // SR-7076 ContiguousArray doesn't conform to Decodable (as of Swift 4.0.3), so this
+            // branch will never actually be reached, but we'll leave it here in case the Decodable
+            // conformance is ever added.
+            do {
+                switch value {
+                case .primitive(let json):
+                    return try json.getArray() as! T
+                case .object:
+                    throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found object"))
+                case .array where _data.applyKeyDecodingStrategyToJSONObject:
+                    break
+                case .array(let array):
+                    return array as! T
+                }
+            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            }
+        case is Decimal.Type:
+            if case .primitive(.decimal(let d)) = value {
+                return d as! T
+            }
+        default:
+            break
+        }
         return try T(from: self)
     }
 }
@@ -305,7 +436,7 @@ private struct _JSONKeyedDecoder<K: CodingKey>: KeyedDecodingContainerProtocol {
         }
         _data.codingPath.append(key)
         defer { _data.codingPath.removeLast() }
-        return try T(from: _JSONDecoder(data: _data, value: value))
+        return try _JSONDecoder(data: _data, value: value).decode(type)
     }
     
     func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type, forKey key: K) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -486,7 +617,7 @@ private struct _JSONUnkeyedDecoder: UnkeyedDecodingContainer {
         try assertNotAtEnd(type)
         _data.codingPath.append(JSONKey.int(currentIndex))
         defer { _data.codingPath.removeLast() }
-        let result = try T(from: _JSONDecoder(data: _data, value: value[currentIndex]))
+        let result = try _JSONDecoder(data: _data, value: value[currentIndex]).decode(type)
         currentIndex += 1
         return result
     }
@@ -516,6 +647,75 @@ private struct _JSONUnkeyedDecoder: UnkeyedDecodingContainer {
         let decoder = _JSONDecoder(data: data, value: value[currentIndex])
         currentIndex += 1
         return decoder
+    }
+}
+
+// MARK: -
+
+extension JSON.Decoder {
+    /// The strategy to use for automatically changing the keys before decoding.
+    public enum KeyDecodingStrategy {
+        /// Use the keys specified by each type. This is the default strategy.
+        case useDefaultKeys
+        
+        /// Convert from "snake_case_keys" to "camelCaseKeys" before attempting to match a key with
+        /// the one specified by each type.
+        ///
+        /// The conversion to uppercase uses the ICU "root" locale (meaning the conversion is not
+        /// affected by the current locale).
+        ///
+        /// Converting from snake_case to camelCase:
+        /// 1. Capitalizes each word starting after `_`.
+        /// 2. Removes all `_` in between words.
+        /// 3. Preserves all `_` at the start and end.
+        ///
+        /// For example, `one_two_three` becomes `oneTwoThree` and `__foo_bar__` becomes
+        /// `__fooBar__`.
+        ///
+        /// - Note: Using this key encoding strategy incurs a minor performance cost.
+        case convertFromSnakeCase
+        
+        /// Provide a custom conversion from the key used in the JSON to the key specified by the
+        /// decoding type. The first parameter is the full path leading up to the current key, which
+        /// can provide context for the conversion, and the second parameter is the key itself,
+        /// which will be replaced by the return value from the function.
+        ///
+        /// - Note: If the result of the conversion is a duplicate key, only one value will be
+        ///   present in the container for the type to decode from.
+        case custom((_ codingPath: [CodingKey], _ key: CodingKey) -> CodingKey)
+        
+        fileprivate static func _convertFromSnakeCase(_ key: String) -> String {
+            guard !key.isEmpty else { return key }
+            
+            let scalars = key.unicodeScalars
+            
+            guard let firstIdx = scalars.index(where: { $0 != "_" }),
+                let lastIdx = scalars.reversed().index(where: { $0 != "_" })?.base
+                else {
+                    // the string is all underscores
+                    return key
+            }
+            
+            guard var nextUnderscoreIdx = scalars[firstIdx..<lastIdx].index(of: "_") else {
+                // only one word
+                return key
+            }
+            
+            var result: String = String(scalars[..<nextUnderscoreIdx])
+            while let nextOtherIdx = scalars[scalars.index(after: nextUnderscoreIdx)..<lastIdx].index(where: { $0 != "_" }) {
+                guard let idx = scalars[scalars.index(after: nextOtherIdx)..<lastIdx].index(of: "_") else {
+                    // this must be the last word
+                    result.append(Substring(scalars[nextOtherIdx..<lastIdx]).capitalized)
+                    break
+                }
+                result.append(Substring(scalars[nextOtherIdx..<idx]).capitalized)
+                nextUnderscoreIdx = idx
+            }
+            if lastIdx != scalars.endIndex {
+                result.unicodeScalars.append(contentsOf: scalars[lastIdx...])
+            }
+            return result
+        }
     }
 }
 
