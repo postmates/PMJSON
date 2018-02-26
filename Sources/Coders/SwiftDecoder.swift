@@ -201,7 +201,16 @@ extension _JSONDecoder: SingleValueDecodingContainer {
             do {
                 return try value.getObject() as! T
             } catch let JSONError.missingOrInvalidType(path, expected, actual) {
-                throw DecodingError.typeMismatch(JSONObject.self, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            }
+        case is JSONArray.Type:
+            // SR-7076 ContiguousArray doesn't conform to Decodable (as of Swift 4.0.3), so this
+            // branch will never actually be reached, but we'll leave it here in case the Decodable
+            // conformance is ever added.
+            do {
+                return try value.getArray() as! T
+            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
             }
         case is Decimal.Type:
             if case .decimal(let d) = value {
