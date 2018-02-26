@@ -356,4 +356,85 @@ final class SwiftDecoderTests: XCTestCase {
                 ]])
         }
     }
+    
+    // MARK: - DateDecodingStrategy
+    
+    // round dates to the nearest millisecond to avoid floating point precision issues when
+    // round-tripping through JSON
+    
+    func testDecodeDateDefaultStrategy() throws {
+        let now = Date().millisecondRounded
+        let decoder = JSON.Decoder()
+        // don't assume the default format since that's up to Date, just encode it first
+        let json = try JSON.Encoder().encodeAsJSON(now)
+        let date = try decoder.decode(Date.self, from: json).millisecondRounded
+        XCTAssertEqual(date, now)
+    }
+    
+    func testDecodeDateSecondsSince1970() throws {
+        let now = Date().millisecondRounded
+        var decoder = JSON.Decoder()
+        decoder.dateDecodingStrategy = .secondsSince1970
+        let date = try decoder.decode(Date.self, from: JSON(now.timeIntervalSince1970)).millisecondRounded
+        XCTAssertEqual(date, now)
+    }
+    
+    func testDecodeDateMillisecondsSince1970() throws {
+        let now = Date().millisecondRounded
+        var decoder = JSON.Decoder()
+        decoder.dateDecodingStrategy = .millisecondsSince1970
+        let date = try decoder.decode(Date.self, from: JSON(now.timeIntervalSince1970 * 1000)).millisecondRounded
+        XCTAssertEqual(date, now)
+    }
+    
+    @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+    func testDecodeDateISO8601() throws {
+        var decoder = JSON.Decoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let date = try decoder.decode(Date.self, from: "2018-02-26T05:55:49Z" as JSON)
+        XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541317349))
+    }
+    
+    @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+    func testDecodeDateISO8601FractionalSeconds() throws {
+        var decoder = JSON.Decoder()
+        decoder.dateDecodingStrategy = .iso8601WithFractionalSeconds
+        do { // fractional seconds
+            let date = try decoder.decode(Date.self, from: "2018-02-26T05:55:49.605Z" as JSON)
+            XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541317349.605))
+        }
+        do { // no fractional seconds
+            let date = try decoder.decode(Date.self, from: "2018-02-26T05:55:49Z" as JSON)
+            XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541317349))
+        }
+    }
+    
+    func testDecodeDateFormatted() throws {
+        var decoder = JSON.Decoder()
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .long
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        decoder.dateDecodingStrategy = .formatted(formatter)
+        let date = try decoder.decode(Date.self, from: "February 25, 2018 at 10:08:00 PM PST" as JSON)
+        XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541318080))
+    }
+    
+    func testDecodeDateCustom() throws {
+        var decoder = JSON.Decoder()
+        decoder.dateDecodingStrategy = .custom({ (decoder) -> Date in
+            let container = try decoder.singleValueContainer()
+            return Date(timeIntervalSinceReferenceDate: try container.decode(Double.self) + 1000)
+        })
+        let date = try decoder.decode(Date.self, from: 541317080)
+        XCTAssertEqual(date, Date(timeIntervalSinceReferenceDate: 541318080))
+    }
+}
+
+private extension Date {
+    /// Returns a `Date` where the underlying time interval has been rounded to the nearest millisecond.
+    var millisecondRounded: Date {
+        return Date(timeIntervalSinceReferenceDate: (self.timeIntervalSinceReferenceDate * 1000).rounded() / 1000)
+    }
 }

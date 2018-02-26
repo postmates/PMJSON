@@ -35,6 +35,9 @@ extension JSON {
         /// - Note: This property does not affect the encoding of `Dictionary`.
         public var applyKeyDecodingStrategyToJSONObject = false
         
+        /// The strategy to use in decoding dates. Defaults to `.deferredToDate`.
+        public var dateDecodingStrategy: DateDecodingStrategy = .deferredToDate
+        
         /// Creates a new, reusable JSON decoder.
         public init() {}
         
@@ -87,6 +90,7 @@ extension JSON {
             data.userInfo = userInfo
             data.keyDecodingStrategy = keyDecodingStrategy
             data.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
+            data.dateDecodingStrategy = dateDecodingStrategy
             return try _JSONDecoder(data: data, value: json).decode(type)
         }
     }
@@ -97,6 +101,7 @@ private class DecoderData {
     var userInfo: [CodingUserInfoKey: Any] = [:]
     var keyDecodingStrategy: JSON.Decoder.KeyDecodingStrategy = .useDefaultKeys
     var applyKeyDecodingStrategyToJSONObject = false
+    var dateDecodingStrategy: JSON.Decoder.DateDecodingStrategy = .deferredToDate
     
     func copy() -> DecoderData {
         let result = DecoderData()
@@ -104,6 +109,7 @@ private class DecoderData {
         result.userInfo = userInfo
         result.keyDecodingStrategy = keyDecodingStrategy
         result.applyKeyDecodingStrategyToJSONObject = applyKeyDecodingStrategyToJSONObject
+        result.dateDecodingStrategy = dateDecodingStrategy
         return result
     }
 }
@@ -287,41 +293,72 @@ extension _JSONDecoder: SingleValueDecodingContainer {
                 return JSON.array(array) as! T
             }
         case is JSONObject.Type:
-            do {
-                switch value {
-                case .primitive(let json):
-                    return try json.getObject() as! T
-                case .object where _data.applyKeyDecodingStrategyToJSONObject:
-                    break
-                case .object(let object, _):
-                    return object as! T
-                case .array:
-                    throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found array"))
-                }
-            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
-                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            switch value {
+            case .primitive(let json):
+                return try wrapTypeMismatch(json.getObject()) as! T
+            case .object where _data.applyKeyDecodingStrategyToJSONObject:
+                break
+            case .object(let object, _):
+                return object as! T
+            case .array:
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONObject, found array"))
             }
         case is JSONArray.Type:
             // SR-7076 ContiguousArray doesn't conform to Decodable (as of Swift 4.0.3), so this
             // branch will never actually be reached, but we'll leave it here in case the Decodable
             // conformance is ever added.
-            do {
-                switch value {
-                case .primitive(let json):
-                    return try json.getArray() as! T
-                case .object:
-                    throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found object"))
-                case .array where _data.applyKeyDecodingStrategyToJSONObject:
-                    break
-                case .array(let array):
-                    return array as! T
-                }
-            } catch let JSONError.missingOrInvalidType(path, expected, actual) {
-                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found \(actual as Any)", underlyingError: JSONError.missingOrInvalidType(path: path, expected: expected, actual: actual)))
+            switch value {
+            case .primitive(let json):
+                return try wrapTypeMismatch(json.getArray()) as! T
+            case .object:
+                throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: codingPath, debugDescription: "Expected JSONArray, found object"))
+            case .array where _data.applyKeyDecodingStrategyToJSONObject:
+                break
+            case .array(let array):
+                return array as! T
             }
         case is Decimal.Type:
             if case .primitive(.decimal(let d)) = value {
                 return d as! T
+            }
+        case is Date.Type:
+            switch _data.dateDecodingStrategy {
+            case .deferredToDate:
+                break
+            case .secondsSince1970:
+                let seconds = try wrapTypeMismatch(value.asJSON.getDouble())
+                return Date(timeIntervalSince1970: seconds) as! T
+            case .millisecondsSince1970:
+                let ms = try wrapTypeMismatch(value.asJSON.getDouble())
+                return Date(timeIntervalSince1970: ms / 1000) as! T
+            case .iso8601:
+                if #available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *) {
+                    let str = try wrapTypeMismatch(value.asJSON.getString())
+                    guard let date = _iso8601Formatter.date(from: str) else {
+                        throw DecodingError.dataCorruptedError(in: self, debugDescription: "Expected date string to be ISO8601-formatted.")
+                    }
+                    return date as! T
+                } else {
+                    fatalError("ISO8601DateFormatter is not available on this platform")
+                }
+            case .iso8601WithFractionalSeconds:
+                if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                    let str = try wrapTypeMismatch(value.asJSON.getString())
+                    guard let date = _iso8601FractionalSecondsFormatter.date(from: str) ?? _iso8601Formatter.date(from: str) else {
+                        throw DecodingError.dataCorruptedError(in: self, debugDescription: "Expected date string to be ISO8601-formatted.")
+                    }
+                    return date as! T
+                } else {
+                    fatalError("ISO8601DateFormatter.Options.withFractionalSeconds is not available on this platform")
+                }
+            case .formatted(let formatter):
+                let str = try wrapTypeMismatch(value.asJSON.getString())
+                guard let date = formatter.date(from: str) else {
+                    throw DecodingError.dataCorruptedError(in: self, debugDescription: "Date string does not match format expected by formatter.")
+                }
+                return date as! T
+            case .custom(let decode):
+                return try decode(self) as! T
             }
         default:
             break
@@ -717,6 +754,43 @@ extension JSON.Decoder {
             return result
         }
     }
+    
+    /// The strategy to use for decoding `Date` values.
+    public enum DateDecodingStrategy {
+        /// Defer to `Date` for decoding. This is the default strategy.
+        case deferredToDate
+        
+        /// Decode the `Date` as a UNIX timestamp from a JSON number.
+        case secondsSince1970
+        
+        /// Decode the `Date` as UNIX millisecond timestamp from a JSON number.
+        case millisecondsSince1970
+        
+        /// Decode the `Date` as an ISO8601-formatted string (in RFC 3339 format).
+        ///
+        /// This matches strings like `"1985-04-12T23:20:50Z"`.
+        ///
+        /// - Note: This does not match strings that include fractional seconds. Use
+        ///   `.iso8601WithFractionalSeconds` for that.
+        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        case iso8601
+        
+        /// Decode the `Date` as an ISO8601-formatted string (in RFC 3339 format) with fractional
+        /// seconds.
+        ///
+        /// This matches strings like `"1985-04-12T23:20:50.52Z"`.
+        ///
+        /// - Note: If the decode fails, it will try again with `.iso8601`. This means it will match
+        ///   strings with or without fractional seconds.
+        @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+        case iso8601WithFractionalSeconds
+        
+        /// Decode the `Date` as a string parsed by the given formatter.
+        case formatted(DateFormatter)
+        
+        /// Decode the `Date` as a custom value decoded by the given closure.
+        case custom((_ decoder: Decoder) throws -> Date)
+    }
 }
 
 // MARK: -
@@ -772,3 +846,17 @@ private func _getUInt64(from value: JSON, data: DecoderData) throws -> UInt64 {
         throw DecodingError.typeMismatch(UInt64.self, DecodingError.Context(codingPath: data.codingPath, debugDescription: "Expected to decode UInt64 but found \(JSONError.JSONType.forValue(value))"))
     }
 }
+
+@available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+private var _iso8601Formatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+}()
+
+@available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+private var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+}()
