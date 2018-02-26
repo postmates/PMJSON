@@ -138,4 +138,222 @@ final class SwiftDecoderTests: XCTestCase {
         let color = try JSON.Decoder().decode(Person.Color.self, from: json)
         XCTAssertEqual(color, .red)
     }
+    
+    // MARK: - KeyDecodingStrategy
+    
+    func testConvertFromSnakeCase() throws {
+        var decoder = JSON.Decoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        func assertEqual(_ key: String, _ expected: String, file: StaticString = #file, line: UInt = #line) throws {
+            let json: JSON = [key: true]
+            let dict = try decoder.decode([String: Bool].self, from: json)
+            XCTAssertEqual(dict, [expected: true], file: file, line: line)
+        }
+        
+        try assertEqual("", "")
+        try assertEqual("hello", "hello")
+        try assertEqual("HELLO", "HELLO")
+        try assertEqual("123", "123")
+        try assertEqual("foo_bar", "fooBar")
+        try assertEqual("one_two_three", "oneTwoThree")
+        try assertEqual("__foo_bar__", "__fooBar__")
+        try assertEqual("_fooBar_", "_fooBar_")
+        try assertEqual("_qux_fooBar_", "_quxFoobar_")
+        try assertEqual("23_skidoo", "23Skidoo")
+        try assertEqual("foo_u\u{308}ber", "fooU\u{308}ber")
+        try assertEqual("ends_with_single_x", "endsWithSingleX")
+    }
+    
+    private struct Person2: Decodable, Equatable {
+        let name: String
+        let isAlive: Bool
+        let favoriteColors: [Color]
+        let fruitRankings: [String: String]
+        
+        struct Color: Decodable, Equatable {
+            let name: String
+            let isVibrant: Bool
+            
+            static func ==(lhs: Color, rhs: Color) -> Bool {
+                return (lhs.name, lhs.isVibrant) == (rhs.name, rhs.isVibrant)
+            }
+        }
+        
+        static func ==(lhs: Person2, rhs: Person2) -> Bool {
+            return (lhs.name, lhs.isAlive) == (rhs.name, rhs.isAlive)
+                && lhs.favoriteColors == rhs.favoriteColors
+                && lhs.fruitRankings == rhs.fruitRankings
+        }
+    }
+    
+    private struct MyKey: CodingKey {
+        let stringValue: String
+        var intValue: Int? { return nil }
+        init(stringValue: String) {
+            self.stringValue = stringValue
+        }
+        init?(intValue: Int) {
+            return nil
+        }
+    }
+    
+    func testDecodingConvertFromSnakeCase() throws {
+        var decoder = JSON.Decoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        let json: JSON = [
+            "name": "Anne",
+            "is_alive": true,
+            "favorite_colors": [
+                [
+                    "name": "red",
+                    "is_vibrant": true
+                ],
+                [
+                    "name": "blue",
+                    "is_vibrant": false
+                ]
+            ],
+            "fruit_rankings": [
+                "apple": "good",
+                "not_a_fruit": "bad"
+            ]
+        ]
+        XCTAssertEqual(try decoder.decode(Person2.self, from: json), Person2(name: "Anne", isAlive: true, favoriteColors: [Person2.Color(name: "red", isVibrant: true), Person2.Color(name: "blue", isVibrant: false)], fruitRankings: ["apple": "good", "notAFruit": "bad"]))
+    }
+    
+    func testDecodingObjectConvertFromSnakeCase() throws {
+        var decoder = JSON.Decoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // use default applyKeyDecodingStrategyToJSONObject
+        do { // JSON
+            let json = try decoder.decode(JSON.self, from: [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+        }
+        do { // JSONObject
+            let json = try decoder.decode([JSONObject].self, from: [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camel_case": false
+                ]])
+        }
+        decoder.applyKeyDecodingStrategyToJSONObject = true
+        do { // JSON
+            let json = try decoder.decode(JSON.self, from: [[
+                "foo": "bar",
+                "camel_case": true
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        do { // JSONObject
+            let json = try decoder.decode([JSONObject].self, from: [[
+                "foo": "bar",
+                "camel_case": true
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+    }
+    
+    func testDecodingCustom() throws {
+        var decoder = JSON.Decoder()
+        decoder.keyDecodingStrategy = .custom({ (codingPath, key) -> CodingKey in
+            switch key.stringValue {
+            case "shade" where codingPath.first?.stringValue == "favoriteColors":
+                return MyKey(stringValue: "name")
+            case "firstName":
+                return MyKey(stringValue: "name")
+            case let s where s.unicodeScalars.last == "!":
+                return MyKey(stringValue: String(s.unicodeScalars.dropLast()))
+            default:
+                return key
+            }
+        })
+        do {
+            let person = try decoder.decode(Person2.self, from: [
+                "firstName": "Anne",
+                "isAlive!": true,
+                "favoriteColors!": [
+                    [
+                        "shade": "red",
+                        "isVibrant!": true
+                    ],
+                    [
+                        "shade": "blue",
+                        "isVibrant!": false
+                    ]
+                ],
+                "fruitRankings!": [
+                    "apple!": "good",
+                    "notAFruit!": "bad"
+                ]
+                ])
+            XCTAssertEqual(person, Person2(name: "Anne", isAlive: true, favoriteColors: [Person2.Color(name: "red", isVibrant: true), Person2.Color(name: "blue", isVibrant: false)], fruitRankings: ["apple": "good", "notAFruit": "bad"]))
+        } catch {
+            XCTFail("error: \(error)")
+        }
+    }
+    
+    func testDecodingObjectCustom() throws {
+        var decoder = JSON.Decoder()
+        decoder.keyDecodingStrategy = .custom({ (codingPath, key) -> CodingKey in
+            return MyKey(stringValue: String(key.stringValue.unicodeScalars.dropLast()))
+        })
+        // use default applyKeyDecodingStrategyToJSONObject
+        do { // JSON
+            let json = try decoder.decode(JSON.self, from: [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        do { // JSONObject
+            let json = try decoder.decode([JSONObject].self, from: [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+            XCTAssertEqual(json, [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+        }
+        decoder.applyKeyDecodingStrategyToJSONObject = true
+        do { // JSON
+            let json = try decoder.decode(JSON.self, from: [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+            XCTAssertEqual(json, [[
+                "fo": "bar",
+                "camelCas": true
+                ]])
+        }
+        do { // JSONObject
+            let json = try decoder.decode([JSONObject].self, from: [[
+                "foo": "bar",
+                "camelCase": true
+                ]])
+            XCTAssertEqual(json, [[
+                "fo": "bar",
+                "camelCas": true
+                ]])
+        }
+    }
 }

@@ -193,6 +193,8 @@ extension JSON {
         /// This defaults to `false` because the assumption is if you're encoding a `JSONObject`,
         /// you want it to encode as-is.
         ///
+        /// This property also affects encoding `JSON` values that contain objects.
+        ///
         /// - Note: This property does not affect the encoding of `Dictionary`.
         public var applyKeyEncodingStrategyToJSONObject = false
         
