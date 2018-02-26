@@ -249,7 +249,7 @@ extension JSON {
             data.keyEncodingStrategy = keyEncodingStrategy
             data.applyKeyEncodingStrategyToJSONObject = applyKeyEncodingStrategyToJSONObject
             let encoder = _JSONEncoder(data: data)
-            try value.encode(to: encoder)
+            try encoder.encode(value)
             guard let json = encoder.json else {
                 throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: [], debugDescription: "Top-level \(type(of: value)) did not encode any values."))
             }
@@ -580,30 +580,14 @@ private class _JSONUnkeyedEncoder: UnkeyedEncodingContainer {
     }
     
     func encode<T>(_ value: T) throws where T : Encodable {
-        switch value {
-        case let json as JSON:
-            switch json {
-            case .object(let object) where _data.shouldRekeyJSONObjects:
-                try encode(object)
-            case .array(let array) where _data.shouldRekeyJSONObjects:
-                try encode(Array(array))
-            default:
-                append(unboxed: json)
-            }
-        case let object as JSONObject where !_data.shouldRekeyJSONObjects:
-            append(unboxed: .object(object))
-        case let decimal as Decimal:
-            append(unboxed: .decimal(decimal))
-        default:
-            _data.codingPath.append(JSONKey.int(count))
-            defer { _data.codingPath.removeLast() }
-            let encoder = _JSONEncoder(data: _data)
-            try value.encode(to: encoder)
-            guard let json = encoder.json else {
-                throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "\(type(of: value)) did not encode any values."))
-            }
-            box.value.append(json)
+        _data.codingPath.append(JSONKey.int(count))
+        defer { _data.codingPath.removeLast() }
+        let encoder = _JSONEncoder(data: _data)
+        try encoder.encode(value)
+        guard let json = encoder.json else {
+            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "\(type(of: value)) did not encode any values."))
         }
+        box.value.append(json)
     }
     
     func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
@@ -717,30 +701,14 @@ private class _JSONKeyedEncoder<K: CodingKey>: KeyedEncodingContainerProtocol {
     }
     
     func encode<T>(_ value: T, forKey key: K) throws where T : Encodable {
-        switch value {
-        case let json as JSON:
-            switch json {
-            case .object(let object) where _data.shouldRekeyJSONObjects:
-                try encode(object, forKey: key)
-            case .array(let array) where _data.shouldRekeyJSONObjects:
-                try encode(Array(array), forKey: key)
-            default:
-                store(unboxed: json, forKey: key)
-            }
-        case let object as JSONObject where !_data.shouldRekeyJSONObjects:
-            store(unboxed: .object(object), forKey: key)
-        case let decimal as Decimal:
-            store(unboxed: .decimal(decimal), forKey: key)
-        default:
-            _data.codingPath.append(key)
-            defer { _data.codingPath.removeLast() }
-            let encoder = _JSONEncoder(data: _data)
-            try value.encode(to: encoder)
-            guard let json = encoder.json else {
-                throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "\(type(of: value)) did not encode any values."))
-            }
-            box.value[_stringKey(for: key)] = json
+        _data.codingPath.append(key)
+        defer { _data.codingPath.removeLast() }
+        let encoder = _JSONEncoder(data: _data)
+        try encoder.encode(value)
+        guard let json = encoder.json else {
+            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: codingPath, debugDescription: "\(type(of: value)) did not encode any values."))
         }
+        box.value[_stringKey(for: key)] = json
     }
     
     func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: K) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
