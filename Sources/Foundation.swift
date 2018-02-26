@@ -13,6 +13,9 @@
 //
 
 import Foundation
+#if os(iOS) || os(watchOS) || os(tvOS)
+    import struct CoreGraphics.CGFloat
+#endif
 
 // MARK: Data Support
 
