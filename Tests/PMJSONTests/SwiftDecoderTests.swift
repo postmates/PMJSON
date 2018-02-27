@@ -158,6 +158,7 @@ final class SwiftDecoderTests: XCTestCase {
         try assertEqual("foo_bar", "fooBar")
         try assertEqual("one_two_three", "oneTwoThree")
         try assertEqual("__foo_bar__", "__fooBar__")
+        try assertEqual("__foo___bar__", "__fooBar__")
         try assertEqual("_fooBar_", "_fooBar_")
         try assertEqual("_qux_fooBar_", "_quxFoobar_")
         try assertEqual("23_skidoo", "23Skidoo")
