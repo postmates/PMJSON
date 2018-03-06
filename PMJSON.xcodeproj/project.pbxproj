@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A0F2BAA1BF1BBE50095D290 /* JSONError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BA91BF1BBE50095D290 /* JSONError.swift */; };
 		0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */; };
+		0A36F660204E6B5E0014CF38 /* SwiftCompatibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A36F65F204E6B5E0014CF38 /* SwiftCompatibility.swift */; };
 		0A550CCE203A28A700941526 /* SwiftEncoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */; };
 		0AE408A4203413AE00A73EBC /* SwiftDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A3203413AE00A73EBC /* SwiftDecoder.swift */; };
 		0AE408A62036A36200A73EBC /* SwiftDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408A52036A36200A73EBC /* SwiftDecoderTests.swift */; };
@@ -48,6 +49,7 @@
 		0A0F2BA91BF1BBE50095D290 /* JSONError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONError.swift; sourceTree = "<group>"; };
 		0A0F2BAB1BF30D1B0095D290 /* JSONObject.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONObject.swift; sourceTree = "<group>"; };
 		0A2556FF2041263D00AA1DC5 /* PMJSON.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; path = PMJSON.playground; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		0A36F65F204E6B5E0014CF38 /* SwiftCompatibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftCompatibility.swift; sourceTree = "<group>"; };
 		0A550CCD203A28A700941526 /* SwiftEncoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoderTests.swift; sourceTree = "<group>"; };
 		0A79B5071E8AFE6700A8C727 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		0A79B5091E8B0BF500A8C727 /* LinuxMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinuxMain.swift; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 				9E1B246A1BC7463D00E5BC19 /* Parser.swift */,
 				9E8793771BC7547800BC6A15 /* Decoder.swift */,
 				9E5983DB1C60282F008495F6 /* Encoder.swift */,
+				0A36F65F204E6B5E0014CF38 /* SwiftCompatibility.swift */,
 				9E1B24431BC73D7600E5BC19 /* PMJSON.h */,
 				9E1B24451BC73D7600E5BC19 /* Info.plist */,
 			);
@@ -299,6 +302,7 @@
 			files = (
 				9E5983DC1C60282F008495F6 /* Encoder.swift in Sources */,
 				9E1B246B1BC7463D00E5BC19 /* Parser.swift in Sources */,
+				0A36F660204E6B5E0014CF38 /* SwiftCompatibility.swift in Sources */,
 				9E87937C1BC8341500BC6A15 /* Foundation.swift in Sources */,
 				9E8793781BC7547800BC6A15 /* Decoder.swift in Sources */,
 				0A0F2BAA1BF1BBE50095D290 /* JSONError.swift in Sources */,

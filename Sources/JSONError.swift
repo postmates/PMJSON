@@ -1327,7 +1327,7 @@ public extension JSON {
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
     static func flatMap<T>(_ array: JSONArray, _ transform: (JSON) throws -> T?) rethrows -> [T] {
-        return try array.enumerated().flatMap({ i, elt in try scoped(i, { try transform(elt) }) })
+        return try array.enumerated().compactMap({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
     /// Returns an `Array` containing the concatenated results of mapping `transform` over `array`.

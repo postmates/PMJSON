@@ -217,7 +217,7 @@ extension JSON {
             case .decimal(let d): return d
             case .object(let obj): return obj.nsNoNull
             case .array(let ary):
-                return ary.flatMap({$0.nsNoNull})
+                return ary.compactMap({$0.nsNoNull})
             }
         }
     }

@@ -406,7 +406,7 @@ private struct _JSONKeyedDecoder<K: CodingKey>: KeyedDecodingContainerProtocol {
     }
     
     var allKeys: [K] {
-        return Array(value.keys.flatMap(K.init(stringValue:)))
+        return Array(value.keys.compactMap(K.init(stringValue:)))
     }
     
     func contains(_ key: K) -> Bool {
