@@ -319,7 +319,7 @@ private struct UTF8Decoder: Sequence {
         }
         
         private let data: NSData
-        private var iter: UnsafeBufferPointerIterator<UInt8>
+        private var iter: UnsafeBufferPointer<UInt8>.Iterator
         private var utf8 = UTF8()
     }
 }
@@ -407,7 +407,7 @@ private struct UTF16Decoder: Sequence {
         
         private let data: NSData
         private let endian: Endian
-        private var iter: UnsafeBufferPointerIterator<UInt16>
+        private var iter: UnsafeBufferPointer<UInt16>.Iterator
         private var trailingFFFD: Bool
     }
 }
@@ -495,7 +495,7 @@ private struct UTF32Decoder: Sequence {
         
         private let data: NSData
         private let endian: Endian
-        private var iter: UnsafeBufferPointerIterator<UInt32>
+        private var iter: UnsafeBufferPointer<UInt32>.Iterator
         private var trailingFFFD: Bool
     }
 }
