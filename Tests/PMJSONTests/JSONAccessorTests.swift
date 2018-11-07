@@ -319,4 +319,37 @@ public final class JSONAccessorTests: XCTestCase {
         XCTAssertEqual(JSON.double(42.1), JSON.decimal(42.1))
         XCTAssertEqual(JSON.double(1e100), JSON.decimal(Decimal(string: "1e100")!)) // Decimal(_: Double) can produce incorrect values
     }
+    
+    func testErrorPaths() {
+        XCTAssertThrowsError(try JSON.int64(42).getString()) { (error) in
+            switch error {
+            case let error as JSONError: XCTAssertNil(error.path)
+            default: XCTFail("Expected JSONError, got \(error)")
+            }
+        }
+        XCTAssertThrowsError(try (["foo": 42] as JSON).getString("bar")) { (error) in
+            switch error {
+            case let error as JSONError: XCTAssertEqual(error.path, "bar")
+            default: XCTFail("Expected JSONError, got \(error)")
+            }
+        }
+        XCTAssertThrowsError(try (["foo": 42] as JSON).getString("foo")) { (error) in
+            switch error {
+            case let error as JSONError: XCTAssertEqual(error.path, "foo")
+            default: XCTFail("Expected JSONError, got \(error)")
+            }
+        }
+        XCTAssertThrowsError(try (["foo": ["bar": 42]] as JSON).getObject("foo", { try $0.getString("bar") })) { (error) in
+            switch error {
+            case let error as JSONError: XCTAssertEqual(error.path, "foo.bar")
+            default: XCTFail("Expected JSONError, got \(error)")
+            }
+        }
+        XCTAssertThrowsError(try (["foo": ["bar": [1, 2]]] as JSON).getObject("foo", { try $0.mapArray("bar", { try $0.getString() }) })) { (error) in
+            switch error {
+            case let error as JSONError: XCTAssertEqual(error.path, "foo.bar[0]")
+            default: XCTFail("Expected JSONError, got \(error)")
+            }
+        }
+    }
 }

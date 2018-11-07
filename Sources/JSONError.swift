@@ -93,16 +93,34 @@ public enum JSONError: Error, CustomStringConvertible {
                 prefix += key.stringValue
             }
         }
-        return prefix.isEmpty ? self : withPrefix(prefix)
+        return prefix.isEmpty ? self : withPrefix(.key(prefix))
     }
     
-    fileprivate func withPrefix(_ prefix: String) -> JSONError {
-        func prefixPath(_ path: String?, with prefix: String) -> String {
-            guard let path = path, !path.isEmpty else { return prefix }
+    /// An element that can be prefixed onto the error path.
+    public enum Prefix {
+        /// A key, as from an object.
+        case key(String)
+        /// An index used to subscript an array.
+        case index(Int)
+        
+        fileprivate var asString: String {
+            switch self {
+            case .key(let key): return key
+            case .index(let x): return "[\(x)]"
+            }
+        }
+    }
+    
+    /// Returns a new `JSONError` by prefixing the given `Prefix` onto the path.
+    /// - Parameter prefix: The prefix to prepend to the error path.
+    /// - Returns: A new `JSONError`.
+    public func withPrefix(_ prefix: Prefix) -> JSONError {
+        func prefixPath(_ path: String?, with prefix: Prefix) -> String {
+            guard let path = path, !path.isEmpty else { return prefix.asString }
             if path.unicodeScalars.first == "[" {
-                return prefix + path
+                return prefix.asString + path
             } else {
-                return "\(prefix).\(path)"
+                return "\(prefix.asString).\(path)"
             }
         }
         switch self {
@@ -1782,7 +1800,7 @@ internal func scoped<T>(_ key: String, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
-        throw error.withPrefix(key)
+        throw error.withPrefix(.key(key))
     }
 }
 
@@ -1790,7 +1808,7 @@ internal func scoped<T>(_ index: Int, _ f: () throws -> T) rethrows -> T {
     do {
         return try f()
     } catch let error as JSONError {
-        throw error.withPrefix("[\(index)]")
+        throw error.withPrefix(.index(index))
     }
 }
 

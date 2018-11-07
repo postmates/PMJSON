@@ -262,6 +262,12 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* Add method `JSONError.withPrefix(_:)` that returns a new error by prepending a prefix onto the path. This can be used in custom parsing code to produce good errors if the existing convenience functions don't do what you want. ([#26][])
+
+[#26]: https://github.com/postmates/PMJSON/issues/26 "GitHub: JSONError should have structured way to add prefixes"
+
 #### v3.1.1 (2018-05-17)
 
 * Squelch Swift 4.1 warnings.
