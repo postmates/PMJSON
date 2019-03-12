@@ -611,6 +611,7 @@ public enum JSONEvent: Hashable {
     /// A parser error.
     case error(JSONParserError)
     
+    #if !swift(>=4.1)
     public var hashValue: Int {
         switch self {
         case .objectStart: return 1
@@ -626,6 +627,7 @@ public enum JSONEvent: Hashable {
         case .error(let error): return error.hashValue << 4 + 11
         }
     }
+    #endif
     
     public static func ==(lhs: JSONEvent, rhs: JSONEvent) -> Bool {
         switch (lhs, rhs) {
@@ -756,9 +758,11 @@ public struct JSONParserError: Error, Hashable, CustomStringConvertible {
         return "JSONParserError(\(code), line: \(line), column: \(column))"
     }
     
+    #if !swift(>=4.1)
     public var hashValue: Int {
         return Int(bitPattern: line << 18) ^ Int(bitPattern: column << 4) ^ code.rawValue
     }
+    #endif
     
     public static func ==(lhs: JSONParserError, rhs: JSONParserError) -> Bool {
         return (lhs.code, lhs.line, lhs.column) == (rhs.code, rhs.line, rhs.column)
