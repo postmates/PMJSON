@@ -245,7 +245,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 0700;
-				LastUpgradeCheck = 0930;
+				LastUpgradeCheck = 1020;
 				ORGANIZATIONNAME = "Kevin Ballard";
 				TargetAttributes = {
 					9E1B24401BC73D7600E5BC19 = {
@@ -260,10 +260,11 @@
 			};
 			buildConfigurationList = 9E1B242B1BC73D1900E5BC19 /* Build configuration list for PBXProject "PMJSON" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 9E1B24271BC73D1900E5BC19;
 			productRefGroup = 9E1B24341BC73D3600E5BC19 /* Products */;
