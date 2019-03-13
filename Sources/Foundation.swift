@@ -86,10 +86,37 @@ internal struct _DataOutput: TextOutputStream {
 
     private var buffer = String()
     private var data = Data()
-    /// Maximum number of UTF-16 characters in the buffer before flushing to data.
-    let maxChunkSize = 32 * 1024
+    /// Maximum number of bytes in the buffer before flushing to data.
+    let maxChunkSize = 64 * 1024
     
     mutating func write(_ string: String) {
+        #if swift(>=4.1.9) // Swift 4.2 compiler or later, required for compiler() test
+        #if compiler(>=5)
+        // Measure the string in its native encoding.
+        func byteLen(of string: String) -> Int {
+            return string.utf8.withContiguousStorageIfAvailable({ $0.count })
+                ?? string.utf16.count * 2
+        }
+        let writeChunkNow = byteLen(of: string) >= maxChunkSize
+        if writeChunkNow || byteLen(of: buffer) >= maxChunkSize {
+            data.append(contentsOf: buffer.utf8)
+            buffer = ""
+        }
+        if writeChunkNow {
+            data.append(contentsOf: string.utf8)
+        } else {
+            buffer.append(string)
+        }
+        #else
+        _writeUTF16(string)
+        #endif
+        #else
+        _writeUTF16(string)
+        #endif
+    }
+    
+    /// The pre-Swift 5 implementation of write()
+    private mutating func _writeUTF16(_ string: String) {
         // Measure the string in UTF-16 because it's O(1). If this is an ASCII string, we'll
         // be off by a factor of 2 on the size, but if it's non-ASCII then we'll have an
         // accurate representation of the string's size in-memory.
