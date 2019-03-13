@@ -81,10 +81,11 @@ internal struct _DataOutput: TextOutputStream {
     // `String` first and then converting to `Data` doubles the memory usage. To strike a
     // balance, we encode to a `String` in chunks up to 64kb, and every time we pass that,
     // we convert it to `Data`.
-    // NB: Data is really slow even in Swift 4, so we actually use `NSMutableData` instead.
-    
+    // NB: Data was slow in Swift 4. It seems to be faster now. I don't have a good way of measuring
+    // the difference so we'll just optimize for the modern compiler case.
+
     private var buffer = String()
-    private let data = NSMutableData()
+    private var data = Data()
     /// Maximum number of UTF-16 characters in the buffer before flushing to data.
     let maxChunkSize = 32 * 1024
     
@@ -93,12 +94,12 @@ internal struct _DataOutput: TextOutputStream {
         // be off by a factor of 2 on the size, but if it's non-ASCII then we'll have an
         // accurate representation of the string's size in-memory.
         let writeChunkNow = string.utf16.count >= maxChunkSize
-        if writeChunkNow ||  buffer.utf16.count >= maxChunkSize {
-            data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
+        if writeChunkNow || buffer.utf16.count >= maxChunkSize {
+            data.append(contentsOf: buffer.utf8)
             buffer = ""
         }
         if writeChunkNow {
-            data.append(string.data(using: .utf8, allowLossyConversion: true)!)
+            data.append(contentsOf: string.utf8)
         } else {
             buffer.append(string)
         }
@@ -106,12 +107,12 @@ internal struct _DataOutput: TextOutputStream {
     
     mutating func finish() -> Data {
         if !buffer.isEmpty {
-            data.append(buffer.data(using: .utf8, allowLossyConversion: true)!)
+            data.append(contentsOf: buffer.utf8)
             buffer = ""
         }
         // NB: We don't really care about whether this references the NSData or not, in fact we'd
         // rather the stdlib make that decision, except `data as Data` isn't compatible with Linux
-        return Data(referencing: data)
+        return data
     }
 }
 
