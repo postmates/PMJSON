@@ -8,8 +8,8 @@ Pod::Spec.new do |s|
 
   s.license      = "MIT & Apache License, Version 2.0"
 
-  s.author             = { "Kevin Ballard" => "kevin.ballard@postmates.com" }
-  s.social_media_url   = "https://twitter.com/eridius"
+  s.author             = { "Lily Ballard" => "lily@sb.org" }
+  s.social_media_url   = "https://twitter.com/LilyInTech"
 
   s.source       = { :git => "https://github.com/postmates/PMJSON.git", :tag => "v#{s.version}" }
 

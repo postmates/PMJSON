@@ -2,7 +2,7 @@
 //  JSON.h
 //  JSON
 //
-//  Created by Kevin Ballard on 10/8/15.
+//  Created by Lily Ballard on 10/8/15.
 //  Copyright © 2016 Postmates.
 //
 //  Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or

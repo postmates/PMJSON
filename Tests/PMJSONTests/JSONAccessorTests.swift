@@ -2,7 +2,7 @@
 //  JSONAccessorTests.swift
 //  PMJSON
 //
-//  Created by Kevin Ballard on 11/3/16.
+//  Created by Lily Ballard on 11/3/16.
 //  Copyright © 2016 Postmates.
 //
 //  Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
