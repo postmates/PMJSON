@@ -383,6 +383,12 @@ extension _JSONDecoder: SingleValueDecodingContainer {
             case .custom(let decode):
                 return try decode(self) as! T
             }
+        case is URL.Type:
+            // URL's built-in implementation encodes an object with "base" and "relative" keys. We don't want that.
+            guard let url = try URL(string: decode(String.self)) else {
+                throw DecodingError.dataCorruptedError(in: self, debugDescription: "Invalid URL string.")
+            }
+            return url as! T
         default:
             break
         }

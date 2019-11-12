@@ -14,6 +14,7 @@
 
 import XCTest
 import PMJSON
+import Foundation
 
 private struct Person: Decodable, Equatable {
     enum Color: String, Decodable {
@@ -464,6 +465,59 @@ final class SwiftDecoderTests: XCTestCase {
         })
         let data = try decoder.decode(Data.self, from: "=8GbsVGa" as JSON)
         XCTAssertEqual(data, "hello".data(using: .utf8)!)
+    }
+    
+    // MARK: - Other custom decoding
+    
+    func testDecodeURL() {
+        XCTAssertNoThrow(try {
+            let data = try JSON.Decoder().decode(URL.self, from: "\"http://example.com\"")
+            XCTAssertEqual(data, URL(string: "http://example.com")!)
+            }())
+        XCTAssertThrowsError(try JSON.Decoder().decode(URL.self, from: "\"foo bar\"")) { (error) in
+            switch error {
+            case DecodingError.dataCorrupted(let context):
+                XCTAssertEqual(context.debugDescription, "Invalid URL string.")
+            case let error:
+                XCTFail("Expected DecodingError.dataCorrupted, found \(error)")
+            }
+        }
+    }
+    
+    func testDecodeURLEncodedFromFoundation() {
+        // Double-check that encoding URLs using JSONEncoder can be decoded with JSON.Decoder.
+        func test(_ url: URL, line: UInt = #line) {
+            XCTAssertNoThrow(try {
+                let data = try JSONEncoder().encode(["url": url])
+                let decoded = try JSON.Decoder().decode(Dictionary<String, URL>.self, from: data)["url"]!
+                XCTAssertEqual(decoded, url.absoluteURL, line: line)
+                }(), line: line)
+        }
+        test(URL(string: "http://example.com")!)
+        test(URL(string: "foo", relativeTo: URL(string: "http://example.com")!)!)
+        test(URL(string: "https://example.com/bar%20baz?q=a+b")!)
+        
+        // https://bugs.swift.org/browse/SR-11780
+        // Decoding empty URLs throws an error. This happens with JSONDecoder as well as JSON.Decoder.
+        // Let's validate here that both behave this way.
+        func testThrowsError(_ block: () throws -> Void, line: UInt = #line) {
+            XCTAssertThrowsError(try block(), line: line) { (error) in
+                switch error {
+                case DecodingError.dataCorrupted(let context):
+                    XCTAssertEqual(context.debugDescription, "Invalid URL string.")
+                case let error:
+                    XCTFail("Expected DecodingError.dataCorrupted, found \(error)")
+                }
+            }
+        }
+        testThrowsError({
+            let data = try JSONEncoder().encode(["url": NSURL(string: "")! as URL])
+            _ = try JSONDecoder().decode(Dictionary<String, URL>.self, from: data)["url"]!
+        })
+        testThrowsError({
+            let data = try JSONEncoder().encode(["url": NSURL(string: "")! as URL])
+            _ = try JSON.Decoder().decode(Dictionary<String, URL>.self, from: data)["url"]!
+        })
     }
 }
 

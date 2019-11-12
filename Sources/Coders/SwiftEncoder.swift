@@ -548,6 +548,10 @@ extension _JSONEncoder: SingleValueEncodingContainer {
                     self.json = .unboxed([:])
                 }
             }
+        case let url as URL:
+            // URL's default encoding is as an object with "base" and "relative" keys. Encode as a
+            // string instead.
+            try encode(url.absoluteString)
         default:
             try value.encode(to: self)
         }

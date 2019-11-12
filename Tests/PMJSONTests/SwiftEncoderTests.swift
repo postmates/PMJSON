@@ -14,6 +14,7 @@
 
 import XCTest
 import PMJSON
+import Foundation
 
 private struct Person: Encodable, Equatable {
     enum Color: String, Encodable {
@@ -847,6 +848,46 @@ final class SwiftEncoderTests: XCTestCase {
         })
         let json = try encoder.encodeAsJSON("hello".data(using: .utf8)!)
         XCTAssertEqual(json, [:])
+    }
+    
+    // MARK: - Other custom encoding
+    
+    func testEncodeURL() {
+        XCTAssertNoThrow(try {
+            let json = try JSON.Encoder().encodeAsJSON(URL(string: "http://example.com")!)
+            XCTAssertEqual(json, "http://example.com", "absolute url")
+            }(), "absolute url")
+        XCTAssertNoThrow(try {
+            let json = try JSON.Encoder().encodeAsJSON(URL(string: "foo", relativeTo: URL(string: "http://example.com")!)!)
+            XCTAssertEqual(json, "http://example.com/foo", "relative url")
+            }(), "relative url")
+    }
+    
+    func testEncodeURLDecodingWithFoundation() {
+        // Double-check that URLs encoded with JSON.Encoder can be decoded with JSONDecoder.
+        func test(_ url: URL, line: UInt = #line) {
+            XCTAssertNoThrow(try {
+                let data = try JSON.Encoder().encodeAsData(["url": url])
+                let decoded = try JSONDecoder().decode(Dictionary<String, URL>.self, from: data)["url"]!
+                XCTAssertEqual(decoded, url.absoluteURL, line: line)
+                }(), line: line)
+        }
+        test(URL(string: "http://example.com")!)
+        test(URL(string: "foo", relativeTo: URL(string: "http://example.com")!)!)
+        test(URL(string: "https://example.com/bar%20baz?q=a+b")!)
+        
+        // https://bugs.swift.org/browse/SR-11780
+        // JSONEncoder and JSON.Encoder can both encode empty URLs, even though decoding fails.
+        // Let's validate here that both can at least encode them, and that they decode as empty strings.
+        func testEmptyURL(_ encode: ([String: URL]) throws -> Data, line: UInt = #line) {
+            XCTAssertNoThrow(try {
+                let data = try encode(["url": NSURL(string: "")! as URL])
+                let dict = try JSON.Decoder().decode(Dictionary<String, String>.self, from: data)
+                XCTAssertEqual(dict["url"], "", line: line)
+                }(), line: line)
+        }
+        testEmptyURL(JSONEncoder().encode(_:))
+        testEmptyURL({ try JSON.Encoder().encodeAsData($0) })
     }
 }
 

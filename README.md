@@ -262,6 +262,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
+#### Development
+
+* When encoding/decoding `URL`s with `JSON.Encoder` and `JSON.Decoder`, encode and decode their absolute string instead of relying on the native implementation which encodes them as an object. This matches the behavior of `JSONEncoder` and `JSONDecoder`.
+
 #### v3.1.2 (2018-11-06)
 
 * Add method `JSONError.withPrefix(_:)` that returns a new error by prepending a prefix onto the path. This can be used in custom parsing code to produce good errors if the existing convenience functions don't do what you want. ([#26][])
