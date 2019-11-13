@@ -268,7 +268,8 @@ extension JSON {
             return json.unbox()
         }
         
-        @available(*, unavailable, renamed: "encodeAsData(_:)")
+        @available(*, deprecated, renamed: "encodeAsData(_:)")
+        @inlinable
         public func encode<T: Encodable>(_ value: T) throws -> Data {
             return try encodeAsData(value)
         }
