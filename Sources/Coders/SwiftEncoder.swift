@@ -210,9 +210,10 @@ extension JSON {
         /// Returns a JSON-encoded representation of the value you supply.
         ///
         /// - Parameter value: The value to encode.
+        /// - Parameter options: A set of options to control the JSON encoder.
         /// - Returns: Data containing the JSON encoding of the value.
         /// - Throws: Any error thrown by a value's `encode(to:)` method.
-        public func encodeAsData<T: Encodable>(_ value: T, options: JSONEncoderOptions = []) throws -> Data {
+        public func encodeAsData<T: Encodable>(_ value: T, options: JSONEncoderOptions) throws -> Data {
             var output = _DataOutput()
             let json = try _encodeAsEncodedJSON(value)
             var encoder = JSONEventEncoder(options: options)
@@ -223,14 +224,37 @@ extension JSON {
         /// Returns a JSON-encoded representation of the value you supply.
         ///
         /// - Parameter value: The value to encode.
+        /// - Returns: Data containing the JSON encoding of the value.
+        /// - Throws: Any error thrown by a value's `encode(to:)` method.
+        /// - SeeAlso: `encodeAsData(_:options:)`.
+        @inlinable
+        public func encodeAsData<T: Encodable>(_ value: T) throws -> Data {
+            return try encodeAsData(value, options: [])
+        }
+        
+        /// Returns a JSON-encoded representation of the value you supply.
+        ///
+        /// - Parameter value: The value to encode.
+        /// - Parameter options: A set of options to control the JSON encoder.
         /// - Returns: A string containing the JSON encoding of the value.
         /// - Throws: Any error thrown by a value's `encode(to:)` method.
-        public func encodeAsString<T: Encodable>(_ value: T, options: JSONEncoderOptions = []) throws -> String {
+        public func encodeAsString<T: Encodable>(_ value: T, options: JSONEncoderOptions) throws -> String {
             var output = ""
             let json = try _encodeAsEncodedJSON(value)
             var encoder = JSONEventEncoder(options: options)
             json.encode(with: &encoder, to: &output)
             return output
+        }
+        
+        /// Returns a JSON-encoded representation of the value you supply.
+        ///
+        /// - Parameter value: The value to encode.
+        /// - Returns: A string containing the JSON encoding of the value.
+        /// - Throws: Any error thrown by a value's `encode(to:)` method.
+        /// - SeeAlso: `encodeAsString(_:options:)`.
+        @inlinable
+        public func encodeAsString<T: Encodable>(_ value: T) throws -> String {
+            return try encodeAsString(value, options: [])
         }
         
         /// Returns a JSON-encoded representation of the value you supply.

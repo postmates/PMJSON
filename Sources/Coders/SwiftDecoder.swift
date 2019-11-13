@@ -48,12 +48,12 @@ extension JSON {
         ///
         /// - Parameter type: The type of the object to decode.
         /// - Parameter data: The data containing JSON to decode.
-        /// - Parameter options: An optional set of options to control the JSON decoder.
+        /// - Parameter options: A set of options to control the JSON decoder.
         /// - Returns: An instance of `type`.
         /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
         ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
         ///   `DecoderError`s if the object decode fails.
-        public func decode<T: Decodable>(_ type: T.Type, from data: Data, options: JSONOptions = []) throws -> T {
+        public func decode<T: Decodable>(_ type: T.Type, from data: Data, options: JSONOptions) throws -> T {
             let json: JSON
             do {
                 json = try JSON.decode(data, options: options)
@@ -66,13 +66,27 @@ extension JSON {
         /// Returns a value of the type you specify, decoded from JSON.
         ///
         /// - Parameter type: The type of the object to decode.
-        /// - Parameter string: The string containing JSON to decode.
-        /// - Parameter options: An optional set of options to control the JSON decoder.
+        /// - Parameter data: The data containing JSON to decode.
         /// - Returns: An instance of `type`.
         /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
         ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
         ///   `DecoderError`s if the object decode fails.
-        public func decode<T: Decodable>(_ type: T.Type, from string: String, options: JSONOptions = []) throws -> T {
+        /// - SeeAlso: `decode(_:from:options:)`.
+        @inlinable
+        public func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+            return try decode(type, from: data, options: [])
+        }
+        
+        /// Returns a value of the type you specify, decoded from JSON.
+        ///
+        /// - Parameter type: The type of the object to decode.
+        /// - Parameter string: The string containing JSON to decode.
+        /// - Parameter options: A set of options to control the JSON decoder.
+        /// - Returns: An instance of `type`.
+        /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
+        ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
+        ///   `DecoderError`s if the object decode fails.
+        public func decode<T: Decodable>(_ type: T.Type, from string: String, options: JSONOptions) throws -> T {
             let json: JSON
             do {
                 json = try JSON.decode(string, options: options)
@@ -80,6 +94,20 @@ extension JSON {
                 throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "The given string was not valid JSON.", underlyingError: error))
             }
             return try decode(type, from: json)
+        }
+        
+        /// Returns a value of the type you specify, decoded from JSON.
+        ///
+        /// - Parameter type: The type of the object to decode.
+        /// - Parameter string: The string containing JSON to decode.
+        /// - Returns: An instance of `type`.
+        /// - Throws: `DecodingError.dataCorrupted` if the JSON fails to decode (where the
+        ///   `underlyingError` on the context is a `JSONParserError`), or any of the other
+        ///   `DecoderError`s if the object decode fails.
+        /// - SeeAlso: `decode(_:from:options:)`.
+        @inlinable
+        public func decode<T: Decodable>(_ type: T.Type, from string: String) throws -> T {
+            return try decode(type, from: string, options: [])
         }
         
         /// Returns a value of the type you specify, decoded from JSON.

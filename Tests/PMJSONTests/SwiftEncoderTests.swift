@@ -887,7 +887,7 @@ final class SwiftEncoderTests: XCTestCase {
                 }(), line: line)
         }
         testEmptyURL(JSONEncoder().encode(_:))
-        testEmptyURL({ try JSON.Encoder().encodeAsData($0) })
+        testEmptyURL(JSON.Encoder().encodeAsData(_:))
     }
 }
 
