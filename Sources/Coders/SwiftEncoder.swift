@@ -977,7 +977,7 @@ extension JSON.Encoder {
         /// seconds.
         ///
         /// This encodes strings like `"1985-04-12T23:20:50.523Z"`.
-        @available(macOS 10.12, iOS 10.0, watchOS 3.0, tvOS 10.0, *)
+        @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
         case iso8601WithFractionalSeconds
         #else
         // swift-corelibs-foundation doesn't support `.withFractionalSeconds`. We still declare the
