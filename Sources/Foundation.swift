@@ -227,8 +227,8 @@ extension JSON {
     
     extension JSONObject {
         /// Returns the JSON as a JSON-compatible dictionary.
-        public var ns: [AnyHashable: Any] {
-            var dict: [AnyHashable: Any] = Dictionary(minimumCapacity: count)
+        public var ns: [String: Any] {
+            var dict: [String: Any] = Dictionary(minimumCapacity: count)
             for (key, value) in self {
                 dict[key] = value.ns
             }
@@ -236,8 +236,8 @@ extension JSON {
         }
         
         /// Returns the JSON as a JSON-compatible dictionary, discarding any nulls.
-        public var nsNoNull: [AnyHashable: Any] {
-            var dict: [AnyHashable: Any] = Dictionary(minimumCapacity: count)
+        public var nsNoNull: [String: Any] {
+            var dict: [String: Any] = Dictionary(minimumCapacity: count)
             for (key, value) in self {
                 if let value = value.nsNoNull {
                     dict[key] = value
@@ -247,7 +247,7 @@ extension JSON {
         }
     }
     
-    /// An error that is thrown when converting from `AnyObject` to `JSON`.
+    /// An error that is thrown when converting from `Any` to `JSON`.
     /// - SeeAlso: `JSON.init(ns:)`
     public enum JSONFoundationError: Error {
         /// Thrown when a non-JSON-compatible type is found.

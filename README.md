@@ -177,7 +177,7 @@ try json.mapArray("elements", Element.init(json:))
 
 The `JSON` type has static methods `map()`, `flatMap()`, and `compactMap()` for working with arrays (since PMJSON does not define its own array type). The benefit of using these methods over using the equivalent `SequenceType` methods is the PMJSON static methods produce better errors.
 
-There are also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: AnyObject) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
+There are also helpers for converting to/from Foundation objects. `JSON` offers an initializer `init(ns: Any) throws` that converts from any JSON-compatible object to a `JSON`. `JSON` and `JSONObject` both offer the property `.ns`, which returns a Foundation object equivalent to the `JSON`, and `.nsNoNull` which does the same but omits any `null` values instead of using `NSNull`.
 
 ### Codable support
 
@@ -271,7 +271,9 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Fix availability attribute for `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds`.
 * Bump `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` and `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` to iOS 11.2+ and tvOS 11.2+ as, despite the constant being marked as available earlier, it's not supported at runtime. ([#33][])
 * Rename `JSON.flatMap*` and `JSONObject.flatMap*` methods to `.compactMap*` instead when the transformation returns an optional. ([#28][])
+* Convert `JSONObject.ns` and `JSONObject.nsNoNull` to return a `[String: Any]` instead of an `[AnyHashable: Any]`. ([#25][])
 
+[#25]: https://github.com/postmates/PMJSON/issues/25 "GitHub: JSONObject.ns should return [String: Any]"
 [#28]: https://github.com/postmates/PMJSON/issues/28 "GitHub: Rename JSON.flatMap to JSON.compactMap"
 [#33]: https://github.com/postmates/PMJSON/issues/33 "GitHub: SwiftDecoder.DateDecodingStrategy.iso8601WithFractionalSeconds should be marked as iOS 11.2+"
 
