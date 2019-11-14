@@ -268,6 +268,9 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Split `JSON.Encoder.encodeAs*` and `JSON.Decoder.decode` methods into overload pairs where one takes `options:` and the other doesn't. This makes it easier to replace function references to `JSONEncoder`/`JSONDecoder` methods with the equivalents from PMJSON.
 * Add conformance to Combine's `TopLevelEncoder` and `TopLevelDecoder`, using `Data` as the input/output type. This means that `JSON.Encoder.encode(_:)` is now marked as deprecated instead of unavailable.
 * Fix availability attribute for `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds`.
+* Bump `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` and `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` to iOS 11.2+ and tvOS 11.2+ as, despite the constant being marked as available earlier, it's not supported at runtime. ([#33][])
+
+[#33]: https://github.com/postmates/PMJSON/issues/33 "GitHub: SwiftDecoder.DateDecodingStrategy.iso8601WithFractionalSeconds should be marked as iOS 11.2+"
 
 #### v3.1.2 (2018-11-06)
 

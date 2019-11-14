@@ -398,7 +398,7 @@ final class SwiftDecoderTests: XCTestCase {
     }
     
     #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+    @available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *)
     func testDecodeDateISO8601FractionalSeconds() throws {
         var decoder = JSON.Decoder()
         decoder.dateDecodingStrategy = .iso8601WithFractionalSeconds

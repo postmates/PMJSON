@@ -541,7 +541,7 @@ extension _JSONEncoder: SingleValueEncodingContainer {
                 }
             case .iso8601WithFractionalSeconds:
                 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-                    if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                    if #available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *) {
                         let str = _iso8601FractionalSecondsFormatter.string(from: date)
                         try encode(str)
                     } else {
@@ -977,7 +977,7 @@ extension JSON.Encoder {
         /// seconds.
         ///
         /// This encodes strings like `"1985-04-12T23:20:50.523Z"`.
-        @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+        @available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *)
         case iso8601WithFractionalSeconds
         #else
         // swift-corelibs-foundation doesn't support `.withFractionalSeconds`. We still declare the

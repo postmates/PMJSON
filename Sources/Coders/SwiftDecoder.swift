@@ -377,7 +377,7 @@ extension _JSONDecoder: SingleValueDecodingContainer {
                 }
             case .iso8601WithFractionalSeconds:
                 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-                    if #available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *) {
+                    if #available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *) {
                         let str = try wrapTypeMismatch(value.asJSON.getString())
                         guard let date = _iso8601FractionalSecondsFormatter.date(from: str) ?? _iso8601Formatter.date(from: str) else {
                             throw DecodingError.dataCorruptedError(in: self, debugDescription: "Expected date string to be ISO8601-formatted.")
@@ -840,7 +840,7 @@ extension JSON.Decoder {
         ///
         /// - Note: If the decode fails, it will try again with `.iso8601`. This means it will match
         ///   strings with or without fractional seconds.
-        @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+        @available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *)
         case iso8601WithFractionalSeconds
         #else
         // swift-corelibs-foundation doesn't support `.withFractionalSeconds`. We still declare the
@@ -940,7 +940,7 @@ internal var _iso8601Formatter: ISO8601DateFormatter = {
 }()
 
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+    @available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *)
     internal var _iso8601FractionalSecondsFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

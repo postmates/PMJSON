@@ -773,7 +773,7 @@ final class SwiftEncoderTests: XCTestCase {
     }
     
     #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    @available(macOS 10.13, iOS 11.0, watchOS 4.0, tvOS 11.0, *)
+    @available(macOS 10.13, iOS 11.2, watchOS 4.0, tvOS 11.2, *)
     func testEncodeDateISO8601FractionalSeconds() throws {
         var encoder = JSON.Encoder()
         encoder.dateEncodingStrategy = .iso8601WithFractionalSeconds
