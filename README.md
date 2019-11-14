@@ -266,12 +266,12 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 * Update to Swift 5.
 * When encoding/decoding `URL`s with `JSON.Encoder` and `JSON.Decoder`, encode and decode their absolute string instead of relying on the native implementation which encodes them as an object. This matches the behavior of `JSONEncoder` and `JSONDecoder`.
-* Split `JSON.Encoder.encodeAs*` and `JSON.Decoder.decode` methods into overload pairs where one takes `options:` and the other doesn't. This makes it easier to replace function references to `JSONEncoder`/`JSONDecoder` methods with the equivalents from PMJSON.
-* Add conformance to Combine's `TopLevelEncoder` and `TopLevelDecoder`, using `Data` as the input/output type. This means that `JSON.Encoder.encode(_:)` is now marked as deprecated instead of unavailable.
 * Fix availability attribute for `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds`.
 * Bump `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` and `JSON.Encoder.DateEncodingStrategy.iso8601WithFractionalSeconds` to iOS 11.2+ and tvOS 11.2+ as, despite the constant being marked as available earlier, it's not supported at runtime. ([#33][])
-* Rename `JSON.flatMap*` and `JSONObject.flatMap*` methods to `.compactMap*` instead when the transformation returns an optional. ([#28][])
 * Convert `JSONObject.ns` and `JSONObject.nsNoNull` to return a `[String: Any]` instead of an `[AnyHashable: Any]`. ([#25][])
+* Split `JSON.Encoder.encodeAs*` and `JSON.Decoder.decode` methods into overload pairs where one takes `options:` and the other doesn't. This makes it easier to replace function references to `JSONEncoder`/`JSONDecoder` methods with the equivalents from PMJSON.
+* Add conformance to Combine's `TopLevelEncoder` and `TopLevelDecoder`, using `Data` as the input/output type. This means that `JSON.Encoder.encode(_:)` is now marked as deprecated instead of unavailable.
+* Rename `JSON.flatMap*` and `JSONObject.flatMap*` methods to `.compactMap*` instead when the transformation returns an optional. ([#28][])
 
 [#25]: https://github.com/postmates/PMJSON/issues/25 "GitHub: JSONObject.ns should return [String: Any]"
 [#28]: https://github.com/postmates/PMJSON/issues/28 "GitHub: Rename JSON.flatMap to JSON.compactMap"
