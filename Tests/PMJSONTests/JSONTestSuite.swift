@@ -164,7 +164,7 @@ private extension String {
     /// Returns the string, sanitized to be a valid identifier.
     /// If the string does not contain any valid identifier characters, returns `nil`.
     var sanitized: String? {
-        guard let start = unicodeScalars.index(where: CharacterSet.identifierStart.contains) else { return nil }
+        guard let start = unicodeScalars.firstIndex(where: CharacterSet.identifierStart.contains) else { return nil }
         let scalars = unicodeScalars.suffix(from: start)
         var result = String.UnicodeScalarView()
         result.append(contentsOf: scalars.lazy.map({ CharacterSet.identifierContinue.contains($0) ? $0 : "_" }))

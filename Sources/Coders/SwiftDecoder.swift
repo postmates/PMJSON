@@ -783,21 +783,21 @@ extension JSON.Decoder {
             
             let scalars = key.unicodeScalars
             
-            guard let firstIdx = scalars.index(where: { $0 != "_" }),
-                let lastIdx = scalars.reversed().index(where: { $0 != "_" })?.base
+            guard let firstIdx = scalars.firstIndex(where: { $0 != "_" }),
+                let lastIdx = scalars.reversed().firstIndex(where: { $0 != "_" })?.base
                 else {
                     // the string is all underscores
                     return key
             }
             
-            guard var nextUnderscoreIdx = scalars[firstIdx..<lastIdx].index(of: "_") else {
+            guard var nextUnderscoreIdx = scalars[firstIdx..<lastIdx].firstIndex(of: "_") else {
                 // only one word
                 return key
             }
             
             var result: String = String(scalars[..<nextUnderscoreIdx])
-            while let nextOtherIdx = scalars[scalars.index(after: nextUnderscoreIdx)..<lastIdx].index(where: { $0 != "_" }) {
-                guard let idx = scalars[scalars.index(after: nextOtherIdx)..<lastIdx].index(of: "_") else {
+            while let nextOtherIdx = scalars[scalars.index(after: nextUnderscoreIdx)..<lastIdx].firstIndex(where: { $0 != "_" }) {
+                guard let idx = scalars[scalars.index(after: nextOtherIdx)..<lastIdx].firstIndex(of: "_") else {
                     // this must be the last word
                     result.append(Substring(scalars[nextOtherIdx..<lastIdx]).capitalized)
                     break

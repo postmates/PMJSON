@@ -264,6 +264,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 #### Development
 
+* Update to Swift 5.
 * When encoding/decoding `URL`s with `JSON.Encoder` and `JSON.Decoder`, encode and decode their absolute string instead of relying on the native implementation which encodes them as an object. This matches the behavior of `JSONEncoder` and `JSONDecoder`.
 * Split `JSON.Encoder.encodeAs*` and `JSON.Decoder.decode` methods into overload pairs where one takes `options:` and the other doesn't. This makes it easier to replace function references to `JSONEncoder`/`JSONDecoder` methods with the equivalents from PMJSON.
 * Add conformance to Combine's `TopLevelEncoder` and `TopLevelDecoder`, using `Data` as the input/output type. This means that `JSON.Encoder.encode(_:)` is now marked as deprecated instead of unavailable.
