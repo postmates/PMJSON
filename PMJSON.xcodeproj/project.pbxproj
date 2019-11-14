@@ -17,6 +17,7 @@
 		0AE408AD2038024E00A73EBC /* JSONKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408AC2038024E00A73EBC /* JSONKey.swift */; };
 		0AE408B62038063500A73EBC /* SwiftEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE408B52038063500A73EBC /* SwiftEncoder.swift */; };
 		2A34C78E237CBDAD00743A62 /* CombineSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A34C78D237CBDAD00743A62 /* CombineSupport.swift */; };
+		2A34C790237D396100743A62 /* Deprecations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A34C78F237D396100743A62 /* Deprecations.swift */; };
 		9E0317C51D664B9000096D9E /* sample.json in Resources */ = {isa = PBXBuildFile; fileRef = 9E0317C41D664B9000096D9E /* sample.json */; };
 		9E0AD0C31C69B3360038B4F5 /* DecimalNumber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */; };
 		9E1B24441BC73D7600E5BC19 /* PMJSON.h in Headers */ = {isa = PBXBuildFile; fileRef = 9E1B24431BC73D7600E5BC19 /* PMJSON.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -60,6 +61,7 @@
 		0AE408AE2038028100A73EBC /* PMJSON.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; path = PMJSON.podspec; sourceTree = "<group>"; };
 		0AE408B52038063500A73EBC /* SwiftEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftEncoder.swift; sourceTree = "<group>"; };
 		2A34C78D237CBDAD00743A62 /* CombineSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombineSupport.swift; sourceTree = "<group>"; };
+		2A34C78F237D396100743A62 /* Deprecations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deprecations.swift; sourceTree = "<group>"; };
 		9E0317C41D664B9000096D9E /* sample.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = sample.json; sourceTree = "<group>"; };
 		9E0317C61D664D7D00096D9E /* README.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		9E0AD0C21C69B3360038B4F5 /* DecimalNumber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DecimalNumber.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 				9E1B246A1BC7463D00E5BC19 /* Parser.swift */,
 				9E8793771BC7547800BC6A15 /* Decoder.swift */,
 				9E5983DB1C60282F008495F6 /* Encoder.swift */,
+				2A34C78F237D396100743A62 /* Deprecations.swift */,
 				9E1B24431BC73D7600E5BC19 /* PMJSON.h */,
 				9E1B24451BC73D7600E5BC19 /* Info.plist */,
 			);
@@ -313,6 +316,7 @@
 				9E87937E1BC835F500BC6A15 /* Accessors.swift in Sources */,
 				0AE408A4203413AE00A73EBC /* SwiftDecoder.swift in Sources */,
 				0A0F2BAC1BF30D1B0095D290 /* JSONObject.swift in Sources */,
+				2A34C790237D396100743A62 /* Deprecations.swift in Sources */,
 				0AE408B62038063500A73EBC /* SwiftEncoder.swift in Sources */,
 				0AE408AD2038024E00A73EBC /* JSONKey.swift in Sources */,
 			);

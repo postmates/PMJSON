@@ -1344,7 +1344,7 @@ public extension JSON {
     /// - Returns: An array with the non-`nil` results of mapping `transform` over `array`.
     /// - Throws: Rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    static func flatMap<T>(_ array: JSONArray, _ transform: (JSON) throws -> T?) rethrows -> [T] {
+    static func compactMap<T>(_ array: JSONArray, _ transform: (JSON) throws -> T?) rethrows -> [T] {
         return try array.enumerated().compactMap({ i, elt in try scoped(i, { try transform(elt) }) })
     }
     
@@ -1450,7 +1450,7 @@ public extension JSON {
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
     /// containing the non-`nil` results of mapping `transform` over the value.
     ///
-    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter key: The key to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1458,8 +1458,8 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object, `key` does not exist, or the value
     ///   is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
-        return try getArray(key, { try JSON.flatMap($0, transform) })
+    func compactMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
+        return try getArray(key, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
@@ -1480,7 +1480,7 @@ public extension JSON {
     /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
     /// containing the non-`nil` results of mapping `transform` over the value.
     ///
-    /// - Note: This method is equivalent to `getArray(index, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArray(index, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter index: The index to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1488,8 +1488,8 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array, `index` is out of bounds, or the
     ///   value is not an array. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T] {
-        return try getArray(index, { try JSON.flatMap($0, transform) })
+    func compactMapArray<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T] {
+        return try getArray(index, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
@@ -1512,7 +1512,7 @@ public extension JSON {
     ///
     /// Returns `nil` if `key` doesn't exist or the value is `null`.
     ///
-    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter key: The key to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1521,8 +1521,8 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an object or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
-        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    func compactMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
@@ -1548,7 +1548,7 @@ public extension JSON {
     ///
     /// Returns `nil` if `index` is out of bounds or the value is `null`.
     ///
-    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArrayOrNil(index, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter index: The index to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1557,8 +1557,8 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not an array or the value is not an array or
     ///   `null`. Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T]? {
-        return try getArrayOrNil(index, { try JSON.flatMap($0, transform) })
+    func compactMapArrayOrNil<T>(_ index: Int, _ transform: (JSON) throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(index, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `index`, converts the value to an array, and returns an `Array`
@@ -1685,7 +1685,7 @@ public extension JSONObject {
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
     /// containing the non-`nil` results of mapping `transform` over the value.
     ///
-    /// - Note: This method is equivalent to `getArray(key, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArray(key, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter key: The key to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1693,8 +1693,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` does not exist or the value is not an array.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
-        return try getArray(key, { try JSON.flatMap($0, transform) })
+    func compactMapArray<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T] {
+        return try getArray(key, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
@@ -1717,7 +1717,7 @@ public extension JSONObject {
     ///
     /// Returns `nil` if `key` doesn't exist or the value is `null`.
     ///
-    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.flatMap($0, transform) })`.
+    /// - Note: This method is equivalent to `getArrayOrNil(key, { try JSON.compactMap($0, transform) })`.
     ///
     /// - Parameter key: The key to subscript the receiver with.
     /// - Parameter transform: A block that is called once for each element of the resulting array.
@@ -1726,8 +1726,8 @@ public extension JSONObject {
     /// - Throws: `JSONError` if `key` exists but the value is not an array or `null`.
     ///   Also rethrows any error thrown by `transform`.
     /// - Complexity: O(*N*).
-    func flatMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
-        return try getArrayOrNil(key, { try JSON.flatMap($0, transform) })
+    func compactMapArrayOrNil<T>(_ key: String, _ transform: (JSON) throws -> T?) throws -> [T]? {
+        return try getArrayOrNil(key, { try JSON.compactMap($0, transform) })
     }
     
     /// Subscripts the receiver with `key`, converts the value to an array, and returns an `Array`
