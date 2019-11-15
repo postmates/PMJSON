@@ -1,6 +1,6 @@
 # PMJSON
 
-[![Version](https://img.shields.io/badge/version-v3.1.2-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
+[![Version](https://img.shields.io/badge/version-v4.0.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
 ![Platforms](https://img.shields.io/badge/platforms-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos-lightgrey.svg)
 ![Languages](https://img.shields.io/badge/languages-swift-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)
@@ -262,7 +262,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 ## Version History
 
-#### Development
+#### v4.0.0 (2019-11-14)
 
 * Update to Swift 5.
 * When encoding/decoding `URL`s with `JSON.Encoder` and `JSON.Decoder`, encode and decode their absolute string instead of relying on the native implementation which encodes them as an object. This matches the behavior of `JSONEncoder` and `JSONDecoder`.
