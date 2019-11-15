@@ -65,8 +65,6 @@ public extension JSON {
     }
     
     /// Returns `true` iff the receiver is `.int64`, `.double`, or `.decimal`.
-    /// - Note: `.decimal` is only considered a number on platforms that have `Decimal`.
-    ///   On platforms where `.decimal` is a dummy value, it's not a treated as a number.
     var isNumber: Bool {
         switch self {
         case .int64, .double, .decimal: return true
@@ -131,9 +129,6 @@ public extension JSON {
     ///
     /// When setting, replaces the receiver with the given integral value, or with
     /// null if the value is `nil`.
-    ///
-    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
-    ///   the `.decimal` dummy value is not treated as a number.
     var int64: Int64? {
         get {
             switch self {
@@ -155,9 +150,6 @@ public extension JSON {
     ///
     /// When setting, replaces the receiver with the given integral value, or with
     /// null if the value is `nil`.
-    ///
-    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
-    ///   the `.decimal` dummy value is not treated as a number.
     var int: Int? {
         get {
             guard let value = self.int64 else { return nil}
@@ -175,9 +167,6 @@ public extension JSON {
     ///
     /// When setting, replaces the receiver with the given double value, or with
     /// null if the value is `nil`.
-    ///
-    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
-    ///   the `.decimal` dummy value is not treated as a number.
     var double: Double? {
         get {
             switch self {
@@ -230,9 +219,6 @@ public extension JSON {
 public extension JSON {
     /// Returns the string value if the receiver is `.string`, coerces the value to a string if
     /// the receiver is `.bool`, `.null`, `.int64`, `.double`, or `.decimal, or otherwise returns `nil`.
-    ///
-    /// - Note: `.decimal` is only supported on platforms with `Decimal`. On platforms without it,
-    ///   the `.decimal` dummy value returns `nil`.
     var asString: String? {
         return try? toString()
     }
