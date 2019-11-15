@@ -24,7 +24,7 @@ public extension JSON {
     var decimal: Decimal? {
         get {
             switch self {
-            case .int64(let i): return Decimal(workaround: i)
+            case .int64(let i): return Decimal(i)
             case .double(let d): return Decimal(workaround: d)
             case .decimal(let d): return d
             default: return nil
@@ -41,7 +41,7 @@ public extension JSON {
     /// - Note: Whitespace is not allowed in the string representation.
     var asDecimal: Decimal? {
         switch self {
-        case .int64(let i): return Decimal(workaround: i)
+        case .int64(let i): return Decimal(i)
         case .double(let d): return Decimal(workaround: d)
         case .decimal(let d): return d
         case .string(let s) where !s.isEmpty:
@@ -70,7 +70,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not `.int64`, `.double`, or `.decimal`.
     func getDecimal() throws -> Decimal {
         switch self {
-        case .int64(let i): return Decimal(workaround: i)
+        case .int64(let i): return Decimal(i)
         case .double(let d): return Decimal(workaround: d)
         case .decimal(let d): return d
         default: throw hideThrow(JSONError.missingOrInvalidType(path: nil, expected: .required(.number), actual: .forValue(self)))
@@ -82,7 +82,7 @@ public extension JSON {
     /// - Throws: `JSONError` if the receiver is not `.int64`, `.double`, or `.decimal`.
     func getDecimalOrNil() throws -> Decimal? {
         switch self {
-        case .int64(let i): return Decimal(workaround: i)
+        case .int64(let i): return Decimal(i)
         case .double(let d): return Decimal(workaround: d)
         case .decimal(let d): return d
         case .null: return nil
@@ -455,27 +455,16 @@ public extension JSONObject {
 // MARK: - Internal Helpers
 
 internal extension Int64 {
-    static let maxDecimal: Decimal = Decimal(workaround: Int64.max)
-    static let minDecimal: Decimal = Decimal(workaround: Int64.min)
+    static let maxDecimal: Decimal = Decimal(Int64.max)
+    static let minDecimal: Decimal = Decimal(Int64.min)
 }
 
 internal extension UInt64 {
-    static let maxDecimal: Decimal = Decimal(workaround: UInt64.max)
-    static let minDecimal: Decimal = Decimal(workaround: UInt64.min)
+    static let maxDecimal: Decimal = Decimal(UInt64.max)
+    static let minDecimal: Decimal = Decimal(UInt64.min)
 }
 
 internal extension Decimal {
-    // NB: As of Swift 3.0.1, Decimal(_: Int64) incorrectly passes through Double first (SR-3125)
-    // and Decimal(_: Double) can produce incorrect results (SR-3130), so for now we're going to
-    // always go through NSNumber.
-    init(workaround value: Int64) {
-        self = NSNumber(value: value).decimalValue
-    }
-    
-    init(workaround value: UInt64) {
-        self = NSNumber(value: value).decimalValue
-    }
-    
     // NB: As of Swift 3.0.1, Decimal(_: Double) can produce incorrect results (SR-3130)
     init(workaround value: Double) {
         self = NSNumber(value: value).decimalValue

@@ -107,7 +107,7 @@ extension JSON: Equatable {
         case (.decimal(let a), .decimal(let b)): return a == b
         case (.int64(let a), .double(let b)): return Double(a) == b
         case (.int64(let a), .decimal(let b)):
-            return Decimal(workaround: a) == b
+            return Decimal(a) == b
         case (.double(let a), .decimal(let b)):
             return Decimal(workaround: a) == b
         case (.double, .int64), (.decimal, .int64), (.decimal, .double): return rhs == lhs
