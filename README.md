@@ -272,6 +272,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 * Split `JSON.Encoder.encodeAs*` and `JSON.Decoder.decode` methods into overload pairs where one takes `options:` and the other doesn't. This makes it easier to replace function references to `JSONEncoder`/`JSONDecoder` methods with the equivalents from PMJSON.
 * Add conformance to Combine's `TopLevelEncoder` and `TopLevelDecoder`, using `Data` as the input/output type. This means that `JSON.Encoder.encode(_:)` is now marked as deprecated instead of unavailable.
 * Rename `JSON.flatMap*` and `JSONObject.flatMap*` methods to `.compactMap*` instead when the transformation returns an optional. ([#28][])
+* Mark a lot of methods as `@inlinable`.
 
 [#25]: https://github.com/postmates/PMJSON/issues/25 "GitHub: JSONObject.ns should return [String: Any]"
 [#28]: https://github.com/postmates/PMJSON/issues/28 "GitHub: Rename JSON.flatMap to JSON.compactMap"

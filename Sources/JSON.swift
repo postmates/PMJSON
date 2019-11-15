@@ -38,29 +38,37 @@ public enum JSON {
     case array(JSONArray)
     
     /// Initializes `self` as a boolean with the value `bool`.
+    @inlinable
     public init(_ bool: Bool) {
         self = .bool(bool)
     }
     /// Initializes `self` as a string with the value `str`.
+    @inlinable
     public init(_ str: String) {
         self = .string(str)
     }
     /// Initializes `self` as a 64-bit integer with the value `i`.
+    @inlinable
     public init(_ i: Int64) {
         self = .int64(i)
     }
     /// Initializes `self` as a double with the value `d`.
+    @inlinable
     public init(_ d: Double) {
         self = .double(d)
     }
+    /// Initializes `self` as a decimal with the value `d`.
+    @inlinable
     public init(_ d: Decimal) {
         self = .decimal(d)
     }
     /// Initializes `self` as an object with the value `obj`.
+    @inlinable
     public init(_ obj: JSONObject) {
         self = .object(obj)
     }
     /// Initializes `self` as an array with the value `ary`.
+    @inlinable
     public init(_ ary: JSONArray) {
         self = .array(ary)
     }
@@ -69,26 +77,31 @@ public enum JSON {
 // Convenience conversions.
 extension JSON {
     /// Returns a `JSON.int64` with the given value.
+    @inlinable
     public static func int(_ value: Int) -> JSON {
         return .int64(Int64(value))
     }
     
     /// Initializes `self` as a 64-bit integer with the value `i`.
+    @inlinable
     public init(_ i: Int) {
         self = .int64(Int64(i))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
+    @inlinable
     public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSON {
         self = .array(JSONArray(seq))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
+    @inlinable
     public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONObject {
         self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
     
     /// Initializes `self` as an array with the contents of the sequence `seq`.
+    @inlinable
     public init<S: Sequence>(_ seq: S) where S.Iterator.Element == JSONArray {
         self = .array(JSONArray(seq.lazy.map(JSON.init)))
     }
@@ -97,6 +110,7 @@ extension JSON {
 public typealias JSONArray = ContiguousArray<JSON>
 
 extension JSON: Equatable {
+    @inlinable
     public static func ==(lhs: JSON, rhs: JSON) -> Bool {
         switch (lhs, rhs) {
         case (.null, .null): return true
@@ -119,10 +133,12 @@ extension JSON: Equatable {
 }
 
 extension JSON: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
+    @inlinable
     public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(self, to: &target)
     }
     
+    @inlinable
     public var description: String {
         return JSON.encodeAsString(self)
     }
@@ -139,42 +155,51 @@ extension JSON: TextOutputStreamable, CustomStringConvertible, CustomDebugString
 }
 
 extension JSON: ExpressibleByIntegerLiteral, ExpressibleByFloatLiteral, ExpressibleByBooleanLiteral, ExpressibleByNilLiteral {
+    @inlinable
     public init(integerLiteral value: Int64) {
         self = .int64(value)
     }
     
+    @inlinable
     public init(floatLiteral value: Double) {
         self = .double(value)
     }
     
+    @inlinable
     public init(booleanLiteral value: Bool) {
         self = .bool(value)
     }
     
+    @inlinable
     public init(nilLiteral: ()) {
         self = .null
     }
 }
 
 extension JSON: ExpressibleByStringLiteral {
+    @inlinable
     public init(stringLiteral value: String) {
         self = .string(value)
     }
     
+    @inlinable
     public init(extendedGraphemeClusterLiteral value: String) {
         self = .string(value)
     }
     
+    @inlinable
     public init(unicodeScalarLiteral value: String) {
         self = .string(value)
     }
 }
 
 extension JSON: ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
+    @inlinable
     public init(arrayLiteral elements: JSON...) {
         self = .array(JSONArray(elements))
     }
     
+    @inlinable
     public init(dictionaryLiteral elements: (String, JSON)...) {
         self = .object(JSONObject(elements))
     }

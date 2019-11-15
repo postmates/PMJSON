@@ -43,6 +43,7 @@ public struct JSONObject {
     public fileprivate(set) var dictionary: [String: JSON]
     
     public subscript(key: String) -> JSON? {
+        @inlinable
         @inline(__always) get {
             return dictionary[key]
         }
@@ -69,11 +70,13 @@ extension JSONObject: Collection {
     }
     
     /// Returns `true` iff `self` is empty.
+    @inlinable
     public var isEmpty: Bool {
         return dictionary.isEmpty
     }
     
     /// The number of entries in the object.
+    @inlinable
     public var count: Int {
         return dictionary.count
     }
@@ -132,6 +135,7 @@ extension JSONObject {
     ///
     /// Keys appear in the same order as they occur as the `.0` member of key-value pairs in `self`.
     /// Each key in the result has a unique value.
+    @inlinable
     public var keys: LazyMapCollection<JSONObject, String> {
         return lazy.map({ $0.0 })
     }
@@ -139,6 +143,7 @@ extension JSONObject {
     /// A collection containing just the values of `self`.
     ///
     /// Values appear in the same order as they occur as the `.1` member of key-value pairs in `self`.
+    @inlinable
     public var values: LazyMapCollection<JSONObject, JSON> {
         return lazy.map({ $0.1 })
     }
@@ -189,16 +194,19 @@ extension JSONObject: ExpressibleByDictionaryLiteral {
     }
     
     /// Creates an object initialized with `elements`.
+    @inlinable
     public init(dictionaryLiteral elements: (String, JSON)...) {
         self.init(elements)
     }
 }
 
 extension JSONObject: TextOutputStreamable, CustomStringConvertible, CustomDebugStringConvertible {
+    @inlinable
     public func write<Target : TextOutputStream>(to target: inout Target) {
         JSON.encode(JSON(self), to: &target)
     }
     
+    @inlinable
     public var description: String {
         return JSON.encodeAsString(JSON(self))
     }
@@ -210,6 +218,7 @@ extension JSONObject: TextOutputStreamable, CustomStringConvertible, CustomDebug
 }
 
 extension JSONObject: Equatable {
+    @inlinable
     public static func ==(lhs: JSONObject, rhs: JSONObject) -> Bool {
         return lhs.dictionary == rhs.dictionary
     }

@@ -466,6 +466,7 @@ internal extension UInt64 {
 
 internal extension Decimal {
     // NB: As of Swift 3.0.1, Decimal(_: Double) can produce incorrect results (SR-3130)
+    @usableFromInline
     init(workaround value: Double) {
         self = NSNumber(value: value).decimalValue
     }
