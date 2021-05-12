@@ -1,3 +1,7 @@
+# Now Archived and Forked
+
+PMJSON will not be maintained in this repository going forward. Please use, create issues on, and make PRs to [the fork of PMJSON located here.](https://github.com/PMSwift/PMJSON)
+
 # PMJSON
 
 [![Version](https://img.shields.io/badge/version-v4.0.0-blue.svg)](https://github.com/postmates/PMJSON/releases/latest)
